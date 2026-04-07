@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bookmark Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: "#08111f",
+            panel: "#0f172a",
+            panel2: "#111c33",
+            accent: "#7dd3fc",
+            accent2: "#fbbf24",
+          },
+          boxShadow: {
+            glow: "0 0 0 1px rgba(125, 211, 252, 0.18), 0 24px 80px rgba(0, 0, 0, 0.35)",
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(125,211,252,0.16),_transparent_30%),linear-gradient(180deg,#020617_0%,#0b1020_100%)] text-slate-100">
+  <main class="mx-auto max-w-7xl px-4 py-8 lg:px-8">
+    <header class="mb-8 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/70 p-6 shadow-glow backdrop-blur">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p class="mb-2 text-sm uppercase tracking-[0.35em] text-sky-300/80">Bookmark Manager</p>
+          <h1 class="text-3xl font-semibold tracking-tight text-white md:text-5xl">Single-page bookmark console</h1>
+          <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Bookmarks, folders, and tags are managed in one screen. No navigation, no build tools, just HTML, CSS, JavaScript, and Tailwind CDN.</p>
+        </div>
+        <div class="grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 md:min-w-[360px]">
+          <label class="text-xs uppercase tracking-[0.3em] text-slate-400">API Base URL</label>
+          <input id="apiBase" class="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-sky-400" value="/api" />
+          <button id="reloadBtn" class="rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300">Reload data</button>
+          <p class="text-xs text-slate-400">The nginx container proxies <code>/api</code> to the backend, so the page can stay single-origin.</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="grid gap-6 xl:grid-cols-3">
+      <div class="xl:col-span-2 space-y-6">
+        <section class="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-glow">
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-xl font-semibold">Bookmarks</h2>
+            <div class="text-sm text-slate-400" id="bookmarkCount">0 items</div>
+          </div>
+
+          <div class="mb-4 grid gap-3 md:grid-cols-4">
+            <input id="searchQ" placeholder="Search title or URL" class="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-sky-400 md:col-span-2" />
+            <select id="filterFolder" class="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-sky-400"></select>
+            <select id="filterTag" class="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-sky-400"></select>
+          </div>
+
+          <div id="bookmarkList" class="grid gap-3"></div>
+        </section>
+
+        <section class="grid gap-6 lg:grid-cols-2">
+          <div class="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-glow">
+            <h2 class="mb-4 text-xl font-semibold">Create / Edit Bookmark</h2>
+            <form id="bookmarkForm" class="grid gap-3">
+              <input type="hidden" id="bookmarkId" />
+              <input id="bookmarkUrl" placeholder="https://example.com" class="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-sky-400" required />
+              <input id="bookmarkTitle" placeholder="Title" class="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-sky-400" required />
+              <textarea id="bookmarkDescription" placeholder="Description" rows="3" class="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-sky-400"></textarea>
+              <select id="bookmarkFolder" class="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-sky-400"></select>
+              <button class="rounded-xl bg-amber-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-amber-300">Save bookmark</button>
+            </form>
+          </div>
+
+          <div class="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-glow">
+            <h2 class="mb-4 text-xl font-semibold">Attach Tags</h2>
+            <form id="tagAttachForm" class="grid gap-3">
+              <select id="attachBookmark" class="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-sky-400"></select>
+              <select id="attachTag" class="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-sky-400"></select>
+              <button class="rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300">Attach tag</button>
+            </form>
+            <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-xs text-slate-300">
+              Tip: click "Edit" on a bookmark card to load it into the form.
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="space-y-6">
+        <section class="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-glow">
+          <h2 class="mb-4 text-xl font-semibold">Folders</h2>
+          <form id="folderForm" class="flex gap-2">
+            <input id="folderName" placeholder="New folder" class="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-sky-400" />
+            <button class="rounded-xl bg-sky-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300">Add</button>
+          </form>
+          <div id="folderList" class="mt-4 grid gap-2"></div>
+        </section>
+
+        <section class="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-glow">
+          <h2 class="mb-4 text-xl font-semibold">Tags</h2>
+          <form id="tagForm" class="flex gap-2">
+            <input id="tagName" placeholder="New tag" class="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-sky-400" />
+            <button class="rounded-xl bg-amber-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-amber-300">Add</button>
+          </form>
+          <div id="tagList" class="mt-4 flex flex-wrap gap-2"></div>
+        </section>
+
+        <section id="message" class="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 text-sm text-slate-300 shadow-glow">
+          Ready.
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const state = { bookmarks: [], folders: [], tags: [] };
+
+    const $ = (id) => document.getElementById(id);
+    const apiBase = () => $('apiBase').value.replace(/\/$/, '') || "/api";
+
+    function setMessage(text, tone = "neutral") {
+      const el = $('message');
+      const tones = {
+        neutral: "border-slate-800 text-slate-300",
+        success: "border-emerald-500/40 text-emerald-300",
+        error: "border-rose-500/40 text-rose-300",
+      };
+      el.className = `rounded-3xl border bg-slate-950/70 p-5 text-sm shadow-glow ${tones[tone]}`;
+      el.textContent = text;
+    }
+
+    async function request(path, options = {}) {
+      const res = await fetch(`${apiBase()}${path}`, {
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+        ...options,
+      });
+      const contentType = res.headers.get("content-type") || "";
+      const body = contentType.includes("application/json") ? await res.json() : null;
+      if (!res.ok) {
+        const detail = body?.detail;
+        throw new Error(Array.isArray(detail) ? JSON.stringify(detail) : detail || `HTTP ${res.status}`);
+      }
+      return body;
+    }
+
+    const emptyOption = (label, value = "") => ({ label, value });
+
+    function renderSelectOptions(select, items, prefix) {
+      const current = select.value;
+      select.innerHTML = "";
+      const defaults = [
+        emptyOption(`All ${prefix}`, ""),
+      ];
+      [...defaults, ...items.map((item) => ({ label: `${item.name}`, value: String(item.id) }))].forEach((opt) => {
+        const el = document.createElement("option");
+        el.value = opt.value;
+        el.textContent = opt.label;
+        select.appendChild(el);
+      });
+      if ([...select.options].some((o) => o.value === current)) select.value = current;
+    }
+
+    function renderFormSelect(select, items, placeholder) {
+      const current = select.value;
+      select.innerHTML = "";
+      const blank = document.createElement("option");
+      blank.value = "";
+      blank.textContent = placeholder;
+      select.appendChild(blank);
+      items.forEach((item) => {
+        const option = document.createElement("option");
+        option.value = String(item.id);
+        option.textContent = item.name;
+        select.appendChild(option);
+      });
+      if ([...select.options].some((o) => o.value === current)) select.value = current;
+    }
+
+    function bookmarkTags(bookmark) {
+      return bookmark.tags.map((tag) => `<span class="rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-xs text-sky-200">${tag.name}</span>`).join(" ");
+    }
+
+    function renderBookmarks() {
+      const list = $('bookmarkList');
+      $('bookmarkCount').textContent = `${state.bookmarks.length} items`;
+      list.innerHTML = "";
+      state.bookmarks.forEach((bm) => {
+        const card = document.createElement("article");
+        card.className = "rounded-2xl border border-slate-800 bg-slate-900/70 p-4";
+        card.innerHTML = `
+          <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div class="min-w-0">
+              <a href="${bm.url}" target="_blank" rel="noreferrer" class="block truncate text-lg font-semibold text-white hover:text-sky-300">${bm.title}</a>
+              <p class="mt-1 break-all text-sm text-slate-400">${bm.url}</p>
+              <p class="mt-2 text-sm text-slate-300">${bm.description || ""}</p>
+              <div class="mt-3 flex flex-wrap gap-2">${bookmarkTags(bm)}</div>
+            </div>
+            <div class="flex shrink-0 gap-2">
+              <button class="edit-btn rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:border-sky-400">Edit</button>
+              <button class="delete-btn rounded-lg border border-rose-500/30 px-3 py-2 text-xs text-rose-200 hover:bg-rose-500/10">Delete</button>
+            </div>
+          </div>
+        `;
+        card.querySelector(".edit-btn").onclick = () => loadBookmarkForm(bm);
+        card.querySelector(".delete-btn").onclick = async () => {
+          if (!confirm(`Delete "${bm.title}"?`)) return;
+          await request(`/bookmarks/${bm.id}`, { method: "DELETE" });
+          await refreshAll();
+        };
+        list.appendChild(card);
+      });
+    }
+
+    function renderFolders() {
+      const list = $('folderList');
+      list.innerHTML = "";
+      state.folders.forEach((folder) => {
+        const item = document.createElement("div");
+        item.className = "flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2 text-sm";
+        item.innerHTML = `<span>${folder.name}</span><button class="text-xs text-rose-200 hover:text-rose-100">Delete</button>`;
+        item.querySelector("button").onclick = async () => {
+          await request(`/folders/${folder.id}`, { method: "DELETE" });
+          await refreshAll();
+        };
+        list.appendChild(item);
+      });
+    }
+
+    function renderTags() {
+      const list = $('tagList');
+      list.innerHTML = "";
+      state.tags.forEach((tag) => {
+        const pill = document.createElement("button");
+        pill.className = "rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 hover:border-sky-400";
+        pill.textContent = tag.name;
+        pill.onclick = async () => {
+          if (!confirm(`Delete tag "${tag.name}"?`)) return;
+          await request(`/tags/${tag.id}`, { method: "DELETE" });
+          await refreshAll();
+        };
+        list.appendChild(pill);
+      });
+    }
+
+    function updateControls() {
+      renderSelectOptions($('filterFolder'), state.folders, "folders");
+      renderSelectOptions($('filterTag'), state.tags, "tags");
+      renderFormSelect($('bookmarkFolder'), state.folders, "No folder");
+      renderFormSelect($('attachBookmark'), state.bookmarks, "Select bookmark");
+      renderFormSelect($('attachTag'), state.tags, "Select tag");
+    }
+
+    function loadBookmarkForm(bm) {
+      $('bookmarkId').value = bm.id;
+      $('bookmarkUrl').value = bm.url;
+      $('bookmarkTitle').value = bm.title;
+      $('bookmarkDescription').value = bm.description || "";
+      $('bookmarkFolder').value = bm.folder_id ? String(bm.folder_id) : "";
+      setMessage(`Loaded "${bm.title}" into the form.`, "neutral");
+    }
+
+    async function loadData() {
+      const folder_id = $('filterFolder').value;
+      const tag_id = $('filterTag').value;
+      const q = $('searchQ').value.trim();
+      const query = new URLSearchParams();
+      if (folder_id) query.set("folder_id", folder_id);
+      if (tag_id) query.set("tag_id", tag_id);
+      if (q) query.set("q", q);
+      const bookmarksPath = query.toString() ? `/bookmarks?${query}` : "/bookmarks";
+      const [bookmarks, folders, tags] = await Promise.all([
+        request(bookmarksPath),
+        request("/folders"),
+        request("/tags"),
+      ]);
+      state.bookmarks = bookmarks;
+      state.folders = folders;
+      state.tags = tags;
+      updateControls();
+      renderBookmarks();
+      renderFolders();
+      renderTags();
+    }
+
+    async function refreshAll() {
+      try {
+        await loadData();
+        setMessage("Data loaded successfully.", "success");
+      } catch (err) {
+        setMessage(err.message || "Request failed.", "error");
+      }
+    }
+
+    $('reloadBtn').onclick = refreshAll;
+    $('searchQ').addEventListener("input", () => loadData().catch((err) => setMessage(err.message, "error")));
+    $('filterFolder').addEventListener("change", () => loadData().catch((err) => setMessage(err.message, "error")));
+    $('filterTag').addEventListener("change", () => loadData().catch((err) => setMessage(err.message, "error")));
+
+    $('folderForm').addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        await request("/folders", { method: "POST", body: JSON.stringify({ name: $('folderName').value.trim() }) });
+        $('folderName').value = "";
+        await refreshAll();
+      } catch (err) {
+        setMessage(err.message, "error");
+      }
+    });
+
+    $('tagForm').addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        await request("/tags", { method: "POST", body: JSON.stringify({ name: $('tagName').value.trim() }) });
+        $('tagName').value = "";
+        await refreshAll();
+      } catch (err) {
+        setMessage(err.message, "error");
+      }
+    });
+
+    $('bookmarkForm').addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const id = $('bookmarkId').value;
+      const payload = {
+        url: $('bookmarkUrl').value.trim(),
+        title: $('bookmarkTitle').value.trim(),
+        description: $('bookmarkDescription').value.trim() || null,
+        folder_id: $('bookmarkFolder').value ? Number($('bookmarkFolder').value) : null,
+      };
+      try {
+        if (id) {
+          await request(`/bookmarks/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+        } else {
+          await request("/bookmarks", { method: "POST", body: JSON.stringify(payload) });
+        }
+        event.target.reset();
+        $('bookmarkId').value = "";
+        $('bookmarkFolder').value = "";
+        await refreshAll();
+      } catch (err) {
+        setMessage(err.message, "error");
+      }
+    });
+
+    $('tagAttachForm').addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        await request(`/bookmarks/${$('attachBookmark').value}/tags`, {
+          method: "POST",
+          body: JSON.stringify({ tag_id: Number($('attachTag').value) }),
+        });
+        await refreshAll();
+      } catch (err) {
+        setMessage(err.message, "error");
+      }
+    });
+
+    refreshAll();
+  </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+[tools]
+codex = "latest"
+opencode = "latest"
+uv = "latest"
