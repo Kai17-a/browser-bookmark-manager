@@ -1,354 +1,371 @@
 <template>
-    <div class="shell">
-        <header class="hero">
-            <div>
-                <p class="eyebrow">Bookmark Manager</p>
-                <h1>Dashboard</h1>
-                <p class="lede">
-                    At-a-glance view of your bookmark system. Jump to bookmarks,
-                    folders, and tags without leaving the Nuxt SPA.
-                </p>
+    <UDashboardPanel id="home">
+        <template #header>
+            <UDashboardNavbar title="Dashboard" :ui="{ right: 'gap-3' }">
+                <template #leading>
+                    <UDashboardSidebarCollapse />
+                </template>
+
+                <!-- API server connectivity status -->
+                <template #trailing>
+                    <UBadge
+                        :label="message"
+                        variant="subtle"
+                        :color="serverStatusColor"
+                    />
+                </template>
+            </UDashboardNavbar>
+        </template>
+
+        <template #body>
+            <div class="dashboard-body">
+                <UPageGrid class="stats-grid">
+                    <UPageCard
+                        v-for="stat in stats"
+                        :key="stat.title"
+                        :title="stat.title"
+                        :to="stat.to"
+                        variant="subtle"
+                        :ui="{
+                            container: 'gap-y-1.5',
+                            wrapper: 'items-start',
+                            leading:
+                                'p-2.5 rounded-full bg-primary/10 ring ring-inset ring-primary/25 flex-col',
+                            title: 'font-normal text-muted text-xs uppercase tracking-[0.2em]',
+                        }"
+                        class="metric-card"
+                    >
+                        <span class="text-3xl font-semibold text-highlighted">
+                            {{ stat.value }}
+                        </span>
+                    </UPageCard>
+                </UPageGrid>
+
+                <UPageCard
+                    title="Bookmarks"
+                    description="Latest bookmarks at a glance"
+                    :ui="{ body: 'space-y-4' }"
+                >
+                    <div v-if="bookmarks.items.length" class="bookmark-grid">
+                        <article
+                            v-for="bookmark in bookmarks.items.slice(0, 6)"
+                            :key="bookmark.id"
+                            class="bookmark-tile"
+                        >
+                            <div class="bookmark-tile__top">
+                                <div class="bookmark-tile__title-wrap">
+                                    <NuxtLink
+                                        :to="bookmark.url"
+                                        external
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        class="bookmark-tile__title"
+                                    >
+                                        {{ bookmark.title }}
+                                    </NuxtLink>
+                                    <p class="bookmark-tile__url">
+                                        {{ bookmark.url }}
+                                    </p>
+                                </div>
+                                <UBadge size="xs" variant="subtle">
+                                    #{{ bookmark.id }}
+                                </UBadge>
+                            </div>
+
+                            <p
+                                v-if="bookmark.description"
+                                class="bookmark-tile__desc"
+                            >
+                                {{ bookmark.description }}
+                            </p>
+
+                            <div v-if="bookmark.tags.length" class="tag-row">
+                                <UBadge
+                                    v-for="tag in bookmark.tags.slice(0, 4)"
+                                    :key="tag.id"
+                                    color="neutral"
+                                    variant="soft"
+                                    size="xs"
+                                >
+                                    {{ tag.name }}
+                                </UBadge>
+                                <span
+                                    v-if="bookmark.tags.length > 4"
+                                    class="tag-more"
+                                >
+                                    +{{ bookmark.tags.length - 4 }}
+                                </span>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div v-else class="empty-state">
+                        <p>No bookmarks yet.</p>
+                    </div>
+
+                    <div class="card-footer">
+                        <p class="card-meta">{{ bookmarks.total }} items</p>
+                        <UButton to="/bookmarks" icon="i-lucide-arrow-right">
+                            More
+                        </UButton>
+                    </div>
+                </UPageCard>
+
+                <UPageGrid class="collection-grid">
+                    <UPageCard
+                        title="Folders"
+                        description="Saved folders"
+                        :ui="{ body: 'space-y-3' }"
+                    >
+                        <div class="pill-list">
+                            <UButton
+                                v-for="folder in folders.slice(0, 10)"
+                                :key="folder.id"
+                                :label="folder.name"
+                                color="neutral"
+                                variant="soft"
+                                size="xs"
+                                class="pill-button"
+                                :to="`/folders/${folder.id}`"
+                            />
+                        </div>
+                        <div class="card-footer">
+                            <p class="card-meta">
+                                {{ folders.length }} folders
+                            </p>
+                            <UButton to="/folders" variant="ghost" size="sm">
+                                More
+                            </UButton>
+                        </div>
+                    </UPageCard>
+
+                    <UPageCard
+                        title="Tags"
+                        description="Saved tags"
+                        :ui="{ body: 'space-y-3' }"
+                    >
+                        <div class="pill-list">
+                            <UButton
+                                v-for="tag in tags.slice(0, 10)"
+                                :key="tag.id"
+                                :label="tag.name"
+                                color="neutral"
+                                variant="soft"
+                                size="xs"
+                                class="pill-button"
+                            />
+                        </div>
+                        <div class="card-footer">
+                            <p class="card-meta">{{ tags.length }} tags</p>
+                            <UButton to="/tags" variant="ghost" size="sm">
+                                More
+                            </UButton>
+                        </div>
+                    </UPageCard>
+                </UPageGrid>
             </div>
-            <div class="controls">
-                <label>API Base URL</label>
-                <input v-model="apiBase" />
-                <button @click="saveApiBase">Save API URL</button>
-                <button @click="refreshAll">Reload data</button>
-                <p class="hint">
-                    Default is proxied through nginx at <code>/api</code>.
-                </p>
-            </div>
-        </header>
-
-        <section class="dashboard">
-            <article class="panel hero-card">
-                <div class="panel-title">
-                    <div>
-                        <p class="eyebrow">Overview</p>
-                        <h2>System health</h2>
-                    </div>
-                    <span>{{ bookmarks.length }} bookmarks</span>
-                </div>
-
-                <div class="metrics">
-                    <div class="metric">
-                        <span>Total bookmarks</span>
-                        <strong>{{ bookmarks.length }}</strong>
-                    </div>
-                    <div class="metric">
-                        <span>Folders</span>
-                        <strong>{{ folders.length }}</strong>
-                    </div>
-                    <div class="metric">
-                        <span>Tags</span>
-                        <strong>{{ tags.length }}</strong>
-                    </div>
-                    <div class="metric">
-                        <span>Tagged bookmarks</span>
-                        <strong>{{ taggedCount }}</strong>
-                    </div>
-                </div>
-            </article>
-
-            <article class="panel message">{{ message }}</article>
-        </section>
-    </div>
+        </template>
+    </UDashboardPanel>
 </template>
 
-<script setup>
-const {
-    apiBase,
-    defaultApiBase,
-    loadApiBase,
-    saveApiBase: persistApiBase,
-    request,
-} = useBookmarkApi();
-const message = ref("Ready.");
-const bookmarks = ref([]);
-const folders = ref([]);
-const tags = ref([]);
+<script setup lang="ts">
+import type {
+    BookmarkListResponse,
+    FolderResponse,
+    TagResponse,
+    Period,
+    Range,
+} from "~/types";
 
-const taggedCount = computed(
-    () => bookmarks.value.filter((b) => b.tags.length).length,
-);
+const message = ref("Connecting API Server...");
+const serverStatusColor = ref("warning");
+const bookmarks = ref<BookmarkListResponse>({
+    items: [],
+    total: 0,
+    page: 1,
+    per_page: 20,
+    total_pages: 0,
+});
+const folders = ref<FolderResponse[]>([]);
+const tags = ref<TagResponse[]>([]);
 
-const refreshAll = async () => {
+await $fetch("http://localhost:8000/health")
+    .then(() => {
+        message.value = "Connect API Server.";
+        serverStatusColor.value = "success";
+    })
+    .catch(() => {
+        message.value = "Failed to connect API Server";
+        serverStatusColor.value = "error";
+    });
+
+const props = defineProps<{
+    period: Period;
+    range: Range;
+}>();
+
+const stats = ref([
+    {
+        title: "Total bookmarks",
+        to: "/bookmarks",
+        value: 0,
+    },
+    {
+        title: "Folders",
+        to: "/folders",
+        value: 40,
+    },
+    {
+        title: "Tags",
+        to: "/tags",
+        value: 3,
+    },
+]);
+
+onMounted(async () => {
     try {
-        const [bm, folderRows, tagRows] = await Promise.all([
-            request("/bookmarks"),
-            request("/folders"),
-            request("/tags"),
-        ]);
-        bookmarks.value = bm;
-        folders.value = folderRows;
-        tags.value = tagRows;
-        message.value = "Dashboard loaded successfully.";
-    } catch (err) {
-        message.value = err.message;
+        const urls = [
+            "http://localhost:8000/bookmarks",
+            "http://localhost:8000/tags",
+            "http://localhost:8000/folders",
+        ];
+
+        const [bookmarksRes, tagsRes, foldersRes] = await Promise.all(
+            urls.map((url) => $fetch(url)),
+        );
+
+        bookmarks.value = bookmarksRes;
+        tags.value = tagsRes;
+        folders.value = foldersRes;
+
+        stats.value[0].value = bookmarks.value.total;
+        stats.value[1].value = tags.value.length;
+        stats.value[2].value = folders.value.length;
+    } catch (error) {
+        console.error("Failed to load data:", error);
     }
-};
-
-const saveApiBase = async () => {
-    try {
-        await persistApiBase(apiBase.value || defaultApiBase);
-        message.value = "API base URL saved.";
-    } catch (err) {
-        message.value = err.message;
-    }
-};
-
-const removeBookmark = async (id) => {
-    try {
-        await request(`/bookmarks/${id}`, { method: "DELETE" });
-        await refreshAll();
-    } catch (err) {
-        message.value = err.message;
-    }
-};
-
-const goToBookmarks = (bookmark) => {
-    navigateTo({ path: "/bookmarks", query: { edit: String(bookmark.id) } });
-};
-
-const filterByFolder = (id) =>
-    navigateTo({ path: "/bookmarks", query: { folder_id: String(id) } });
-const filterByTag = (id) =>
-    navigateTo({ path: "/bookmarks", query: { tag_id: String(id) } });
-
-onMounted(refreshAll);
-onMounted(loadApiBase);
+});
 </script>
 
 <style scoped>
-:global(body) {
-    margin: 0;
-    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-    background:
-        radial-gradient(
-            circle at top,
-            rgba(125, 211, 252, 0.18),
-            transparent 30%
-        ),
-        linear-gradient(180deg, #020617 0%, #0b1020 100%);
-    color: #e2e8f0;
+.dashboard-body {
+    display: grid;
+    gap: 24px;
 }
 
-.shell {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 32px 20px 48px;
+.stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-.hero,
-.panel {
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    background: rgba(2, 6, 23, 0.72);
-    backdrop-filter: blur(18px);
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
-}
-.hero {
-    display: flex;
-    justify-content: space-between;
-    gap: 24px;
-    padding: 28px;
-    border-radius: 28px;
-    margin-bottom: 20px;
-}
-.eyebrow {
-    margin: 0 0 10px;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    color: #7dd3fc;
-    font-size: 12px;
-}
-h1,
-h2,
-p {
-    margin-top: 0;
-}
-h1 {
-    font-size: clamp(2.2rem, 4vw, 4.3rem);
-    line-height: 1;
-    margin-bottom: 14px;
-}
-.lede {
-    max-width: 720px;
-    color: #cbd5e1;
-}
-.controls {
-    min-width: 320px;
-    display: grid;
-    gap: 10px;
-}
-.controls input {
-    width: 100%;
-    border-radius: 14px;
-    border: 1px solid #334155;
-    background: #0f172ae6;
-    color: #e2e8f0;
-    padding: 12px 14px;
-}
-.controls button,
-.panel-link,
-.shortcut {
-    border: 0;
-    border-radius: 14px;
-    background: #7dd3fc;
-    color: #08111f;
-    font-weight: 700;
-    padding: 12px 14px;
-    text-decoration: none;
-    display: inline-block;
-}
-.controls button {
-    width: 100%;
-}
-.hint {
-    font-size: 12px;
-    color: #94a3b8;
-}
-.dashboard {
-    display: grid;
-    gap: 20px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.lists-wrap {
-    grid-column: 1 / -1;
-    display: grid;
-    gap: 20px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.panel {
-    border-radius: 28px;
-    padding: 20px;
-}
-.hero-card,
-.wide {
-    grid-column: 1 / -1;
-}
-.panel-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-}
-.section-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-}
-.metrics {
-    display: grid;
-    gap: 12px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: 16px;
-}
-.metric {
+
+.metric-card {
     border-radius: 18px;
-    border: 1px solid rgba(51, 65, 85, 1);
-    background: rgba(15, 23, 42, 0.6);
+}
+
+.bookmark-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.bookmark-tile {
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: linear-gradient(
+        180deg,
+        rgba(15, 23, 42, 0.92),
+        rgba(15, 23, 42, 0.74)
+    );
     padding: 16px;
-    display: grid;
-    gap: 6px;
-}
-.metric span {
-    color: #94a3b8;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-}
-.metric strong {
-    font-size: 2rem;
-}
-.stack,
-.chips {
-    display: grid;
-    gap: 10px;
-    margin-top: 12px;
-}
-.chips {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-}
-.chip {
-    border-radius: 999px;
-    border: 1px solid rgba(51, 65, 85, 1);
-    background: rgba(15, 23, 42, 0.95);
-    color: #e2e8f0;
-    padding: 10px 14px;
-}
-.list {
     display: grid;
     gap: 12px;
 }
-.list-item {
-    border-radius: 20px;
-    border: 1px solid rgba(51, 65, 85, 1);
-    background: rgba(15, 23, 42, 0.6);
-    padding: 16px;
+
+.bookmark-tile__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: start;
 }
-.list-item.compact {
-    padding: 14px 16px;
+
+.bookmark-tile__title-wrap {
+    min-width: 0;
 }
-.list-main {
-    display: grid;
-    gap: 6px;
-}
-.item-title {
-    color: #ffffff;
+
+.bookmark-tile__title {
+    display: block;
+    font-size: 15px;
     font-weight: 700;
+    line-height: 1.35;
+    color: #f8fafc;
     text-decoration: none;
+    word-break: break-word;
 }
-.item-meta,
-.item-desc {
+
+.bookmark-tile__title:hover {
+    text-decoration: underline;
+}
+
+.bookmark-tile__url {
+    margin: 4px 0 0;
     color: #94a3b8;
-    font-size: 13px;
-    margin: 0;
+    font-size: 12px;
     word-break: break-all;
 }
-.folder-chip,
-.tag-chip {
-    justify-content: space-between;
+
+.bookmark-tile__desc {
+    margin: 0;
+    color: #cbd5e1;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.tag-row,
+.pill-list {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    text-align: left;
-    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
 }
-.folder-name {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+
+.pill-button {
+    border-radius: 999px;
+    min-height: 28px;
 }
-.folder-id {
-    color: #f8fafc;
+
+.tag-more {
+    align-self: center;
+    color: #94a3b8;
     font-size: 12px;
-    opacity: 0.7;
-    flex-shrink: 0;
 }
-.message {
-    grid-column: 1 / -1;
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
 }
+
+.card-meta {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.empty-state {
+    padding: 24px 0;
+    color: #94a3b8;
+}
+
 @media (max-width: 1024px) {
-    .hero,
-    .dashboard {
+    .stats-grid,
+    .collection-grid {
         grid-template-columns: 1fr;
-        display: grid;
-    }
-    .lists-wrap {
-        grid-template-columns: 1fr;
-    }
-    .metrics {
-        grid-template-columns: 1fr;
-    }
-    .section-head {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-    .folder-chip,
-    .tag-chip {
-        justify-content: flex-start;
     }
 }
 </style>
