@@ -3,7 +3,13 @@ import sqlite3
 from fastapi import HTTPException
 
 from api.app.database import get_db
-from api.app.models import BookmarkCreate, BookmarkResponse, BookmarkUpdate, TagResponse
+from api.app.models import (
+    BookmarkCreate,
+    BookmarkListResponse,
+    BookmarkResponse,
+    BookmarkUpdate,
+    TagResponse,
+)
 from api.app.repositories.bookmark_repo import BookmarkRepository
 from api.app.repositories.folder_repo import FolderRepository
 from api.app.repositories.tag_repo import TagRepository
@@ -37,11 +43,26 @@ class BookmarkService:
         folder_id: int | None = None,
         tag_id: int | None = None,
         q: str | None = None,
-    ) -> list[BookmarkResponse]:
+        page: int = 1,
+        per_page: int = 20,
+    ) -> BookmarkListResponse:
         with get_db() as conn:
             repo = BookmarkRepository(conn)
-            rows = repo.find_all(folder_id=folder_id, tag_id=tag_id, q=q)
-            return [self._to_response(repo, row) for row in rows]
+            total = repo.count_all(folder_id=folder_id, tag_id=tag_id, q=q)
+            total_pages = max((total + per_page - 1) // per_page, 1) if total else 0
+            page = max(page, 1)
+            if total_pages and page > total_pages:
+                page = total_pages
+            offset = (page - 1) * per_page
+            rows = repo.find_all(folder_id=folder_id, tag_id=tag_id, q=q, limit=per_page, offset=offset)
+            items = [self._to_response(repo, row) for row in rows]
+            return BookmarkListResponse(
+                items=items,
+                total=total,
+                page=page,
+                per_page=per_page,
+                total_pages=total_pages,
+            )
 
     def get(self, bookmark_id: int) -> BookmarkResponse:
         with get_db() as conn:

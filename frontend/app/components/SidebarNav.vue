@@ -1,26 +1,67 @@
 <template>
-  <aside :class="['sidebar', { open: open }]">
-    <div class="brand">
-      <p>Bookmark Manager</p>
-      <strong>Dashboard</strong>
-    </div>
+    <UCard
+        :ui="{
+            body: 'space-y-4',
+        }"
+        :class="[
+            'rounded-3xl border border-default bg-elevated/60 shadow-sm',
+            { 'ring-1 ring-inset ring-primary/20': open },
+        ]"
+    >
+        <div class="space-y-1">
+            <p class="text-xs uppercase tracking-[0.2em] text-muted">
+                Bookmark Manager
+            </p>
+            <strong class="block text-base text-default">Dashboard</strong>
+        </div>
 
-    <nav class="menu">
-      <NuxtLink to="/" class="menu-link" @click="$emit('navigate')">Overview</NuxtLink>
-      <NuxtLink to="/bookmarks" class="menu-link" @click="$emit('navigate')">Bookmarks</NuxtLink>
-      <NuxtLink to="/folders" class="menu-link" @click="$emit('navigate')">Folders</NuxtLink>
-      <NuxtLink to="/tags" class="menu-link" @click="$emit('navigate')">Tags</NuxtLink>
-    </nav>
-  </aside>
+        <div class="grid gap-2">
+            <UButton
+                to="/"
+                color="neutral"
+                variant="ghost"
+                class="w-full justify-start"
+                @click="$emit('navigate')"
+            >
+                Overview
+            </UButton>
+            <UButton
+                to="/bookmarks"
+                color="neutral"
+                variant="ghost"
+                class="w-full justify-start"
+                @click="$emit('navigate')"
+            >
+                Bookmarks
+            </UButton>
+            <UButton
+                to="/folders"
+                color="neutral"
+                variant="ghost"
+                class="w-full justify-start"
+                @click="$emit('navigate')"
+            >
+                Folders
+            </UButton>
+            <UButton
+                to="/tags"
+                color="neutral"
+                variant="ghost"
+                class="w-full justify-start"
+                @click="$emit('navigate')"
+            >
+                Tags
+            </UButton>
+        </div>
+    </UCard>
 </template>
 
-<script setup>
-defineProps({
-  open: {
-    type: Boolean,
-    default: false,
-  },
-})
+<script setup lang="ts">
+defineProps<{
+    open?: boolean;
+}>();
 
-defineEmits(["navigate"])
+defineEmits<{
+    navigate: [];
+}>();
 </script>

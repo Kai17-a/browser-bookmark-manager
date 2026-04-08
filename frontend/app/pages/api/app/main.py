@@ -56,6 +56,11 @@ async def sqlite_exception_handler(request, exc):
     return JSONResponse(status_code=500, content={"detail": "Database error occurred"})
 
 
+@app.get("/health", status_code=200)
+def health_check():
+    return {"status": "ok"}
+
+
 app.include_router(bookmarks_router)
 app.include_router(bookmark_tags_router)
 app.include_router(folders_router)

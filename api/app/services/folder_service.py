@@ -4,11 +4,18 @@ from api.app.database import get_db
 from api.app.models import FolderCreate, FolderResponse, FolderUpdate
 from api.app.repositories.folder_repo import FolderRepository
 
+MAX_FOLDERS = 20
+
 
 class FolderService:
     def create(self, data: FolderCreate) -> FolderResponse:
         with get_db() as conn:
             repo = FolderRepository(conn)
+            if len(repo.find_all()) >= MAX_FOLDERS:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Folder limit reached: maximum {MAX_FOLDERS} folders",
+                )
             row = repo.insert(data.name)
             return FolderResponse(**row)
 

@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
-from api.app.models import BookmarkCreate, BookmarkResponse, BookmarkUpdate
+from api.app.models import BookmarkCreate, BookmarkListResponse, BookmarkResponse, BookmarkUpdate
 from api.app.services.bookmark_service import BookmarkService
 
 router = APIRouter(prefix="/bookmarks", tags=["bookmarks"])
@@ -15,14 +15,16 @@ def create_bookmark(body: BookmarkCreate, service: BookmarkService = Depends(get
     return service.create(body)
 
 
-@router.get("", status_code=200, response_model=list[BookmarkResponse])
+@router.get("", status_code=200, response_model=BookmarkListResponse)
 def list_bookmarks(
     folder_id: int | None = None,
     tag_id: int | None = None,
     q: str | None = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
     service: BookmarkService = Depends(get_bookmark_service),
 ):
-    return service.list(folder_id=folder_id, tag_id=tag_id, q=q)
+    return service.list(folder_id=folder_id, tag_id=tag_id, q=q, page=page, per_page=per_page)
 
 
 @router.get("/{bookmark_id}", status_code=200, response_model=BookmarkResponse)

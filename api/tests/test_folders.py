@@ -85,3 +85,13 @@ def test_create_folder_without_name_returns_422(client):
 def test_delete_nonexistent_folder_returns_404(client):
     response = client.delete("/folders/99999")
     assert response.status_code == 404
+
+
+def test_create_folder_returns_400_when_limit_reached(client):
+    for i in range(20):
+        response = client.post("/folders", json={"name": f"Folder {i}"})
+        assert response.status_code == 201
+
+    response = client.post("/folders", json={"name": "Folder 20"})
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Folder limit reached: maximum 20 folders"

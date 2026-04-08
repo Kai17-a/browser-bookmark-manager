@@ -84,3 +84,13 @@ def test_create_duplicate_tag_returns_409(client):
 def test_delete_nonexistent_tag_returns_404(client):
     response = client.delete("/tags/99999")
     assert response.status_code == 404
+
+
+def test_create_tag_returns_400_when_limit_reached(client):
+    for i in range(20):
+        response = client.post("/tags", json={"name": f"tag-{i}"})
+        assert response.status_code == 201
+
+    response = client.post("/tags", json={"name": "tag-20"})
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Tag limit reached: maximum 20 tags"

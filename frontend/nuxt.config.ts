@@ -1,6 +1,13 @@
+const env =
+    (globalThis as {
+        process?: { env?: Record<string, string | undefined> };
+    }).process?.env ?? {};
+
 export default defineNuxtConfig({
-    compatibilityDate: "2025-04-07",
+    modules: ["@nuxt/ui"],
+
     devtools: { enabled: false },
+    css: ["~/assets/css/main.css"],
     ssr: false,
     app: {
         head: {
@@ -13,10 +20,13 @@ export default defineNuxtConfig({
             ],
         },
     },
+
+    compatibilityDate: "2025-04-07",
+
     runtimeConfig: {
         public: {
-            apiBase:
-                process.env.NUXT_PUBLIC_API_BASE || "http://localhost:8001",
+            apiBaseUrl:
+                env.NUXT_PUBLIC_API_BASE_URL || "http://localhost:8000",
         },
     },
 });

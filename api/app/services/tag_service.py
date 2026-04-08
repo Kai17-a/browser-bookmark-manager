@@ -6,11 +6,18 @@ from api.app.database import get_db
 from api.app.models import TagCreate, TagResponse, TagUpdate
 from api.app.repositories.tag_repo import TagRepository
 
+MAX_TAGS = 20
+
 
 class TagService:
     def create(self, data: TagCreate) -> TagResponse:
         with get_db() as conn:
             repo = TagRepository(conn)
+            if len(repo.find_all()) >= MAX_TAGS:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Tag limit reached: maximum {MAX_TAGS} tags",
+                )
             try:
                 row = repo.insert(data.name)
             except sqlite3.IntegrityError:

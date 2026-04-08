@@ -76,9 +76,34 @@ def test_list_bookmarks_returns_200(client):
     create_bookmark(client, url="https://b.com", title="B")
     resp = client.get("/bookmarks")
     assert resp.status_code == 200
-    titles = [b["title"] for b in resp.json()]
+    body = resp.json()
+    titles = [b["title"] for b in body["items"]]
     assert "A" in titles
     assert "B" in titles
+    assert body["page"] == 1
+    assert body["per_page"] == 20
+
+
+def test_list_bookmarks_paginates_by_default(client):
+    for i in range(21):
+        create_bookmark(client, url=f"https://{i}.example.com", title=f"B{i}")
+    resp = client.get("/bookmarks")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body["items"]) == 20
+    assert body["total"] == 21
+    assert body["total_pages"] == 2
+
+
+def test_list_bookmarks_accepts_page_and_per_page(client):
+    for i in range(5):
+        create_bookmark(client, url=f"https://{i}.example.com", title=f"B{i}")
+    resp = client.get("/bookmarks?page=2&per_page=2")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["page"] == 2
+    assert body["per_page"] == 2
+    assert len(body["items"]) == 2
 
 
 def test_get_bookmark_returns_200(client):

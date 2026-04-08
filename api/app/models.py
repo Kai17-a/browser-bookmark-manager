@@ -60,3 +60,11 @@ class BookmarkResponse(BaseModel):
     tags: list[TagResponse]
     created_at: datetime
     updated_at: datetime
+
+
+class BookmarkListResponse(BaseModel):
+    items: list[BookmarkResponse]
+    total: int
+    page: int
+    per_page: int
+    total_pages: int

@@ -6,20 +6,19 @@
                     <UDashboardSidebarCollapse />
                 </template>
 
-                <!-- API server connectivity status -->
                 <template #trailing>
                     <UBadge
-                        :label="message"
+                        :label="connectionLabel"
                         variant="subtle"
-                        :color="serverStatusColor"
+                        :color="connectionColor"
                     />
                 </template>
             </UDashboardNavbar>
         </template>
 
         <template #body>
-            <div class="dashboard-body">
-                <UPageGrid class="stats-grid">
+            <div class="space-y-6">
+                <UPageGrid class="grid gap-4 lg:grid-cols-3">
                     <UPageCard
                         v-for="stat in stats"
                         :key="stat.title"
@@ -33,7 +32,7 @@
                                 'p-2.5 rounded-full bg-primary/10 ring ring-inset ring-primary/25 flex-col',
                             title: 'font-normal text-muted text-xs uppercase tracking-[0.2em]',
                         }"
-                        class="metric-card"
+                        class="rounded-2xl"
                     >
                         <span class="text-3xl font-semibold text-highlighted">
                             {{ stat.value }}
@@ -46,40 +45,34 @@
                     description="Latest bookmarks at a glance"
                     :ui="{ body: 'space-y-4' }"
                 >
-                    <div v-if="bookmarks.items.length" class="bookmark-grid">
+                    <div v-if="bookmarks.items.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                         <article
                             v-for="bookmark in bookmarks.items.slice(0, 6)"
                             :key="bookmark.id"
-                            class="bookmark-tile"
+                            class="rounded-2xl border border-default bg-elevated/40 p-4"
                         >
-                            <div class="bookmark-tile__top">
-                                <div class="bookmark-tile__title-wrap">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
                                     <NuxtLink
                                         :to="bookmark.url"
                                         external
                                         target="_blank"
                                         rel="noreferrer"
-                                        class="bookmark-tile__title"
+                                        class="block break-words text-sm font-semibold text-default hover:underline"
                                     >
                                         {{ bookmark.title }}
                                     </NuxtLink>
-                                    <p class="bookmark-tile__url">
+                                    <p class="mt-1 break-all text-xs text-muted">
                                         {{ bookmark.url }}
                                     </p>
+                                    <p v-if="bookmark.description" class="mt-2 text-sm text-default">
+                                        {{ bookmark.description }}
+                                    </p>
                                 </div>
-                                <UBadge size="xs" variant="subtle">
-                                    #{{ bookmark.id }}
-                                </UBadge>
+                                <UBadge size="xs" variant="soft">#{{ bookmark.id }}</UBadge>
                             </div>
 
-                            <p
-                                v-if="bookmark.description"
-                                class="bookmark-tile__desc"
-                            >
-                                {{ bookmark.description }}
-                            </p>
-
-                            <div v-if="bookmark.tags.length" class="tag-row">
+                            <div v-if="bookmark.tags.length" class="mt-3 flex flex-wrap gap-2">
                                 <UBadge
                                     v-for="tag in bookmark.tags.slice(0, 4)"
                                     :key="tag.id"
@@ -89,35 +82,34 @@
                                 >
                                     {{ tag.name }}
                                 </UBadge>
-                                <span
-                                    v-if="bookmark.tags.length > 4"
-                                    class="tag-more"
-                                >
+                                <span v-if="bookmark.tags.length > 4" class="self-center text-xs text-muted">
                                     +{{ bookmark.tags.length - 4 }}
                                 </span>
                             </div>
                         </article>
                     </div>
 
-                    <div v-else class="empty-state">
+                    <div v-else class="rounded-2xl border border-dashed border-default p-6 text-sm text-muted">
                         <p>No bookmarks yet.</p>
                     </div>
 
-                    <div class="card-footer">
-                        <p class="card-meta">{{ bookmarks.total }} items</p>
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-xs uppercase tracking-[0.08em] text-muted">
+                            {{ bookmarks.total }} items
+                        </p>
                         <UButton to="/bookmarks" icon="i-lucide-arrow-right">
                             More
                         </UButton>
                     </div>
                 </UPageCard>
 
-                <UPageGrid class="collection-grid">
+                <UPageGrid class="grid gap-4 lg:grid-cols-2">
                     <UPageCard
                         title="Folders"
                         description="Saved folders"
                         :ui="{ body: 'space-y-3' }"
                     >
-                        <div class="pill-list">
+                        <div class="flex flex-wrap gap-2">
                             <UButton
                                 v-for="folder in folders.slice(0, 10)"
                                 :key="folder.id"
@@ -125,12 +117,12 @@
                                 color="neutral"
                                 variant="soft"
                                 size="xs"
-                                class="pill-button"
+                                class="rounded-full"
                                 :to="`/folders/${folder.id}`"
                             />
                         </div>
-                        <div class="card-footer">
-                            <p class="card-meta">
+                        <div class="flex items-center justify-between gap-3">
+                            <p class="text-xs uppercase tracking-[0.08em] text-muted">
                                 {{ folders.length }} folders
                             </p>
                             <UButton to="/folders" variant="ghost" size="sm">
@@ -144,7 +136,7 @@
                         description="Saved tags"
                         :ui="{ body: 'space-y-3' }"
                     >
-                        <div class="pill-list">
+                        <div class="flex flex-wrap gap-2">
                             <UButton
                                 v-for="tag in tags.slice(0, 10)"
                                 :key="tag.id"
@@ -152,11 +144,13 @@
                                 color="neutral"
                                 variant="soft"
                                 size="xs"
-                                class="pill-button"
+                                class="rounded-full"
                             />
                         </div>
-                        <div class="card-footer">
-                            <p class="card-meta">{{ tags.length }} tags</p>
+                        <div class="flex items-center justify-between gap-3">
+                            <p class="text-xs uppercase tracking-[0.08em] text-muted">
+                                {{ tags.length }} tags
+                            </p>
                             <UButton to="/tags" variant="ghost" size="sm">
                                 More
                             </UButton>
@@ -173,12 +167,12 @@ import type {
     BookmarkListResponse,
     FolderResponse,
     TagResponse,
-    Period,
-    Range,
 } from "~/types";
 
-const message = ref("Connecting API Server...");
-const serverStatusColor = ref("warning");
+const { request } = useBookmarkApi();
+const toast = useSingleToast();
+const connectionLabel = ref("Connecting...");
+const connectionColor = ref("warning");
 const bookmarks = ref<BookmarkListResponse>({
     items: [],
     total: 0,
@@ -189,21 +183,6 @@ const bookmarks = ref<BookmarkListResponse>({
 const folders = ref<FolderResponse[]>([]);
 const tags = ref<TagResponse[]>([]);
 
-await $fetch("http://localhost:8000/health")
-    .then(() => {
-        message.value = "Connect API Server.";
-        serverStatusColor.value = "success";
-    })
-    .catch(() => {
-        message.value = "Failed to connect API Server";
-        serverStatusColor.value = "error";
-    });
-
-const props = defineProps<{
-    period: Period;
-    range: Range;
-}>();
-
 const stats = ref([
     {
         title: "Total bookmarks",
@@ -213,159 +192,56 @@ const stats = ref([
     {
         title: "Folders",
         to: "/folders",
-        value: 40,
+        value: 0,
     },
     {
         title: "Tags",
         to: "/tags",
-        value: 3,
+        value: 0,
     },
 ]);
 
 onMounted(async () => {
     try {
-        const urls = [
-            "http://localhost:8000/bookmarks",
-            "http://localhost:8000/tags",
-            "http://localhost:8000/folders",
-        ];
-
-        const [bookmarksRes, tagsRes, foldersRes] = await Promise.all(
-            urls.map((url) => $fetch(url)),
-        );
+        const [healthRes, bookmarksRes, tagsRes, foldersRes] =
+            await Promise.all([
+                request("/health"),
+                request("/bookmarks"),
+                request("/tags"),
+                request("/folders"),
+            ]);
 
         bookmarks.value = bookmarksRes;
         tags.value = tagsRes;
         folders.value = foldersRes;
+        connectionLabel.value = "Connected";
+        connectionColor.value = "success";
+        toast.show({
+            title:
+                healthRes?.status === "ok"
+                    ? "API server is reachable."
+                    : "API server responded unexpectedly.",
+            color: healthRes?.status === "ok" ? "success" : "warning",
+            icon:
+                healthRes?.status === "ok"
+                    ? "i-lucide-check"
+                    : "i-lucide-circle-alert",
+        });
 
         stats.value[0].value = bookmarks.value.total;
-        stats.value[1].value = tags.value.length;
-        stats.value[2].value = folders.value.length;
+        stats.value[1].value = folders.value.length;
+        stats.value[2].value = tags.value.length;
     } catch (error) {
+        connectionLabel.value = "Serverに接続できない";
+        connectionColor.value = "error";
+        toast.show({
+            title: "Failed to load dashboard.",
+            description:
+                error instanceof Error ? error.message : "Unknown error",
+            color: "error",
+            icon: "i-lucide-circle-alert",
+        });
         console.error("Failed to load data:", error);
     }
 });
 </script>
-
-<style scoped>
-.dashboard-body {
-    display: grid;
-    gap: 24px;
-}
-
-.stats-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.metric-card {
-    border-radius: 18px;
-}
-
-.bookmark-grid {
-    display: grid;
-    gap: 14px;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.bookmark-tile {
-    border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.16);
-    background: linear-gradient(
-        180deg,
-        rgba(15, 23, 42, 0.92),
-        rgba(15, 23, 42, 0.74)
-    );
-    padding: 16px;
-    display: grid;
-    gap: 12px;
-}
-
-.bookmark-tile__top {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: start;
-}
-
-.bookmark-tile__title-wrap {
-    min-width: 0;
-}
-
-.bookmark-tile__title {
-    display: block;
-    font-size: 15px;
-    font-weight: 700;
-    line-height: 1.35;
-    color: #f8fafc;
-    text-decoration: none;
-    word-break: break-word;
-}
-
-.bookmark-tile__title:hover {
-    text-decoration: underline;
-}
-
-.bookmark-tile__url {
-    margin: 4px 0 0;
-    color: #94a3b8;
-    font-size: 12px;
-    word-break: break-all;
-}
-
-.bookmark-tile__desc {
-    margin: 0;
-    color: #cbd5e1;
-    font-size: 13px;
-    line-height: 1.6;
-}
-
-.tag-row,
-.pill-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.pill-button {
-    border-radius: 999px;
-    min-height: 28px;
-}
-
-.tag-more {
-    align-self: center;
-    color: #94a3b8;
-    font-size: 12px;
-}
-
-.card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin-top: 4px;
-}
-
-.card-meta {
-    margin: 0;
-    color: #94a3b8;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-
-.collection-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.empty-state {
-    padding: 24px 0;
-    color: #94a3b8;
-}
-
-@media (max-width: 1024px) {
-    .stats-grid,
-    .collection-grid {
-        grid-template-columns: 1fr;
-    }
-}
-</style>

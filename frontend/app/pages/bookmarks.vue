@@ -1,169 +1,242 @@
 <template>
-    <div class="page">
-        <header class="topbar">
-            <div>
-                <p class="eyebrow">Bookmarks</p>
-                <h1>Bookmark list</h1>
-            </div>
-            <div class="top-actions">
-                <button class="back action" @click="openCreateModal">
-                    Register bookmark
-                </button>
-            </div>
-        </header>
+    <UDashboardPanel id="bookmarks">
+        <template #header>
+            <UDashboardNavbar title="Bookmarks" :ui="{ right: 'gap-3' }">
+                <template #leading>
+                    <UDashboardSidebarCollapse />
+                </template>
 
-        <section class="panel">
-            <div class="filters">
-                <input v-model="searchQ" placeholder="Search title or URL" />
-                <select v-model="filterFolder">
-                    <option value="">All folders</option>
-                    <option
-                        v-for="folder in folders"
-                        :key="folder.id"
-                        :value="String(folder.id)"
+                <template #trailing>
+                    <UBadge
+                        :label="connectionLabel"
+                        variant="soft"
+                        :color="connectionColor"
+                    />
+                </template>
+
+                <template #right>
+                    <UButton
+                        label="Register"
+                        icon="i-lucide-plus"
+                        size="sm"
+                        @click="openCreateModal"
+                    />
+                </template>
+            </UDashboardNavbar>
+        </template>
+
+        <template #body>
+            <div class="space-y-6">
+                <UPageCard
+                    title="Search & filters"
+                    description="Filter bookmarks by keyword, folder, or tag"
+                    :ui="{ body: 'space-y-4' }"
+                >
+                    <form class="grid gap-3 lg:grid-cols-[2fr_1fr_1fr]">
+                        <UInput
+                            v-model="searchQ"
+                            placeholder="Search by title or URL"
+                        />
+                        <USelectMenu
+                            v-model="selectedFilterFolder"
+                            :items="filterFolderOptions"
+                            placeholder="All folders"
+                            value-attribute="value"
+                            option-attribute="label"
+                        />
+                        <USelectMenu
+                            v-model="selectedFilterTag"
+                            :items="filterTagOptions"
+                            placeholder="All tags"
+                            value-attribute="value"
+                            option-attribute="label"
+                        />
+                    </form>
+                </UPageCard>
+
+                <UPageCard
+                    title="Bookmark list"
+                    description="Latest bookmarks matching the current filters"
+                    :ui="{ body: 'space-y-4' }"
+                >
+                    <div
+                        class="flex flex-col gap-3 border-b border-default pb-4 md:flex-row md:items-center md:justify-between"
                     >
-                        {{ folder.name }}
-                    </option>
-                </select>
-                <select v-model="filterTag">
-                    <option value="">All tags</option>
-                    <option
-                        v-for="tag in tags"
-                        :key="tag.id"
-                        :value="String(tag.id)"
-                    >
-                        {{ tag.name }}
-                    </option>
-                </select>
-            </div>
-        </section>
-
-        <section class="panel">
-            <article v-for="bm in bookmarks" :key="bm.id">
-                <div class="row">
-                    <div class="row-main">
-                        <div class="title-line">
-                            <a :href="bm.url" target="_blank" rel="noreferrer">
-                                {{ bm.title }}
-                            </a>
-                            <span class="url">{{ bm.url }}</span>
-                        </div>
-                        <div class="meta">
-                            <span v-if="bm.folder_id" class="badge folder">
-                                Folder #{{ bm.folder_id }}
-                            </span>
-                            <span
-                                v-for="tag in bm.tags"
-                                :key="tag.id"
-                                class="badge tag"
-                            >
-                                {{ tag.name }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="actions">
-                        <button
-                            type="button"
-                            class="edit"
-                            @click="openEdit(bm)"
-                        >
-                            Edit
-                        </button>
-                        <button
-                            type="button"
-                            class="trash"
-                            aria-label="Delete bookmark"
-                            @click="removeBookmark(bm.id)"
-                        >
-                            <span class="material-symbols-outlined"
-                                >delete</span
-                            >
-                        </button>
-                    </div>
-                </div>
-            </article>
-        </section>
-
-        <div v-if="modalOpen" class="modal-backdrop" @click.self="closeModal">
-            <div class="modal">
-                <div class="modal-head">
-                    <div>
-                        <p class="eyebrow">
-                            {{ bookmarkForm.id ? "Edit" : "Create" }}
+                        <p class="text-xs uppercase tracking-[0.08em] text-muted">
+                            Page {{ bookmarkList.page }} of
+                            {{ pageCount }}
                         </p>
-                        <h2>
-                            {{
-                                bookmarkForm.id
-                                    ? "Edit bookmark"
-                                    : "Register bookmark"
-                            }}
-                        </h2>
+                        <div class="flex items-center gap-2">
+                            <UButton
+                                size="sm"
+                                variant="ghost"
+                                color="neutral"
+                                :disabled="page <= 1 || loading"
+                                @click="setPage(page - 1)"
+                            >
+                                Prev
+                            </UButton>
+                            <template v-for="(item, index) in paginationItems" :key="`${item.type}-${index}-${item.value ?? 'ellipsis'}`">
+                                <UButton
+                                    v-if="item.type === 'page'"
+                                    size="sm"
+                                    :color="item.value === page ? 'primary' : 'neutral'"
+                                    :variant="item.value === page ? 'solid' : 'ghost'"
+                                    :disabled="loading"
+                                    @click="setPage(item.value)"
+                                >
+                                    {{ item.label }}
+                                </UButton>
+                                <UButton
+                                    v-else
+                                    size="sm"
+                                    variant="ghost"
+                                    color="neutral"
+                                    disabled
+                                >
+                                    ...
+                                </UButton>
+                            </template>
+                            <UButton
+                                size="sm"
+                                variant="ghost"
+                                color="neutral"
+                                :disabled="page >= pageCount || loading"
+                                @click="setPage(page + 1)"
+                            >
+                                Next
+                            </UButton>
+                        </div>
                     </div>
-                    <button
-                        type="button"
-                        class="modal-close"
-                        @click="closeModal"
-                    >
-                        ×
-                    </button>
-                </div>
 
-                <form class="form" @submit.prevent="saveBookmark">
-                    <input
-                        v-model="bookmarkForm.url"
-                        placeholder="https://example.com"
-                        required
-                    />
-                    <input
-                        v-model="bookmarkForm.title"
-                        placeholder="Title"
-                        required
-                    />
-                    <textarea
-                        v-model="bookmarkForm.description"
-                        rows="3"
-                        placeholder="Description"
-                    />
-                    <select v-model="bookmarkForm.folder_id">
-                        <option value="" disabled>No folder</option>
-                        <option
-                            v-for="folder in folders"
-                            :key="folder.id"
-                            :value="String(folder.id)"
-                        >
-                            {{ folder.name }}
-                        </option>
-                    </select>
-                    <select v-model="attachForm.tag_id">
-                        <option value="" disabled>Select tag to attach</option>
-                        <option
-                            v-for="tag in tags"
-                            :key="tag.id"
-                            :value="String(tag.id)"
-                        >
-                            {{ tag.name }}
-                        </option>
-                    </select>
-                    <button>Save bookmark</button>
-                </form>
+                    <div v-if="bookmarkList.items.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        <BookmarkCard
+                            v-for="bookmark in bookmarkCards"
+                            :key="bookmark.id"
+                            :bookmark="bookmark"
+                            @edit="loadBookmarkForm"
+                            @remove="removeBookmark"
+                        />
+                    </div>
+
+                    <div
+                        v-else
+                        class="rounded-2xl border border-dashed border-default p-6 text-sm text-muted"
+                    >
+                        <p v-if="loading">Loading bookmarks...</p>
+                        <p v-else-if="loadError">
+                            {{ loadError }}
+                        </p>
+                        <p v-else>No bookmarks yet.</p>
+                    </div>
+
+                </UPageCard>
+
+                <UModal
+                    v-model:open="modalOpen"
+                    :title="bookmarkForm.id ? 'Edit bookmark' : 'Register bookmark'"
+                    :description="bookmarkForm.id ? 'Update the bookmark details.' : 'Create a bookmark and optionally attach a tag.'"
+                >
+                    <template #content="{ close }">
+                        <form class="space-y-4 p-6" @submit.prevent="saveBookmark">
+                            <UFormField label="URL" required>
+                                <UInput
+                                    v-model="bookmarkForm.url"
+                                    placeholder="https://example.com"
+                                />
+                            </UFormField>
+
+                            <UFormField label="Title" required>
+                                <UInput
+                                    v-model="bookmarkForm.title"
+                                    placeholder="Bookmark title"
+                                />
+                            </UFormField>
+
+                            <UFormField label="Description">
+                                <UTextarea
+                                    v-model="bookmarkForm.description"
+                                    placeholder="Optional description"
+                                    :rows="4"
+                                />
+                            </UFormField>
+
+                            <UFormField label="Folder">
+                            <USelectMenu
+                                    v-model="selectedBookmarkFolder"
+                                    :items="bookmarkFolderOptions"
+                                    placeholder="No folder"
+                                    value-attribute="value"
+                                    option-attribute="label"
+                                />
+                            </UFormField>
+
+                            <UFormField
+                                v-if="!bookmarkForm.id"
+                                label="Tag"
+                                description="Attach one tag to the new bookmark."
+                            >
+                                <USelectMenu
+                                    v-model="selectedAttachTag"
+                                    :items="bookmarkTagOptions"
+                                    placeholder="No tag"
+                                    value-attribute="value"
+                                    option-attribute="label"
+                                />
+                            </UFormField>
+
+                            <div class="flex justify-end gap-3">
+                                <UButton
+                                    color="neutral"
+                                    variant="ghost"
+                                    @click="close"
+                                >
+                                    Cancel
+                                </UButton>
+                                <UButton type="submit" :loading="saving">
+                                    Save bookmark
+                                </UButton>
+                            </div>
+                        </form>
+                    </template>
+                </UModal>
             </div>
-        </div>
-    </div>
+        </template>
+    </UDashboardPanel>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type {
+    BookmarkListResponse,
+    BookmarkResponse,
+    FolderResponse,
+    TagResponse,
+} from "~/types";
+
 const route = useRoute();
 const router = useRouter();
 const { request } = useBookmarkApi();
+const toast = useSingleToast();
 
-const message = ref("Ready.");
+const connectionLabel = ref("Connecting...");
+const connectionColor = ref<"warning" | "success" | "error">("warning");
+const loading = ref(false);
+const saving = ref(false);
+const loadError = ref("");
 const modalOpen = ref(false);
-const bookmarks = ref([]);
-const folders = ref([]);
-const tags = ref([]);
+const bookmarkList = ref<BookmarkListResponse>({
+    items: [],
+    total: 0,
+    page: 1,
+    per_page: 20,
+    total_pages: 0,
+});
+const folders = ref<FolderResponse[]>([]);
+const tags = ref<TagResponse[]>([]);
 const searchQ = ref(String(route.query.q || ""));
 const filterFolder = ref(String(route.query.folder_id || ""));
 const filterTag = ref(String(route.query.tag_id || ""));
+const page = ref(Number(route.query.page || 1) || 1);
 const bookmarkForm = reactive({
     id: "",
     url: "",
@@ -171,26 +244,142 @@ const bookmarkForm = reactive({
     description: "",
     folder_id: "",
 });
-const attachForm = reactive({ bookmark_id: "", tag_id: "" });
+const attachForm = reactive({ tag_id: "" });
+
+const filterFolderOptions = computed(() => [
+    { label: "All folders", value: "" },
+    ...folders.value.map((folder) => ({
+        label: folder.name,
+        value: String(folder.id),
+    })),
+]);
+
+const filterTagOptions = computed(() => [
+    { label: "All tags", value: "" },
+    ...tags.value.map((tag) => ({
+        label: tag.name,
+        value: String(tag.id),
+    })),
+]);
+
+const bookmarkFolderOptions = computed(() => [
+    { label: "No folder", value: "" },
+    ...folders.value.map((folder) => ({
+        label: folder.name,
+        value: String(folder.id),
+    })),
+]);
+
+const bookmarkTagOptions = computed(() => [
+    { label: "No tag", value: "" },
+    ...tags.value.map((tag) => ({
+        label: tag.name,
+        value: String(tag.id),
+    })),
+]);
+
+const normalizeSelectValue = (value: unknown) => {
+    if (typeof value === "string" || typeof value === "number") {
+        return String(value);
+    }
+
+    if (value && typeof value === "object" && "value" in value) {
+        const raw = (value as { value?: unknown }).value;
+        return raw == null ? "" : String(raw);
+    }
+
+    return "";
+};
+
+const selectedFilterFolder = computed({
+    get: () => filterFolder.value,
+    set: (value) => {
+        filterFolder.value = normalizeSelectValue(value);
+    },
+});
+
+const selectedFilterTag = computed({
+    get: () => filterTag.value,
+    set: (value) => {
+        filterTag.value = normalizeSelectValue(value);
+    },
+});
+
+const selectedBookmarkFolder = computed({
+    get: () => bookmarkForm.folder_id,
+    set: (value) => {
+        bookmarkForm.folder_id = normalizeSelectValue(value);
+    },
+});
+
+const selectedAttachTag = computed({
+    get: () => attachForm.tag_id,
+    set: (value) => {
+        attachForm.tag_id = normalizeSelectValue(value);
+    },
+});
+
+const bookmarkCards = computed(() =>
+    bookmarkList.value.items.map((bookmark) => ({
+        ...bookmark,
+        folder_name:
+            folders.value.find((folder) => folder.id === bookmark.folder_id)
+                ?.name || null,
+    })),
+);
+
+const pageCount = computed(() =>
+    Math.max(
+        Math.ceil(bookmarkList.value.total / Math.max(bookmarkList.value.per_page, 1)),
+        1,
+    ),
+);
+
+const paginationItems = computed(() => {
+    const total = pageCount.value;
+    const current = Math.min(Math.max(page.value, 1), total);
+    const items: Array<
+        | { type: "page"; value: number; label: string }
+        | { type: "ellipsis" }
+    > = [];
+
+    if (total <= 7) {
+        for (let number = 1; number <= total; number += 1) {
+            items.push({ type: "page", value: number, label: String(number) });
+        }
+        return items;
+    }
+
+    items.push({ type: "page", value: 1, label: "1" });
+
+    if (current > 3) {
+        items.push({ type: "ellipsis" });
+    }
+
+    const middleStart = Math.max(2, current - 1);
+    const middleEnd = Math.min(total - 1, current + 1);
+
+    for (let number = middleStart; number <= middleEnd; number += 1) {
+        items.push({ type: "page", value: number, label: String(number) });
+    }
+
+    if (current < total - 2) {
+        items.push({ type: "ellipsis" });
+    }
+
+    items.push({ type: "page", value: total, label: String(total) });
+
+    return items;
+});
 
 const queryPath = computed(() => {
     const params = new URLSearchParams();
     if (filterFolder.value) params.set("folder_id", filterFolder.value);
     if (filterTag.value) params.set("tag_id", filterTag.value);
     if (searchQ.value.trim()) params.set("q", searchQ.value.trim());
+    params.set("page", String(page.value));
     return params.toString() ? `/bookmarks?${params}` : "/bookmarks";
 });
-
-const loadData = async () => {
-    const [bm, fs, ts] = await Promise.all([
-        request(queryPath.value),
-        request("/folders"),
-        request("/tags"),
-    ]);
-    bookmarks.value = bm;
-    folders.value = fs;
-    tags.value = ts;
-};
 
 const syncQuery = () => {
     router.replace({
@@ -199,16 +388,48 @@ const syncQuery = () => {
                 q: searchQ.value || undefined,
                 folder_id: filterFolder.value || undefined,
                 tag_id: filterTag.value || undefined,
-            }).filter(([, v]) => v !== undefined),
+                page: page.value > 1 ? String(page.value) : undefined,
+            }).filter(([, value]) => value !== undefined),
         ),
     });
 };
 
-const refreshAll = async () => {
+const loadData = async () => {
+    loading.value = true;
+    loadError.value = "";
+    bookmarkList.value.items = [];
     try {
-        await loadData();
+        const [bookmarkRes, folderRes, tagRes] = await Promise.all([
+            request(queryPath.value),
+            request("/folders"),
+            request("/tags"),
+        ]);
+
+        const result = bookmarkRes as BookmarkListResponse;
+        bookmarkList.value = result;
+        page.value = result.page || 1;
+        folders.value = folderRes;
+        tags.value = tagRes;
+        connectionLabel.value = "Connected";
+        connectionColor.value = "success";
+        toast.show({
+            title: "Bookmarks loaded.",
+            color: "success",
+            icon: "i-lucide-check",
+        });
     } catch (err) {
-        message.value = err.message;
+        loadError.value =
+            err instanceof Error ? err.message : "Failed to load bookmarks.";
+        connectionLabel.value = "Serverに接続できない";
+        connectionColor.value = "error";
+        toast.show({
+            title: "Failed to load bookmarks.",
+            description: loadError.value,
+            color: "error",
+            icon: "i-lucide-circle-alert",
+        });
+    } finally {
+        loading.value = false;
     }
 };
 
@@ -220,7 +441,7 @@ const resetBookmarkForm = () => {
     bookmarkForm.folder_id = "";
 };
 
-const loadBookmarkForm = (bookmark) => {
+const loadBookmarkForm = (bookmark: BookmarkResponse) => {
     bookmarkForm.id = String(bookmark.id);
     bookmarkForm.url = bookmark.url;
     bookmarkForm.title = bookmark.title;
@@ -228,6 +449,7 @@ const loadBookmarkForm = (bookmark) => {
     bookmarkForm.folder_id = bookmark.folder_id
         ? String(bookmark.folder_id)
         : "";
+    attachForm.tag_id = "";
     modalOpen.value = true;
 };
 
@@ -241,6 +463,16 @@ const closeModal = () => {
     modalOpen.value = false;
 };
 
+const setPage = async (nextPage: number) => {
+    const next = Math.min(Math.max(nextPage, 1), pageCount.value);
+    if (next === page.value) return;
+    page.value = next;
+};
+
+const refreshAll = async () => {
+    await loadData();
+};
+
 const saveBookmark = async () => {
     const payload = {
         url: bookmarkForm.url,
@@ -250,17 +482,20 @@ const saveBookmark = async () => {
             ? Number(bookmarkForm.folder_id)
             : null,
     };
+
+    saving.value = true;
     try {
-        if (bookmarkForm.id)
+        if (bookmarkForm.id) {
             await request(`/bookmarks/${bookmarkForm.id}`, {
                 method: "PATCH",
                 body: JSON.stringify(payload),
             });
-        else {
-            const created = await request("/bookmarks", {
+        } else {
+            const created = (await request("/bookmarks", {
                 method: "POST",
                 body: JSON.stringify(payload),
-            });
+            })) as BookmarkResponse;
+
             if (created?.id && attachForm.tag_id) {
                 await request(`/bookmarks/${created.id}/tags`, {
                     method: "POST",
@@ -268,299 +503,58 @@ const saveBookmark = async () => {
                 });
             }
         }
+
         resetBookmarkForm();
         attachForm.tag_id = "";
         modalOpen.value = false;
         await refreshAll();
     } catch (err) {
-        message.value = err.message;
+        toast.show({
+            title: "Failed to save bookmark.",
+            description: err instanceof Error ? err.message : undefined,
+            color: "error",
+            icon: "i-lucide-circle-alert",
+        });
+    } finally {
+        saving.value = false;
     }
 };
 
-const removeBookmark = async (id) => {
+const removeBookmark = async (id: number) => {
     try {
         await request(`/bookmarks/${id}`, { method: "DELETE" });
         await refreshAll();
     } catch (err) {
-        message.value = err.message;
+        toast.show({
+            title: "Failed to delete bookmark.",
+            description: err instanceof Error ? err.message : undefined,
+            color: "error",
+            icon: "i-lucide-circle-alert",
+        });
     }
 };
 
 onMounted(refreshAll);
-watch([searchQ, filterFolder, filterTag], () => {
-    if (process.client) syncQuery();
-});
-</script>
 
-<style scoped>
-.page {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 28px 20px 44px;
-    color: #e2e8f0;
-}
-.topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: end;
-    gap: 12px;
-    margin-bottom: 18px;
-}
-.top-actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-.eyebrow {
-    margin: 0 0 10px;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    color: #7dd3fc;
-    font-size: 12px;
-}
-h1,
-h2,
-p {
-    margin-top: 0;
-}
-.back,
-.panel button {
-    border-radius: 14px;
-    background: #7dd3fc;
-    color: #08111f;
-    font-weight: 700;
-    padding: 12px 14px;
-    text-decoration: none;
-    display: inline-block;
-    border: 0;
-}
-.panel {
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    background: rgba(2, 6, 23, 0.72);
-    backdrop-filter: blur(18px);
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
-    border-radius: 28px;
-    padding: 20px;
-}
-.panel + .panel {
-    margin-top: 16px;
-}
-.filters,
-.form,
-.list,
-.tags,
-.actions {
-    display: grid;
-    gap: 12px;
-}
-.filters {
-    grid-template-columns: 1.5fr 1fr 1fr;
-    margin-bottom: 14px;
-}
-.filters input,
-.filters select,
-.form input,
-.form textarea,
-.form select {
-    border-radius: 14px;
-    border: 1px solid #334155;
-    background: #0f172ae6;
-    color: #e2e8f0;
-    padding: 12px 14px;
-}
-.message {
-    margin-top: 20px;
-}
-.action {
-    cursor: pointer;
-}
-.modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(2, 6, 23, 0.72);
-    display: grid;
-    place-items: center;
-    z-index: 60;
-    padding: 20px;
-}
-.modal {
-    width: min(720px, 100%);
-    border-radius: 28px;
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    background: rgba(2, 6, 23, 0.96);
-    backdrop-filter: blur(18px);
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
-    padding: 20px;
-}
-.modal-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 16px;
-}
-.modal-close {
-    width: 40px;
-    height: 40px;
-    border-radius: 999px;
-    border: 1px solid rgba(51, 65, 85, 1);
-    background: rgba(15, 23, 42, 0.95);
-    color: #e2e8f0;
-    font-size: 24px;
-    line-height: 1;
-    padding: 0;
-}
-.list {
-    margin-top: 16px;
-}
-.list article + article {
-    margin-top: 12px;
-}
-.item,
-.row,
-.accordion {
-    border: 1px solid #334155;
-    border-radius: 22px;
-    background: rgba(15, 23, 42, 0.5);
-    padding: 14px;
-}
-.row-main a {
-    color: #ffffff;
-    font-weight: 700;
-    text-decoration: none;
-    word-break: break-word;
-}
-.title-line {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-    flex-wrap: wrap;
-}
-.url {
-    color: #94a3b8;
-    font-size: 12px;
-    word-break: break-all;
-}
-.row {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: center;
-}
-.meta {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-}
-.row {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: flex-start;
-}
-.row-main {
-    min-width: 0;
-}
-.tags {
-    display: flex;
-    flex-wrap: wrap;
-}
-.badge {
-    border-radius: 999px;
-    border: 1px solid rgba(125, 211, 252, 0.25);
-    background: rgba(125, 211, 252, 0.08);
-    color: #bae6fd;
-    padding: 4px 10px;
-    font-size: 12px;
-}
-.folder {
-    border-color: rgba(56, 189, 248, 0.3);
-    background: rgba(56, 189, 248, 0.12);
-    color: #cffafe;
-}
-.tag {
-    border-color: rgba(251, 191, 36, 0.28);
-    background: rgba(251, 191, 36, 0.12);
-    color: #fde68a;
-}
-.actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-shrink: 0;
-}
-button {
-    border: 1px solid rgba(51, 65, 85, 1);
-    background: transparent;
-    color: #e2e8f0;
-    border-radius: 10px;
-    padding: 8px 10px;
-    font-size: 12px;
-}
-.edit {
-    background: transparent;
-    border: 1px solid #334155;
-    color: #e2e8f0;
-    padding: 8px 12px;
-}
-.danger {
-    border-color: rgba(244, 63, 94, 0.35);
-    color: #fecdd3;
-}
-.trash {
-    display: grid;
-    place-items: center;
-    padding: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: 999px;
-    background: transparent;
-    color: #fecaca;
-    border: 1px solid rgba(51, 65, 85, 1);
-}
-.material-symbols-outlined {
-    font-size: 18px;
-    line-height: 1;
-    font-variation-settings:
-        "FILL" 0,
-        "wght" 400,
-        "GRAD" 0,
-        "opsz" 24;
-}
-.actions .edit {
-    border-color: rgba(51, 65, 85, 1);
-}
-.actions .trash {
-    color: #fecaca;
-}
-@media (max-width: 1024px) {
-    .filters {
-        grid-template-columns: 1fr;
-    }
-    .topbar {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-    .top-actions {
-        width: 100%;
-        justify-content: stretch;
-    }
-    .top-actions .back {
-        flex: 1;
-    }
-    .summary,
-    .row {
-        flex-direction: column;
-    }
-    .actions {
-        align-self: flex-end;
-        flex-direction: row;
-    }
-    .summary-meta {
-        justify-content: flex-start;
-    }
-}
-</style>
+watch([searchQ, filterFolder, filterTag], async () => {
+    page.value = 1;
+    syncQuery();
+    await loadData();
+});
+
+watch(page, async (next, prev) => {
+    if (next === prev) return;
+    await loadData();
+    syncQuery();
+});
+
+watch(
+    () => route.query.page,
+    async (next) => {
+        const nextPage = Number(next || 1) || 1;
+        if (nextPage !== page.value) {
+            page.value = nextPage;
+        }
+    },
+);
+</script>

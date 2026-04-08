@@ -15,7 +15,39 @@ class BookmarkRepository:
         ).fetchone()
         return dict(row)
 
-    def find_all(self, folder_id: int | None, tag_id: int | None, q: str | None) -> list[dict]:
+    def count_all(self, folder_id: int | None, tag_id: int | None, q: str | None) -> int:
+        query = "SELECT COUNT(DISTINCT b.id) AS total FROM bookmarks b"
+        params: list = []
+
+        if tag_id is not None:
+            query += " INNER JOIN bookmark_tags bt ON b.id = bt.bookmark_id"
+
+        conditions: list[str] = []
+        if folder_id is not None:
+            conditions.append("b.folder_id = ?")
+            params.append(folder_id)
+        if tag_id is not None:
+            conditions.append("bt.tag_id = ?")
+            params.append(tag_id)
+        if q is not None:
+            conditions.append("(b.title LIKE ? OR b.url LIKE ?)")
+            like = f"%{q}%"
+            params.extend([like, like])
+
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+
+        row = self.conn.execute(query, params).fetchone()
+        return int(row["total"]) if row else 0
+
+    def find_all(
+        self,
+        folder_id: int | None,
+        tag_id: int | None,
+        q: str | None,
+        limit: int,
+        offset: int,
+    ) -> list[dict]:
         query = "SELECT DISTINCT b.* FROM bookmarks b"
         params: list = []
 
@@ -36,6 +68,9 @@ class BookmarkRepository:
 
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
+
+        query += " ORDER BY b.created_at DESC, b.id DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
 
         rows = self.conn.execute(query, params).fetchall()
         return [dict(row) for row in rows]

@@ -84,7 +84,12 @@ class CompatTestClient:
                 folder_id = int(query["folder_id"]) if "folder_id" in query else None
                 tag_id = int(query["tag_id"]) if "tag_id" in query else None
                 q = query.get("q")
-                return self._ok(self._serialize(BookmarkService().list(folder_id, tag_id, q)), 200)
+                page = int(query.get("page", "1"))
+                per_page = int(query.get("per_page", "20"))
+                return self._ok(
+                    BookmarkService().list(folder_id, tag_id, q, page=page, per_page=per_page).model_dump(),
+                    200,
+                )
             if method == "GET" and path.startswith("/bookmarks/") and "/tags" not in path:
                 payload = BookmarkService().get(int(path.rsplit("/", 1)[1])).model_dump()
                 return self._ok(payload, 200)
