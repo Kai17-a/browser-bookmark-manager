@@ -3,7 +3,57 @@ const pageUrlInput = document.getElementById("page-url");
 const apiServerUrlInput = document.getElementById("api-server-url");
 const apiStatusMessage = document.getElementById("api-status-message");
 const apiStatusDot = document.getElementById("api-status-dot");
+const apiHealthcheckButton = document.getElementById("api-healthcheck-button");
+const saveStatusMessage = document.getElementById("save-status-message");
 const cancelButton = document.getElementById("cancel-button");
+const fieldSelects = document.querySelectorAll(".split select");
+
+const API_SERVER_URL_STORAGE_KEY = "apiServerUrl";
+let hasCreatedBookmark = false;
+
+function setApiStatus(state, message) {
+    apiStatusDot.classList.remove("dot--pending", "dot--success", "dot--error");
+    apiStatusDot.classList.add(`dot--${state}`);
+    apiStatusMessage.textContent = message;
+}
+
+function setSaveStatus(state, message) {
+    saveStatusMessage.classList.remove(
+        "save-status--success",
+        "save-status--error",
+    );
+
+    if (state) {
+        saveStatusMessage.classList.add(`save-status--${state}`);
+    }
+
+    saveStatusMessage.textContent = message;
+}
+
+async function readErrorMessage(response) {
+    const contentType = response.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+        try {
+            const data = await response.json();
+            return (
+                data?.detail ||
+                data?.message ||
+                data?.error ||
+                JSON.stringify(data)
+            );
+        } catch {
+            return null;
+        }
+    }
+
+    try {
+        const text = await response.text();
+        return text.trim() || null;
+    } catch {
+        return null;
+    }
+}
 
 function setPageDetails(tab) {
     if (!tab) {
@@ -21,11 +71,10 @@ function setPageDetails(tab) {
 
 async function checkApiHealth() {
     const baseUrl = apiServerUrlInput.value.trim();
+    setApiStatus("pending", "Connecting to API...");
 
     if (!baseUrl) {
-        apiStatusDot.classList.remove("dot--success");
-        apiStatusDot.classList.add("dot--error");
-        apiStatusMessage.textContent = "Failed to Connect to API";
+        setApiStatus("error", "Failed to Connect to API");
         return;
     }
 
@@ -36,13 +85,103 @@ async function checkApiHealth() {
             throw new Error(`Health check failed with status ${response.status}`);
         }
 
-        apiStatusDot.classList.remove("dot--error");
-        apiStatusDot.classList.add("dot--success");
+        setApiStatus("success", "Connected to API");
+        if (!hasCreatedBookmark) {
+            hasCreatedBookmark = true;
+            await createBookmark(baseUrl);
+        }
     } catch {
-        apiStatusDot.classList.remove("dot--success");
-        apiStatusDot.classList.add("dot--error");
-        apiStatusMessage.textContent = "Failed to Connect to API";
+        setApiStatus("error", "Failed to Connect to API");
     }
+}
+
+async function createBookmark(baseUrl) {
+    const payload = {
+        url: pageUrlInput.value.trim(),
+        title: pageTitleInput.value.trim(),
+    };
+
+    if (!payload.url || !payload.title) {
+        setSaveStatus("error", "Missing title or URL");
+        return;
+    }
+
+    try {
+        const response = await fetch(new URL("/bookmarks", baseUrl), {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorMessage = await readErrorMessage(response);
+            throw new Error(
+                errorMessage || `Create bookmark failed with status ${response.status}`,
+            );
+        }
+
+        setSaveStatus("success", "Saved");
+        await loadFolderAndTagOptions(baseUrl);
+    } catch (error) {
+        setSaveStatus(
+            "error",
+            error instanceof Error && error.message
+                ? error.message
+                : "Save failed",
+        );
+    }
+}
+
+function setSelectOptions(select, placeholderText, items, getLabel) {
+    select.replaceChildren();
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = placeholderText;
+    select.appendChild(placeholder);
+
+    for (const item of items) {
+        const option = document.createElement("option");
+        option.value = String(item.id);
+        option.textContent = getLabel(item);
+        select.appendChild(option);
+    }
+}
+
+async function loadFolderAndTagOptions(baseUrl) {
+    try {
+        const [foldersResponse, tagsResponse] = await Promise.all([
+            fetch(new URL("/folders", baseUrl)),
+            fetch(new URL("/tags", baseUrl)),
+        ]);
+
+        if (!foldersResponse.ok || !tagsResponse.ok) {
+            throw new Error("Failed to load folders or tags");
+        }
+
+        const [folders, tags] = await Promise.all([
+            foldersResponse.json(),
+            tagsResponse.json(),
+        ]);
+
+        const [folderSelectEl, tagSelectEl] = fieldSelects;
+        if (folderSelectEl) {
+            setSelectOptions(folderSelectEl, "-- Select Folder --", folders, (item) => item.name);
+        }
+        if (tagSelectEl) {
+            setSelectOptions(tagSelectEl, "-- Select Tag --", tags, (item) => item.name);
+        }
+    } catch {
+        // Leave the existing empty selects in place if loading fails.
+    }
+}
+
+function saveApiServerUrl() {
+    chrome.storage.local.set({
+        [API_SERVER_URL_STORAGE_KEY]: apiServerUrlInput.value.trim(),
+    });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -50,9 +189,22 @@ document.addEventListener("DOMContentLoaded", () => {
         window.close();
     });
 
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        setPageDetails(tabs[0]);
+    apiHealthcheckButton.addEventListener("click", () => {
+        checkApiHealth();
     });
 
-    checkApiHealth();
+    apiServerUrlInput.addEventListener("input", saveApiServerUrl);
+
+    chrome.storage.local.get([API_SERVER_URL_STORAGE_KEY], (result) => {
+        if (result[API_SERVER_URL_STORAGE_KEY]) {
+            apiServerUrlInput.value = result[API_SERVER_URL_STORAGE_KEY];
+        }
+
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            setPageDetails(tabs[0]);
+        });
+
+        setSaveStatus("", "");
+        checkApiHealth();
+    });
 });

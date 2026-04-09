@@ -144,6 +144,11 @@ select option {
     box-shadow: 0 0 0 4px rgba(0, 220, 130, 0.12);
 }
 
+.dot--pending {
+    background: #facc15;
+    box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.16);
+}
+
 .dot--error {
     background: #ef4444;
     box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
@@ -154,11 +159,28 @@ select option {
     gap: 8px;
 }
 
+.save-status {
+    margin-right: auto;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #94a3b8;
+    min-height: 1em;
+}
+
+.save-status--success {
+    color: #00dc82;
+}
+
+.save-status--error {
+    color: #ef4444;
+}
+
 .button {
     border: 0;
     border-radius: 14px;
     padding: 8px 12px;
-    font-weight: 800;
+    font-weight: 600;
     cursor: pointer;
 }
 

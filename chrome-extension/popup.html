@@ -4,6 +4,7 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Bookmark Manager</title>
+        <link rel="icon" href="icon.svg" type="image/svg+xml" />
         <link rel="stylesheet" href="popup.css" />
     </head>
     <body>
@@ -25,9 +26,14 @@
                             <input
                                 id="api-server-url"
                                 type="url"
-                                placeholder="http://localhost:8080"
+                                value="http://localhost:8000"
+                                placeholder="http://localhost:8000"
                             />
-                            <button class="button button--ghost" type="button">
+                            <button
+                                id="api-healthcheck-button"
+                                class="button button--ghost"
+                                type="button"
+                            >
                                 Test
                             </button>
                         </div>
@@ -35,9 +41,11 @@
                     <div class="hint">
                         <span
                             id="api-status-dot"
-                            class="dot dot--success"
+                            class="dot dot--pending"
                         ></span>
-                        <span id="api-status-message">Connected to API</span>
+                        <span id="api-status-message"
+                            >Connecting to API...</span
+                        >
                     </div>
                 </section>
 
@@ -73,20 +81,16 @@
                             <label class="field">
                                 <span>Folder</span>
                                 <select>
-                                    <option>Choose folder</option>
-                                    <option>Reading</option>
-                                    <option>Work</option>
-                                    <option>Research</option>
+                                    <option value="">
+                                        -- Select Folder --
+                                    </option>
                                 </select>
                             </label>
 
                             <label class="field">
                                 <span>Tag</span>
                                 <select>
-                                    <option>Choose tag</option>
-                                    <option>Important</option>
-                                    <option>Later</option>
-                                    <option>Reference</option>
+                                    <option value="">-- Select Tag --</option>
                                 </select>
                             </label>
                         </div>
@@ -94,6 +98,7 @@
                 </section>
 
                 <footer class="actions">
+                    <span id="save-status-message" class="save-status"></span>
                     <button
                         id="cancel-button"
                         class="button button--ghost"
