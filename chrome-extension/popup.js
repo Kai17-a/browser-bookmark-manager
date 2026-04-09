@@ -5,10 +5,13 @@ const apiStatusMessage = document.getElementById("api-status-message");
 const apiStatusDot = document.getElementById("api-status-dot");
 const apiHealthcheckButton = document.getElementById("api-healthcheck-button");
 const saveStatusMessage = document.getElementById("save-status-message");
+const saveButton = document.getElementById("save-button");
 const cancelButton = document.getElementById("cancel-button");
 
 const API_SERVER_URL_STORAGE_KEY = "apiServerUrl";
-let hasCreatedBookmark = false;
+let apiHealthyOnLoad = false;
+let savedBookmarkId = null;
+let initialBookmarkCreated = false;
 
 function setApiStatus(state, message) {
     apiStatusDot.classList.remove("dot--pending", "dot--success", "dot--error");
@@ -68,13 +71,49 @@ function setPageDetails(tab) {
     }
 }
 
+function buildBookmarkPayload() {
+    return {
+        url: pageUrlInput.value.trim(),
+        title: pageTitleInput.value.trim(),
+    };
+}
+
+async function createBookmark(baseUrl) {
+    const payload = buildBookmarkPayload();
+
+    if (!payload.url || !payload.title) {
+        setSaveStatus("error", "Missing title or URL");
+        return null;
+    }
+
+    const response = await fetch(new URL("/bookmarks", baseUrl), {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const errorMessage = await readErrorMessage(response);
+        throw new Error(
+            errorMessage || `Create bookmark failed with status ${response.status}`,
+        );
+    }
+
+    const data = await response.json();
+    savedBookmarkId = data.id ?? null;
+    return data;
+}
+
 async function checkApiHealth() {
     const baseUrl = apiServerUrlInput.value.trim();
     setApiStatus("pending", "Connecting to API...");
 
     if (!baseUrl) {
+        apiHealthyOnLoad = false;
         setApiStatus("error", "Failed to Connect to API");
-        return;
+        return false;
     }
 
     try {
@@ -84,50 +123,75 @@ async function checkApiHealth() {
             throw new Error(`Health check failed with status ${response.status}`);
         }
 
+        apiHealthyOnLoad = true;
         setApiStatus("success", "Connected to API");
-        if (!hasCreatedBookmark) {
-            hasCreatedBookmark = true;
-            await createBookmark(baseUrl);
+        if (!initialBookmarkCreated) {
+            initialBookmarkCreated = true;
+            try {
+                await createBookmark(baseUrl);
+                setSaveStatus("success", "Saved");
+            } catch (error) {
+                setSaveStatus(
+                    "error",
+                    error instanceof Error && error.message
+                        ? error.message
+                        : "Save failed",
+                );
+            }
         }
+        return true;
     } catch {
+        apiHealthyOnLoad = false;
         setApiStatus("error", "Failed to Connect to API");
+        return false;
     }
 }
 
-async function createBookmark(baseUrl) {
-    const payload = {
-        url: pageUrlInput.value.trim(),
-        title: pageTitleInput.value.trim(),
-    };
+async function patchBookmark(baseUrl, bookmarkId) {
+    const payload = buildBookmarkPayload();
 
     if (!payload.url || !payload.title) {
         setSaveStatus("error", "Missing title or URL");
         return;
     }
 
-    try {
-        const response = await fetch(new URL("/bookmarks", baseUrl), {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-        });
+    const response = await fetch(new URL(`/bookmarks/${bookmarkId}`, baseUrl), {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
 
-        if (!response.ok) {
-            const errorMessage = await readErrorMessage(response);
-            throw new Error(
-                errorMessage || `Create bookmark failed with status ${response.status}`,
-            );
+    if (!response.ok) {
+        const errorMessage = await readErrorMessage(response);
+        throw new Error(errorMessage || `Patch bookmark failed with status ${response.status}`);
+    }
+
+    setSaveStatus("success", "Saved");
+}
+
+async function handleSaveClick() {
+    setSaveStatus("", "");
+
+    try {
+        const baseUrl = apiServerUrlInput.value.trim();
+
+        if (apiHealthyOnLoad && savedBookmarkId) {
+            await patchBookmark(baseUrl, savedBookmarkId);
+            savedBookmarkId = null;
+        } else {
+            const created = await createBookmark(baseUrl);
+            if (created?.id != null) {
+                savedBookmarkId = null;
+            }
         }
 
-        setSaveStatus("success", "Saved");
+        window.close();
     } catch (error) {
         setSaveStatus(
             "error",
-            error instanceof Error && error.message
-                ? error.message
-                : "Save failed",
+            error instanceof Error && error.message ? error.message : "Save failed",
         );
     }
 }
@@ -145,6 +209,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     apiHealthcheckButton.addEventListener("click", () => {
         checkApiHealth();
+    });
+
+    saveButton.addEventListener("click", () => {
+        handleSaveClick();
     });
 
     apiServerUrlInput.addEventListener("input", saveApiServerUrl);

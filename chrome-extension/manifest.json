@@ -7,6 +7,6 @@
         "default_popup": "popup.html",
         "default_title": "Bookmark"
     },
-    "permissions": ["tabs", "storage"],
+    "permissions": ["tabs", "storage", "bookmarks"],
     "host_permissions": ["<all_urls>"]
 }
