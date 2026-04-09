@@ -29,8 +29,9 @@
                 <section class="panel panel--accent">
                     <label class="field">
                         <span>API Server URL</span>
-                        <div class="row">
-                            <input
+                    <div class="row">
+                        <input
+                                id="api-server-url"
                                 type="url"
                                 placeholder="http://localhost:8080"
                             />
@@ -49,12 +50,17 @@
                     <div class="stack">
                         <label class="field">
                             <span>Title</span>
-                            <input type="text" placeholder="Page title" />
+                            <input
+                                id="page-title"
+                                type="text"
+                                placeholder="Page title"
+                            />
                         </label>
 
                         <label class="field">
                             <span>URL</span>
                             <input
+                                id="page-url"
                                 type="url"
                                 placeholder="https://example.com"
                             />
@@ -110,5 +116,6 @@
                 </footer>
             </section>
         </main>
+        <script src="popup.js"></script>
     </body>
 </html>
