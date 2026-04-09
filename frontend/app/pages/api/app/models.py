@@ -62,3 +62,7 @@ class BookmarkListResponse(BaseModel):
     page: int
     per_page: int
     total_pages: int
+
+
+class ErrorResponse(BaseModel):
+    detail: str

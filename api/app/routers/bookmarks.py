@@ -2,7 +2,13 @@ from fastapi import APIRouter, Depends
 
 from fastapi import Query
 
-from api.app.models import BookmarkCreate, BookmarkListResponse, BookmarkResponse, BookmarkUpdate
+from api.app.models import (
+    BookmarkCreate,
+    BookmarkListResponse,
+    BookmarkResponse,
+    BookmarkUpdate,
+    ErrorResponse,
+)
 from api.app.services.bookmark_service import BookmarkService
 
 router = APIRouter(prefix="/bookmarks", tags=["bookmarks"])
@@ -12,7 +18,12 @@ def get_bookmark_service() -> BookmarkService:
     return BookmarkService()
 
 
-@router.post("", status_code=201, response_model=BookmarkResponse)
+@router.post(
+    "",
+    status_code=201,
+    response_model=BookmarkResponse,
+    responses={409: {"model": ErrorResponse, "description": "Bookmark URL already exists"}},
+)
 def create_bookmark(body: BookmarkCreate, service: BookmarkService = Depends(get_bookmark_service)):
     return service.create(body)
 
@@ -34,7 +45,12 @@ def get_bookmark(bookmark_id: int, service: BookmarkService = Depends(get_bookma
     return service.get(bookmark_id)
 
 
-@router.patch("/{bookmark_id}", status_code=200, response_model=BookmarkResponse)
+@router.patch(
+    "/{bookmark_id}",
+    status_code=200,
+    response_model=BookmarkResponse,
+    responses={409: {"model": ErrorResponse, "description": "Bookmark URL already exists"}},
+)
 def update_bookmark(
     bookmark_id: int,
     body: BookmarkUpdate,
