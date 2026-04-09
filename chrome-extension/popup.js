@@ -6,7 +6,6 @@ const apiStatusDot = document.getElementById("api-status-dot");
 const apiHealthcheckButton = document.getElementById("api-healthcheck-button");
 const saveStatusMessage = document.getElementById("save-status-message");
 const cancelButton = document.getElementById("cancel-button");
-const fieldSelects = document.querySelectorAll(".split select");
 
 const API_SERVER_URL_STORAGE_KEY = "apiServerUrl";
 let hasCreatedBookmark = false;
@@ -123,7 +122,6 @@ async function createBookmark(baseUrl) {
         }
 
         setSaveStatus("success", "Saved");
-        await loadFolderAndTagOptions(baseUrl);
     } catch (error) {
         setSaveStatus(
             "error",
@@ -131,50 +129,6 @@ async function createBookmark(baseUrl) {
                 ? error.message
                 : "Save failed",
         );
-    }
-}
-
-function setSelectOptions(select, placeholderText, items, getLabel) {
-    select.replaceChildren();
-
-    const placeholder = document.createElement("option");
-    placeholder.value = "";
-    placeholder.textContent = placeholderText;
-    select.appendChild(placeholder);
-
-    for (const item of items) {
-        const option = document.createElement("option");
-        option.value = String(item.id);
-        option.textContent = getLabel(item);
-        select.appendChild(option);
-    }
-}
-
-async function loadFolderAndTagOptions(baseUrl) {
-    try {
-        const [foldersResponse, tagsResponse] = await Promise.all([
-            fetch(new URL("/folders", baseUrl)),
-            fetch(new URL("/tags", baseUrl)),
-        ]);
-
-        if (!foldersResponse.ok || !tagsResponse.ok) {
-            throw new Error("Failed to load folders or tags");
-        }
-
-        const [folders, tags] = await Promise.all([
-            foldersResponse.json(),
-            tagsResponse.json(),
-        ]);
-
-        const [folderSelectEl, tagSelectEl] = fieldSelects;
-        if (folderSelectEl) {
-            setSelectOptions(folderSelectEl, "-- Select Folder --", folders, (item) => item.name);
-        }
-        if (tagSelectEl) {
-            setSelectOptions(tagSelectEl, "-- Select Tag --", tags, (item) => item.name);
-        }
-    } catch {
-        // Leave the existing empty selects in place if loading fails.
     }
 }
 
