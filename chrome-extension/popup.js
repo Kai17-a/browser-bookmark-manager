@@ -129,7 +129,7 @@ async function checkApiHealth() {
             initialBookmarkCreated = true;
             try {
                 await createBookmark(baseUrl);
-                setSaveStatus("success", "Saved");
+                setSaveStatus("success", "Registered");
             } catch (error) {
                 setSaveStatus(
                     "error",
