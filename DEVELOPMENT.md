@@ -31,6 +31,21 @@ bun run dev
 ./run-local.sh
 ```
 
+### GitHub Actions をローカル実行
+
+GitHub Actions のワークフローをローカルで再現する場合は `act` を使う。
+
+```bash
+./scripts/run-github-actions.sh
+```
+
+デフォルトでは `.github/workflows/pr-tests.yml` の `pull_request` イベントを実行する。
+別のワークフローを試す場合は、ワークフローパスとイベント名を渡す。
+
+```bash
+./scripts/run-github-actions.sh .github/workflows/release-on-tag.yml push
+```
+
 ### Docker を使う場合
 
 ```bash
