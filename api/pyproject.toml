@@ -13,8 +13,8 @@ dependencies = [
 ]
 
 [project.scripts]
-api-dev = "api.main:main"
-api-run = "api.main:main"
+api-dev = "api.main:dev"
+api-run = "api.main:serve"
 
 [dependency-groups]
 dev = [

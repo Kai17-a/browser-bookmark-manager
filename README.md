@@ -25,6 +25,8 @@ cd api
 api-dev
 ```
 
+`api-dev` は `uvicorn` を使って起動します。
+
 `frontend/` 配下からフロントエンドを起動するには次を実行します。
 
 ```bash
@@ -44,7 +46,7 @@ Docker で起動する場合は次を実行します。
 docker compose up --build
 ```
 
-Docker 起動時は 1 つのコンテナでフロントエンドが `http://127.0.0.1:3000`、API が `http://127.0.0.1:8000` で利用できます。
+Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコンテナでフロントエンドが `http://127.0.0.1:3000`、API が `http://127.0.0.1:8000` で利用できます。
 
 API テストは次を実行します。
 

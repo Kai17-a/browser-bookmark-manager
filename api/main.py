@@ -67,7 +67,13 @@ app.include_router(settings_router)
 app.include_router(tags_router)
 
 
-def main() -> None:
+def dev() -> None:
     import uvicorn
 
     uvicorn.run("api.main:app", reload=True)
+
+
+def serve() -> None:
+    import uvicorn
+
+    uvicorn.run("api.main:app", host="0.0.0.0", port=8000)
