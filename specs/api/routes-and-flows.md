@@ -185,7 +185,7 @@ Request:
 Request:
 
 ```json
-{ "name": "Work" }
+{ "name": "Work", "description": "Team notes" }
 ```
 
 Response:
@@ -201,6 +201,7 @@ Response:
 ### `PATCH /folders/{id}`
 
 - 名前を更新する
+- `description` も更新できる
 - 重複名は 409 を返す
 - 存在しない ID は 404 を返す
 
@@ -209,7 +210,7 @@ Response:
 Request:
 
 ```json
-{ "name": "python" }
+{ "name": "python", "description": "Programming language" }
 ```
 
 Response:
@@ -221,6 +222,7 @@ Response:
 ### `PATCH /tags/{id}`
 
 - 名前を更新する
+- `description` も更新できる
 - 重複名は 409 を返す
 - 存在しない ID は 404 を返す
 
