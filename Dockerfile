@@ -3,6 +3,8 @@ FROM oven/bun:1.1.38-alpine AS frontend-build
 
 WORKDIR /app/frontend
 
+RUN apk add --no-cache bash
+
 COPY frontend/package.json frontend/bun.lock ./
 RUN bun install
 
