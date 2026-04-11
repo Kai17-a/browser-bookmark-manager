@@ -7,9 +7,6 @@ frontend_port=${FRONTEND_PORT:-3001}
 api_port=${API_PORT:-8001}
 
 cleanup() {
-    if [ -n "${frontend_env_backup:-}" ] && [ -f "$frontend_env_backup" ]; then
-        mv "$frontend_env_backup" "$repo_root/frontend/.env"
-    fi
     if [ -n "${api_pid:-}" ]; then
         kill "$api_pid" 2>/dev/null || true
     fi
@@ -43,12 +40,6 @@ start_api_server() {
 
 start_frontend_server() {
     cd "$repo_root/frontend"
-    frontend_env_backup=$(mktemp)
-    cp .env "$frontend_env_backup"
-    cat > .env <<EOF
-NUXT_PUBLIC_API_BASE_URL=http://127.0.0.1:$api_port
-NUXT_PUBLIC_API_BASE=http://127.0.0.1:$api_port
-EOF
     export API_BASE_URL="http://127.0.0.1:$api_port"
     export NUXT_PUBLIC_API_BASE_URL="http://127.0.0.1:$api_port"
     bun run build
