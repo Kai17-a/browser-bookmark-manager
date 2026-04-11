@@ -17,10 +17,13 @@ api-dev
 ### Frontend
 
 ```bash
+mise install
 cd frontend
 bun install
 bun run dev
 ```
+
+`bun` は `mise.toml` で `1.1.38` に固定している。ローカルで `bun run build` を実行する場合も `mise exec bun@1.1.38 -- bun run build` のように同じ版を使う。
 
 ### 両方まとめて起動
 
