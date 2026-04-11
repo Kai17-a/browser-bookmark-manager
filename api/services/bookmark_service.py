@@ -1,4 +1,6 @@
 import sqlite3
+from datetime import datetime
+from typing import cast
 
 from fastapi import HTTPException
 
@@ -16,9 +18,19 @@ from api.repositories.tag_repo import TagRepository
 
 
 class BookmarkService:
-    def _to_response(self, repo: BookmarkRepository, row: dict) -> BookmarkResponse:
-        tags = [TagResponse(**t) for t in repo.get_tags(row["id"])]
-        return BookmarkResponse(**row, tags=tags)
+    def _to_response(self, repo: BookmarkRepository, row: dict[str, object]) -> BookmarkResponse:
+        bookmark_id = cast(int, row["id"])
+        tags = [TagResponse(**t) for t in repo.get_tags(bookmark_id)]
+        return BookmarkResponse(
+            id=bookmark_id,
+            url=cast(str, row["url"]),
+            title=cast(str, row["title"]),
+            description=cast(str | None, row["description"]),
+            folder_id=cast(int | None, row["folder_id"]),
+            tags=tags,
+            created_at=cast(datetime, row["created_at"]),
+            updated_at=cast(datetime, row["updated_at"]),
+        )
 
     def _verify_folder(self, conn, folder_id: int) -> None:
         folder_repo = FolderRepository(conn)
@@ -53,6 +65,7 @@ class BookmarkService:
             )
             self._sync_tags(repo, row["id"], data.tag_ids)
             row = repo.find_by_id(row["id"])
+            assert row is not None
             return self._to_response(repo, row)
 
     def list(
@@ -97,7 +110,7 @@ class BookmarkService:
                 raise HTTPException(status_code=404, detail="Bookmark not found")
 
             # Build fields dict with only non-None values
-            fields: dict = {}
+            fields: dict[str, object] = {}
             if data.url is not None:
                 fields["url"] = str(data.url)
             if data.title is not None:
@@ -115,6 +128,7 @@ class BookmarkService:
             row = repo.update(bookmark_id, fields)
             self._sync_tags(repo, bookmark_id, data.tag_ids)
             row = repo.find_by_id(bookmark_id)
+            assert row is not None
             return self._to_response(repo, row)
 
     def delete(self, bookmark_id: int) -> None:
@@ -140,6 +154,7 @@ class BookmarkService:
                 raise HTTPException(status_code=409, detail="Tag already attached")
 
             row = repo.find_by_id(bookmark_id)
+            assert row is not None
             return self._to_response(repo, row)
 
     def remove_tag(self, bookmark_id: int, tag_id: int) -> None:
