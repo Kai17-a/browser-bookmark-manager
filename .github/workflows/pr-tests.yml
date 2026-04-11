@@ -90,6 +90,10 @@ jobs:
         working-directory: frontend
         run: bun install --frozen-lockfile
 
+      - name: Prepare frontend Nuxt artifacts
+        working-directory: frontend
+        run: bun run prepare
+
       - name: Run frontend unit tests
         working-directory: frontend
         run: bun run test
@@ -150,6 +154,10 @@ jobs:
         if: steps.frontend-cache.outputs.cache-hit != 'true'
         working-directory: frontend
         run: bun install --frozen-lockfile
+
+      - name: Prepare frontend Nuxt artifacts
+        working-directory: frontend
+        run: bun run prepare
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
