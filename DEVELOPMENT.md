@@ -64,15 +64,15 @@ services:
             dockerfile: Dockerfile
         environment:
             DATABASE_URL: /data/bookmark.db
-            API_BASE_URL: http://127.0.0.1:8000
+            API_BASE_URL: http://127.0.0.1:${API_PORT:-8000}
         ports:
-            - "3000:3000"
-            - "8000:8000"
+            - "${FRONTEND_PORT:-3000}:3000"
+            - "${API_PORT:-8000}:8000"
         volumes:
             - ./local-data:/data
 ```
 
-Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコンテナでフロントエンドが `http://127.0.0.1:3000`、API が `http://127.0.0.1:8000` で利用できる。
+Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコンテナでフロントエンドと API を利用できる。公開ポートを変える場合は `API_PORT` と `FRONTEND_PORT` を変更する。
 
 ## Push 前チェック
 

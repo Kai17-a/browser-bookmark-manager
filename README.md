@@ -44,18 +44,17 @@ services:
         image: ghcr.io/kai17-a/browser-bookmark-manager:latest
         environment:
             DATABASE_URL: /data/bookmark.db
-            # API を別ホストや別ポートで公開する場合だけ設定する
-            API_BASE_URL: http://127.0.0.1:8000
+            API_BASE_URL: http://127.0.0.1:${API_PORT:-8000}
         ports:
-            - "3000:3000"
-            - "8000:8000"
+            - "${FRONTEND_PORT:-3000}:3000"
+            - "${API_PORT:-8000}:8000"
         volumes:
             - ./data:/data
 ```
 
 `API_BASE_URL` は、API を別ホストや別ポートに公開するときだけ上書きする。
 フロントエンド内部ではこの値を `NUXT_PUBLIC_API_BASE_URL` として扱う。
-同じホストで `3000` と `8000` を公開する標準構成では、未設定のほうが外部端末からも正しく解決される。
+`docker compose` では `API_PORT` と `FRONTEND_PORT` を変えるだけで公開ポートを変えられる。
 
 GitHub Packages の Docker image 公開機能を使う場合は、別途ワークフローを用意してください。
 `GITHUB_TOKEN` に `packages: write` 権限が付くように設定してください。
