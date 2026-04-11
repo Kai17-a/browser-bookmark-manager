@@ -45,7 +45,6 @@
                             :key="tag.id"
                             :title="tag.name"
                             :to="`/tags/${tag.id}`"
-                            :meta="`Tag ID ${tag.id}`"
                             :description="tag.description || undefined"
                             @edit="openEdit(tag)"
                             @remove="askDelete(tag)"

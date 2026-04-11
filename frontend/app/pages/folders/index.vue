@@ -35,10 +35,7 @@
                     </form>
                 </UPageCard>
 
-                <UPageCard
-                    title="Folder list"
-                    :ui="{ body: 'space-y-3' }"
-                >
+                <UPageCard title="Folder list" :ui="{ body: 'space-y-3' }">
                     <div
                         v-if="folders.length"
                         class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
@@ -48,7 +45,6 @@
                             :key="folder.id"
                             :title="folder.name"
                             :to="`/folders/${folder.id}`"
-                            :meta="`Folder ID ${folder.id}`"
                             :description="folder.description || undefined"
                             @edit="openEdit(folder)"
                             @remove="askDelete(folder)"
