@@ -7,8 +7,10 @@
 - `api/` - FastAPI のバックエンド本体とテスト
 - `frontend/` - Nuxt 4 の SPA
 - `chrome-extension/` - Chrome 拡張のクイック追加ポップアップ
-- `specs/` - 実装メモとタスク管理
-- `doc/` - テスト観点と実装済みテストの整理
+- `specs/` - 要件・設計・タスク・テスト観点の整理
+- `specs/api/` - API 仕様
+- `specs/frontend/` - フロントエンド仕様
+- `docs/commit-policy.md` - コミット規約
 
 ## API
 
@@ -54,12 +56,16 @@ pytest は `api/tests` を対象に収集するよう設定しています。
 
 ## テスト仕様
 
-テスト観点と実装済みテストの整理は `doc/` にあります。
+要件・設計・タスク・テスト観点の整理は `specs/` にあります。
 
-- [総覧](doc/test-observations.md)
-- [API](doc/api/test-observations.md)
-- [Frontend](doc/frontend/test-observations.md)
-- [Frontend E2E](doc/frontend-e2e/test-observations.md)
+- [API 仕様](specs/api/README.md)
+- [総覧](specs/test-observations/README.md)
+- [API](specs/test-observations/api/test-observations.md)
+- [Frontend](specs/test-observations/frontend/test-observations.md)
+- [Frontend E2E](specs/test-observations/frontend-e2e/test-observations.md)
+- [コミット規約](docs/commit-policy.md)
+
+`specs/requirements.md` は要件の上位定義、`specs/api/` は API 挙動の詳細、`specs/frontend/` は画面と操作の詳細です。
 
 ## Frontend Tests
 
