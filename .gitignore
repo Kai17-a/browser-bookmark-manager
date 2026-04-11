@@ -16,5 +16,5 @@ api/.pytest_cache/
 api/.hypothesis/
 api/.ruff_cache/
 api/__pycache__/
-data/*
+local-data/*
 */test-results/
