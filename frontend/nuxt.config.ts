@@ -9,12 +9,17 @@ export default defineNuxtConfig({
     devtools: { enabled: false },
     css: ["~/assets/css/main.css"],
     ssr: false,
+    sourcemap: false,
+    cssSourceMap: false,
     vite: {
         build: {
             sourcemap: false,
             modulePreload: {
                 polyfill: false,
             },
+        },
+        css: {
+            devSourcemap: false,
         },
     },
     app: {
