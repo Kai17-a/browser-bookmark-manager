@@ -13,3 +13,4 @@ This repository uses the following reading order for agentic work:
 
 Follow those sources before making changes to Nuxt, Python, Nuxt UI, or TypeScript code in this repository.
 
+If you change code, tests, or repository behavior, finish the task by creating the corresponding commit unless the user explicitly says not to.
