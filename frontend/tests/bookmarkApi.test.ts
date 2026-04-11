@@ -6,7 +6,6 @@ import {
     deriveBrowserApiBase,
     getDefaultApiBase,
     extractErrorMessage,
-    resolveApiBase,
     trimTrailingSlash,
 } from "../app/utils/bookmarkApi";
 
@@ -17,13 +16,6 @@ describe("bookmarkApi helpers", () => {
         );
         expect(trimTrailingSlash("http://localhost:8000")).toBe(
             "http://localhost:8000",
-        );
-    });
-
-    it("falls back to the default API base when config is missing", () => {
-        expect(resolveApiBase(undefined)).toBe(DEFAULT_API_BASE);
-        expect(resolveApiBase("https://api.example.com")).toBe(
-            "https://api.example.com",
         );
     });
 

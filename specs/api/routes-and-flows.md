@@ -19,7 +19,6 @@
 | GET | `/tags` | タグ一覧取得 |
 | PATCH | `/tags/{id}` | タグ更新 |
 | DELETE | `/tags/{id}` | タグ削除 |
-| GET | `/settings` | API ベース URL 取得 |
 | GET | `/health` | ヘルスチェック |
 
 ## ユーザーフロー
@@ -44,11 +43,6 @@
 - 一覧から対象タグへ移動する
 - 詳細で関連ブックマークを確認する
 - タグ名を更新し、不要なら削除する
-
-### 設定
-
-- `/settings` で `api_base_url` を取得する
-- 取得した base URL を使って `/health` を確認する
 
 ## 共通レスポンス
 
@@ -87,12 +81,11 @@
 18. `DELETE /tags/{id}` は、204 を返す。
 19. タグ削除時は、関連 `bookmark_tags` を削除する。
 
-### タグ付与・設定
+### タグ付与
 
 20. `POST /bookmarks/{id}/tags` は、タグ紐付けを追加し更新後ブックマークを返す。
 21. `DELETE /bookmarks/{id}/tags/{tag_id}` は、204 を返す。
-22. `GET /settings` は、`api_base_url` を返す。
-23. `GET /health` は、`status: ok` を返す。
+22. `GET /health` は、`status: ok` を返す。
 
 ## エンドポイント詳細
 
@@ -225,17 +218,6 @@ Response:
 - `description` も更新できる
 - 重複名は 409 を返す
 - 存在しない ID は 404 を返す
-
-### `GET /settings`
-
-Response:
-
-```json
-{ "api_base_url": "https://bookmarks.example.com:8000" }
-```
-
-- `API_BASE_URL` 環境変数がある場合はその値を返す
-- 未設定の場合は受信したリクエストのオリジンを返す
 
 ### `GET /health`
 

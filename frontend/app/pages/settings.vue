@@ -45,30 +45,15 @@
 </template>
 
 <script setup lang="ts">
-const { defaultApiBase, loadApiBase } = useBookmarkApi();
+const { apiBase, defaultApiBase } = useBookmarkApi();
 const toast = useSingleToast();
 const checking = ref(false);
 const form = reactive({
     apiBaseUrl: "",
 });
 
-const syncSettings = async () => {
-    try {
-        const base = await loadApiBase();
-        form.apiBaseUrl = base || "";
-        toast.show({
-            title: "API settings loaded.",
-            color: "success",
-            icon: "i-lucide-check",
-        });
-    } catch {
-        form.apiBaseUrl = "";
-        toast.show({
-            title: "Failed to load API settings.",
-            color: "error",
-            icon: "i-lucide-circle-alert",
-        });
-    }
+const syncSettings = () => {
+    form.apiBaseUrl = apiBase.value || defaultApiBase;
 };
 
 const checkHealth = async () => {
@@ -113,6 +98,6 @@ const checkHealth = async () => {
 };
 
 onMounted(async () => {
-    await syncSettings();
+    syncSettings();
 });
 </script>

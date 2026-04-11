@@ -11,7 +11,6 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from api.database import init_db
 from api.routers.bookmarks import router as bookmarks_router
 from api.routers.folders import router as folders_router
-from api.routers.settings import router as settings_router
 from api.routers.tags import router as tags_router
 
 logging.basicConfig(
@@ -63,7 +62,6 @@ def health_check():
 
 app.include_router(bookmarks_router)
 app.include_router(folders_router)
-app.include_router(settings_router)
 app.include_router(tags_router)
 
 

@@ -8,7 +8,6 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 from starlette.requests import Request
 
-from api.config import resolve_api_base_url
 from api.model.models import (
     BookmarkCreate,
     BookmarkUpdate,
@@ -99,9 +98,6 @@ class CompatTestClient:
         path, query = self._parse(url)
 
         try:
-            if method == "GET" and path == "/settings":
-                payload = {"api_base_url": resolve_api_base_url(self._build_request(path))}
-                return self._ok(payload, 200)
             if method == "GET" and path == "/health":
                 return self._ok({"status": "ok"}, 200)
 

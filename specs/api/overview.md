@@ -1,6 +1,6 @@
 # 概要
 
-この API は、ブックマーク、フォルダ、タグ、設定を管理する FastAPI サービスである。
+この API は、ブックマーク、フォルダ、タグを管理する FastAPI サービスである。
 
 この配下の仕様書は、`specs/requirements.md` の要件を実装視点に分解したものとして扱う。
 `specs/requirements.md` はプロダクト要件、`specs/api/` は API の入出力と挙動を中心に記述する。
@@ -10,7 +10,6 @@
 - SQLite による永続化
 - ブックマーク、フォルダ、タグの CRUD
 - ブックマークへのタグ付与・解除
-- `/settings` による API ベース URL の公開
 - `/health` による疎通確認
 - 例外ハンドリングと検証エラーの標準化
 
@@ -22,7 +21,6 @@
 - [フォルダルータ](/home/kaito/workspaces/bookmark-manager/api/routers/folders.py)
 - [タグルータ](/home/kaito/workspaces/bookmark-manager/api/routers/tags.py)
 - [タグ付与ルータ](/home/kaito/workspaces/bookmark-manager/api/routers/bookmark_tags.py)
-- [設定ルータ](/home/kaito/workspaces/bookmark-manager/api/routers/settings.py)
 - [ブックマークサービス](/home/kaito/workspaces/bookmark-manager/api/services/bookmark_service.py)
 - [フォルダサービス](/home/kaito/workspaces/bookmark-manager/api/services/folder_service.py)
 - [タグサービス](/home/kaito/workspaces/bookmark-manager/api/services/tag_service.py)

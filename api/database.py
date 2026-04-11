@@ -1,7 +1,7 @@
 import sqlite3
 from contextlib import contextmanager
 
-from api.config import DATABASE_URL
+DATABASE_URL = "bookmarks.db"
 
 
 def init_db(database_url: str = DATABASE_URL) -> None:

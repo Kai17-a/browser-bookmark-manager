@@ -1,12 +1,7 @@
 export const DEFAULT_API_BASE = "http://localhost:8000";
-export const SETTINGS_PATH = "/settings";
 
 export type ApiErrorBody = {
   detail?: string | string[];
-};
-
-export type ApiSettingsBody = {
-  api_base_url?: string;
 };
 
 export const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
@@ -24,11 +19,6 @@ export const getDefaultApiBase = () => {
 
   return DEFAULT_API_BASE;
 };
-
-export const resolveApiBase = (
-  value: unknown,
-  fallback: string = getDefaultApiBase(),
-) => (typeof value === "string" && value ? value : fallback);
 
 export const buildRequestHeaders = (options: RequestInit = {}) => {
   const { headers, ...rest } = options;

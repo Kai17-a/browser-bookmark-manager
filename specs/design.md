@@ -4,7 +4,7 @@
 
 本ドキュメントは、ブックマーク管理REST APIの技術設計を定義する。
 PythonでAPIサーバーを実装し、SQLiteをデータストアとして使用する。
-ブックマーク・フォルダ・タグのCRUD操作と、ブックマークへのタグ付与・解除、設定取得を提供する。
+ブックマーク・フォルダ・タグのCRUD操作と、ブックマークへのタグ付与・解除を提供する。
 
 ### 技術スタック
 
@@ -90,7 +90,6 @@ bookmark-manager/
 | GET | `/tags` | タグ一覧取得 |
 | PATCH | `/tags/{id}` | タグ更新 |
 | DELETE | `/tags/{id}` | タグ削除 |
-| GET | `/settings` | API設定取得 |
 | GET | `/health` | ヘルスチェック |
 
 ### レスポンス方針
@@ -198,15 +197,11 @@ class BookmarkListResponse(BaseModel):
     total: int
     page: int
     per_page: int
-
-class ApiBaseUrlResponse(BaseModel):
-    api_base_url: str
 ```
 
 ---
 
 ## 運用上の補足
 
-- `/settings` は `API_BASE_URL` が設定されていればその値を返し、未設定なら受信したリクエストのオリジンを返す
 - 未知の SQLite エラーは 500 に変換する
 - アプリ起動時に初期化処理を実行する
