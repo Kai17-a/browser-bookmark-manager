@@ -49,9 +49,17 @@
                         <h1 class="text-2xl font-semibold text-default">
                             {{ folder.name }}
                         </h1>
-                        <p v-if="folder.description" class="text-sm text-muted">
-                            {{ folder.description }}
-                        </p>
+                        <div class="space-y-1">
+                            <p class="text-xs font-medium uppercase tracking-wide text-muted">
+                                Description
+                            </p>
+                            <p v-if="folder.description" class="text-sm leading-6 text-default/90">
+                                {{ folder.description }}
+                            </p>
+                            <p v-else class="text-sm text-muted">
+                                No description provided.
+                            </p>
+                        </div>
                         <p class="text-sm text-muted">
                             {{ bookmarks.length }} bookmark{{ bookmarks.length === 1 ? "" : "s" }} in this folder.
                         </p>

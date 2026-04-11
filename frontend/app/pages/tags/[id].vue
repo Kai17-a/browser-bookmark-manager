@@ -49,9 +49,17 @@
                         <h1 class="text-2xl font-semibold text-default">
                             {{ tag.name }}
                         </h1>
-                        <p v-if="tag.description" class="text-sm text-muted">
-                            {{ tag.description }}
-                        </p>
+                        <div class="space-y-1">
+                            <p class="text-xs font-medium uppercase tracking-wide text-muted">
+                                Description
+                            </p>
+                            <p v-if="tag.description" class="text-sm leading-6 text-default/90">
+                                {{ tag.description }}
+                            </p>
+                            <p v-else class="text-sm text-muted">
+                                No description provided.
+                            </p>
+                        </div>
                         <div class="flex flex-wrap gap-3">
                             <UButton to="/tags" variant="ghost" size="sm">
                                 Back to tags

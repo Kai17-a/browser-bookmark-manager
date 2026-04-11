@@ -53,7 +53,7 @@ test.describe("folders", () => {
   test("creates, renames, opens, and deletes folders", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
     const created = await page.request.post(`${apiBaseUrl}/folders`, {
-      data: { name: `Folder ${suffix}` },
+      data: { name: `Folder ${suffix}`, description: "Folder description" },
     });
     expect(created.status()).toBe(201);
     const createdBody = (await created.json()) as { id: number };
@@ -71,6 +71,7 @@ test.describe("folders", () => {
 
     await page.goto(`/folders/${createdBody.id}`);
     await expect(page.getByRole("heading", { name: `Folder ${suffix}` })).toBeVisible();
+    await expect(page.getByText("Folder description")).toBeVisible();
     await expect(page.getByText(`Folder Bookmark ${suffix}`)).toBeVisible();
 
     const deleted = await page.request.delete(`${apiBaseUrl}/folders/${createdBody.id}`);
@@ -84,7 +85,7 @@ test.describe("tags", () => {
   test("creates, renames, opens, and deletes tags", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
     const created = await page.request.post(`${apiBaseUrl}/tags`, {
-      data: { name: `Tag ${suffix}` },
+      data: { name: `Tag ${suffix}`, description: "Tag description" },
     });
     expect(created.status()).toBe(201);
     const createdBody = (await created.json()) as { id: number };
@@ -102,6 +103,7 @@ test.describe("tags", () => {
 
     await page.goto(`/tags/${createdBody.id}`);
     await expect(page.getByRole("heading", { name: `Tag ${suffix}` })).toBeVisible();
+    await expect(page.getByText("Tag description")).toBeVisible();
     await expect(page.getByText(`Tag Bookmark ${suffix}`)).toBeVisible();
 
     const deleted = await page.request.delete(`${apiBaseUrl}/tags/${createdBody.id}`);
