@@ -195,6 +195,34 @@
                         </form>
                     </template>
                 </UModal>
+
+                <UModal
+                    v-model:open="deleteOpen"
+                    title="Delete bookmark"
+                    description="This action cannot be undone."
+                >
+                    <template #content>
+                        <div class="space-y-4 p-6">
+                            <p class="text-sm text-default">
+                                Delete
+                                <strong>{{ pendingBookmark?.title }}</strong>
+                                and remove it from the list?
+                            </p>
+                            <div class="flex justify-end gap-3">
+                                <UButton
+                                    color="neutral"
+                                    variant="ghost"
+                                    @click="closeDelete"
+                                >
+                                    Cancel
+                                </UButton>
+                                <UButton color="error" :loading="deleting" @click="confirmDelete">
+                                    Delete bookmark
+                                </UButton>
+                            </div>
+                        </div>
+                    </template>
+                </UModal>
             </div>
         </template>
     </UDashboardPanel>
@@ -227,8 +255,11 @@ const toast = useSingleToast();
 
 const loading = ref(false);
 const saving = ref(false);
+const deleting = ref(false);
 const loadError = ref("");
 const modalOpen = ref(false);
+const deleteOpen = ref(false);
+const pendingBookmark = ref<BookmarkResponse | null>(null);
 const bookmarkList = ref<BookmarkListResponse>({
     items: [],
     total: 0,
@@ -457,8 +488,23 @@ const saveBookmark = async () => {
 };
 
 const removeBookmark = async (id: number) => {
+    const bookmark = bookmarkCards.value.find((item) => item.id === id) || null;
+    if (!bookmark) return;
+    pendingBookmark.value = bookmark;
+    deleteOpen.value = true;
+};
+
+const closeDelete = () => {
+    deleteOpen.value = false;
+    pendingBookmark.value = null;
+};
+
+const confirmDelete = async () => {
+    if (!pendingBookmark.value) return;
+    deleting.value = true;
     try {
-        await request(`/bookmarks/${id}`, { method: "DELETE" });
+        await request(`/bookmarks/${pendingBookmark.value.id}`, { method: "DELETE" });
+        closeDelete();
         await loadData();
         toast.show({
             title: "Bookmark deleted.",
@@ -472,6 +518,8 @@ const removeBookmark = async (id: number) => {
             color: "error",
             icon: "i-lucide-circle-alert",
         });
+    } finally {
+        deleting.value = false;
     }
 };
 
