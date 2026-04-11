@@ -17,20 +17,22 @@
             </div>
             <div class="flex shrink-0 items-center gap-2">
                 <UButton
+                    type="button"
                     size="xs"
                     variant="ghost"
                     color="neutral"
                     icon="i-lucide-pencil"
-                    @click="$emit('edit', bookmark)"
+                    @click.stop="$emit('edit', bookmark)"
                 >
                     <span class="sr-only">Edit</span>
                 </UButton>
                 <UButton
+                    type="button"
                     size="xs"
                     variant="soft"
                     color="error"
                     icon="i-lucide-trash-2"
-                    @click="$emit('remove', bookmark.id)"
+                    @click.stop="$emit('remove', bookmark.id)"
                 />
             </div>
         </div>
