@@ -15,8 +15,24 @@
                     {{ bookmark.url }}
                 </p>
             </div>
-
-            <UBadge size="xs" variant="soft">#{{ bookmark.id }}</UBadge>
+            <div class="flex shrink-0 items-center gap-2">
+                <UButton
+                    size="xs"
+                    variant="ghost"
+                    color="neutral"
+                    icon="i-lucide-pencil"
+                    @click="$emit('edit', bookmark)"
+                >
+                    <span class="sr-only">Edit</span>
+                </UButton>
+                <UButton
+                    size="xs"
+                    variant="soft"
+                    color="error"
+                    icon="i-lucide-trash-2"
+                    @click="$emit('remove', bookmark.id)"
+                />
+            </div>
         </div>
 
         <p v-if="bookmark.description" class="text-sm text-default">
@@ -56,5 +72,10 @@ defineProps<{
     bookmark: BookmarkResponse & { folder_name?: string | null };
     showFolder?: boolean;
     showTags?: boolean;
+}>();
+
+defineEmits<{
+    edit: [bookmark: BookmarkResponse & { folder_name?: string | null }];
+    remove: [id: number];
 }>();
 </script>
