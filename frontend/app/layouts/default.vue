@@ -9,19 +9,11 @@
             :ui="{ footer: 'lg:border-t lg:border-default' }"
         >
             <template #default="{ collapsed }">
-                <UNavigationMenu
+                <SidebarNav
                     :collapsed="collapsed"
-                    :items="primaryLinks"
-                    orientation="vertical"
-                    tooltip
-                    popover
-                />
-                <UNavigationMenu
-                    :collapsed="collapsed"
-                    :items="secondaryLinks"
-                    orientation="vertical"
-                    tooltip
-                    class="mt-auto"
+                    :primary-links="primaryLinks"
+                    :secondary-links="secondaryLinks"
+                    @navigate="closeSidebar"
                 />
             </template>
         </UDashboardSidebar>
@@ -38,7 +30,7 @@ const { folders, tags, refresh } = useSidebarCatalog();
 const open = ref(false);
 
 const closeSidebar = () => {
-  open.value = false;
+    open.value = false;
 };
 
 const primaryLinks = computed<NavigationMenuItem[]>(() => [

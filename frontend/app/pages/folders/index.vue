@@ -36,52 +36,16 @@
                     :ui="{ body: 'space-y-3' }"
                 >
                     <div v-if="folders.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        <UCard
+                        <EntityCard
                             v-for="folder in folders"
                             :key="folder.id"
-                            :ui="{
-                                body: 'space-y-4',
-                                header: 'space-y-2',
-                            }"
-                        >
-                            <template #header>
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <NuxtLink
-                                            :to="`/folders/${folder.id}`"
-                                            class="truncate text-base font-semibold text-default hover:underline"
-                                        >
-                                            {{ folder.name }}
-                                        </NuxtLink>
-                                        <p class="mt-1 text-sm text-muted">
-                                            Folder ID {{ folder.id }}
-                                        </p>
-                                    </div>
-                                    <div class="flex shrink-0 items-center gap-2">
-                                        <UButton
-                                            size="xs"
-                                            variant="ghost"
-                                            color="neutral"
-                                            icon="i-lucide-pencil"
-                                            @click="openEdit(folder)"
-                                        >
-                                            <span class="sr-only">Edit</span>
-                                        </UButton>
-                                        <UButton
-                                            size="xs"
-                                            variant="soft"
-                                            color="error"
-                                            icon="i-lucide-trash-2"
-                                            @click="askDelete(folder)"
-                                        />
-                                    </div>
-                                </div>
-                            </template>
-
-                            <p class="text-sm text-muted">
-                                Manage this folder and review bookmarks assigned to it from the detail page.
-                            </p>
-                        </UCard>
+                            :title="folder.name"
+                            :to="`/folders/${folder.id}`"
+                            :meta="`Folder ID ${folder.id}`"
+                            description="Manage this folder and review bookmarks assigned to it from the detail page."
+                            @edit="openEdit(folder)"
+                            @remove="askDelete(folder)"
+                        />
                     </div>
                     <div
                         v-else

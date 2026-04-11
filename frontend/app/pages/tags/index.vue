@@ -36,52 +36,16 @@
                     :ui="{ body: 'space-y-3' }"
                 >
                     <div v-if="tags.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        <UCard
+                        <EntityCard
                             v-for="tag in tags"
                             :key="tag.id"
-                            :ui="{
-                                body: 'space-y-4',
-                                header: 'space-y-2',
-                            }"
-                        >
-                            <template #header>
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <NuxtLink
-                                            :to="`/tags/${tag.id}`"
-                                            class="truncate text-base font-semibold text-default hover:underline"
-                                        >
-                                            {{ tag.name }}
-                                        </NuxtLink>
-                                        <p class="mt-1 text-sm text-muted">
-                                            Tag ID {{ tag.id }}
-                                        </p>
-                                    </div>
-                                    <div class="flex shrink-0 items-center gap-2">
-                                        <UButton
-                                            size="xs"
-                                            variant="ghost"
-                                            color="neutral"
-                                            icon="i-lucide-pencil"
-                                            @click="openEdit(tag)"
-                                        >
-                                            <span class="sr-only">Edit</span>
-                                        </UButton>
-                                        <UButton
-                                            size="xs"
-                                            variant="soft"
-                                            color="error"
-                                            icon="i-lucide-trash-2"
-                                            @click="askDelete(tag)"
-                                        />
-                                    </div>
-                                </div>
-                            </template>
-
-                            <p class="text-sm text-muted">
-                                Manage this tag and review its associated bookmarks from the detail page.
-                            </p>
-                        </UCard>
+                            :title="tag.name"
+                            :to="`/tags/${tag.id}`"
+                            :meta="`Tag ID ${tag.id}`"
+                            description="Manage this tag and review its associated bookmarks from the detail page."
+                            @edit="openEdit(tag)"
+                            @remove="askDelete(tag)"
+                        />
                     </div>
                     <div
                         v-else

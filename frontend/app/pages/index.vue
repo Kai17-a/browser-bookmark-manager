@@ -11,25 +11,13 @@
         <template #body>
             <div class="space-y-6">
                 <UPageGrid class="grid gap-4 lg:grid-cols-3">
-                    <UPageCard
+                    <StatCard
                         v-for="stat in stats"
                         :key="stat.title"
                         :title="stat.title"
                         :to="stat.to"
-                        variant="subtle"
-                        :ui="{
-                            container: 'gap-y-1.5',
-                            wrapper: 'items-start',
-                            leading:
-                                'p-2.5 rounded-full bg-primary/10 ring ring-inset ring-primary/25 flex-col',
-                            title: 'font-normal text-muted text-xs uppercase tracking-[0.2em]',
-                        }"
-                        class="rounded-2xl"
-                    >
-                        <span class="text-3xl font-semibold text-highlighted">
-                            {{ stat.value }}
-                        </span>
-                    </UPageCard>
+                        :value="stat.value"
+                    />
                 </UPageGrid>
 
                 <UPageCard
@@ -38,47 +26,11 @@
                     :ui="{ body: 'space-y-4' }"
                 >
                     <div v-if="bookmarks.items.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        <article
+                        <BookmarkPreviewCard
                             v-for="bookmark in bookmarks.items.slice(0, 6)"
                             :key="bookmark.id"
-                            class="rounded-2xl border border-default bg-elevated/40 p-4"
-                        >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="min-w-0">
-                                    <NuxtLink
-                                        :to="bookmark.url"
-                                        external
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        class="block wrap-break-word text-sm font-semibold text-default hover:underline"
-                                    >
-                                        {{ bookmark.title }}
-                                    </NuxtLink>
-                                    <p class="mt-1 break-all text-xs text-muted">
-                                        {{ bookmark.url }}
-                                    </p>
-                                    <p v-if="bookmark.description" class="mt-2 text-sm text-default">
-                                        {{ bookmark.description }}
-                                    </p>
-                                </div>
-                                <UBadge size="xs" variant="soft">#{{ bookmark.id }}</UBadge>
-                            </div>
-
-                            <div v-if="bookmark.tags.length" class="mt-3 flex flex-wrap gap-2">
-                                <UBadge
-                                    v-for="tag in bookmark.tags.slice(0, 4)"
-                                    :key="tag.id"
-                                    color="neutral"
-                                    variant="soft"
-                                    size="xs"
-                                >
-                                    {{ tag.name }}
-                                </UBadge>
-                                <span v-if="bookmark.tags.length > 4" class="self-center text-xs text-muted">
-                                    +{{ bookmark.tags.length - 4 }}
-                                </span>
-                            </div>
-                        </article>
+                            :bookmark="bookmark"
+                        />
                     </div>
 
                     <div v-else class="rounded-2xl border border-dashed border-default p-6 text-sm text-muted">
@@ -137,6 +89,7 @@
                                 variant="soft"
                                 size="xs"
                                 class="rounded-full"
+                                :to="`/tags/${tag.id}`"
                             />
                         </div>
                         <div class="flex items-center justify-between gap-3">

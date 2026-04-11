@@ -76,24 +76,12 @@
                     </div>
 
                     <div v-else-if="bookmarks.length" class="grid gap-3">
-                        <article
+                        <BookmarkPreviewCard
                             v-for="bookmark in bookmarks"
                             :key="bookmark.id"
-                            class="rounded-2xl border border-default bg-elevated/40 p-4"
-                        >
-                            <NuxtLink
-                                :to="bookmark.url"
-                                external
-                                target="_blank"
-                                rel="noreferrer"
-                                class="font-medium text-default hover:underline"
-                            >
-                                {{ bookmark.title }}
-                            </NuxtLink>
-                            <p class="mt-1 break-all text-sm text-muted">
-                                {{ bookmark.url }}
-                            </p>
-                        </article>
+                            :bookmark="bookmark"
+                            :max-tags="0"
+                        />
                     </div>
                     <div
                         v-else
