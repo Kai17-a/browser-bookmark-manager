@@ -8,3 +8,5 @@ bookmarks.db
 frontend/.nuxt/
 frontend/.output/
 frontend/dist/
+
+data/*
