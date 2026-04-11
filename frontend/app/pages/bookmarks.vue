@@ -207,14 +207,24 @@ import type {
     FolderResponse,
     TagResponse,
 } from "~/types";
+import {
+    buildBookmarkQuery,
+    buildPaginationItems,
+    createEmptyBookmarkForm,
+    createSelectOptions,
+    mapBookmarksWithFolderNames,
+    normalizeSelectValue,
+    parsePositiveInteger,
+    toBookmarkRouteQuery,
+    type BookmarkFormState,
+    type PaginationItem,
+} from "~/utils/bookmarkList";
 
 const route = useRoute();
 const router = useRouter();
 const { request } = useBookmarkApi();
 const toast = useSingleToast();
 
-const connectionLabel = ref("Connecting...");
-const connectionColor = ref<"warning" | "success" | "error">("warning");
 const loading = ref(false);
 const saving = ref(false);
 const loadError = ref("");
@@ -231,63 +241,39 @@ const tags = ref<TagResponse[]>([]);
 const searchQ = ref(String(route.query.q || ""));
 const filterFolder = ref(String(route.query.folder_id || ""));
 const filterTag = ref(String(route.query.tag_id || ""));
-const page = ref(Number(route.query.page || 1) || 1);
-const bookmarkForm = reactive({
-    id: "",
-    url: "",
-    title: "",
-    description: "",
-    folder_id: "",
-    tag_ids: [] as string[],
-});
+const page = ref(parsePositiveInteger(route.query.page, 1));
+const bookmarkForm = reactive<BookmarkFormState>(createEmptyBookmarkForm());
 
 const filterFolderOptions = computed(() => [
     { label: "All folders", value: "" },
-    ...folders.value.map((folder) => ({
-        label: folder.name,
-        value: String(folder.id),
-    })),
+    ...createSelectOptions(
+        folders.value,
+        (folder) => folder.name,
+        (folder) => folder.id,
+    ),
 ]);
 
 const filterTagOptions = computed(() => [
     { label: "All tags", value: "" },
-    ...tags.value.map((tag) => ({
-        label: tag.name,
-        value: String(tag.id),
-    })),
+    ...createSelectOptions(tags.value, (tag) => tag.name, (tag) => tag.id),
 ]);
 
 const bookmarkFolderOptions = computed(() => [
     { label: "No folder", value: "" },
-    ...folders.value.map((folder) => ({
-        label: folder.name,
-        value: String(folder.id),
-    })),
+    ...createSelectOptions(
+        folders.value,
+        (folder) => folder.name,
+        (folder) => folder.id,
+    ),
 ]);
 
 const bookmarkTagOptions = computed(() => [
-    ...tags.value.map((tag) => ({
-        label: tag.name,
-        value: String(tag.id),
-    })),
+    ...createSelectOptions(tags.value, (tag) => tag.name, (tag) => tag.id),
 ]);
 
 type SelectOption = {
     label: string;
     value: string;
-};
-
-const normalizeSelectValue = (value: unknown) => {
-    if (typeof value === "string" || typeof value === "number") {
-        return String(value);
-    }
-
-    if (value && typeof value === "object" && "value" in value) {
-        const raw = (value as { value?: unknown }).value;
-        return raw == null ? "" : String(raw);
-    }
-
-    return "";
 };
 
 const selectedFilterFolder = computed({
@@ -315,12 +301,7 @@ const selectedBookmarkFolder = computed<SelectOption | null>({
 });
 
 const bookmarkCards = computed(() =>
-    bookmarkList.value.items.map((bookmark) => ({
-        ...bookmark,
-        folder_name:
-            folders.value.find((folder) => folder.id === bookmark.folder_id)
-                ?.name || null,
-    })),
+    mapBookmarksWithFolderNames(bookmarkList.value.items, folders.value),
 );
 
 const pageCount = computed(() =>
@@ -330,93 +311,34 @@ const pageCount = computed(() =>
     ),
 );
 
-const paginationItems = computed(() => {
-    const total = pageCount.value;
-    const current = Math.min(Math.max(page.value, 1), total);
-    const items: Array<
-        | { type: "page"; value: number; label: string }
-        | { type: "ellipsis" }
-    > = [];
-
-    if (total <= 7) {
-        for (let number = 1; number <= total; number += 1) {
-            items.push({ type: "page", value: number, label: String(number) });
-        }
-        return items;
-    }
-
-    items.push({ type: "page", value: 1, label: "1" });
-
-    if (current > 3) {
-        items.push({ type: "ellipsis" });
-    }
-
-    const middleStart = Math.max(2, current - 1);
-    const middleEnd = Math.min(total - 1, current + 1);
-
-    for (let number = middleStart; number <= middleEnd; number += 1) {
-        items.push({ type: "page", value: number, label: String(number) });
-    }
-
-    if (current < total - 2) {
-        items.push({ type: "ellipsis" });
-    }
-
-    items.push({ type: "page", value: total, label: String(total) });
-
-    return items;
-});
-
-const queryPath = computed(() => {
-    const params = new URLSearchParams();
-    if (filterFolder.value) params.set("folder_id", filterFolder.value);
-    if (filterTag.value) params.set("tag_id", filterTag.value);
-    if (searchQ.value.trim()) params.set("q", searchQ.value.trim());
-    params.set("page", String(page.value));
-    return params.toString() ? `/bookmarks?${params}` : "/bookmarks";
-});
-
-const syncQuery = () => {
-    router.replace({
-        query: Object.fromEntries(
-            Object.entries({
-                q: searchQ.value || undefined,
-                folder_id: filterFolder.value || undefined,
-                tag_id: filterTag.value || undefined,
-                page: page.value > 1 ? String(page.value) : undefined,
-            }).filter(([, value]) => value !== undefined),
-        ),
-    });
-};
+const paginationItems = computed<PaginationItem[]>(() =>
+    buildPaginationItems(page.value, pageCount.value),
+);
 
 const loadData = async () => {
     loading.value = true;
     loadError.value = "";
-    bookmarkList.value.items = [];
     try {
         const [bookmarkRes, folderRes, tagRes] = await Promise.all([
-            request(queryPath.value),
-            request("/folders"),
-            request("/tags"),
+            request<BookmarkListResponse>(
+                buildBookmarkQuery({
+                    searchQ: searchQ.value,
+                    folderId: filterFolder.value,
+                    tagId: filterTag.value,
+                    page: page.value,
+                }),
+            ),
+            request<FolderResponse[]>("/folders"),
+            request<TagResponse[]>("/tags"),
         ]);
 
-        const result = bookmarkRes as BookmarkListResponse;
-        bookmarkList.value = result;
-        page.value = result.page || 1;
+        bookmarkList.value = bookmarkRes;
+        page.value = bookmarkRes.page || 1;
         folders.value = folderRes;
         tags.value = tagRes;
-        connectionLabel.value = "Connected";
-        connectionColor.value = "success";
-        toast.show({
-            title: "Bookmarks loaded.",
-            color: "success",
-            icon: "i-lucide-check",
-        });
     } catch (err) {
         loadError.value =
             err instanceof Error ? err.message : "Failed to load bookmarks.";
-        connectionLabel.value = "Serverに接続できない";
-        connectionColor.value = "error";
         toast.show({
             title: "Failed to load bookmarks.",
             description: loadError.value,
@@ -429,12 +351,7 @@ const loadData = async () => {
 };
 
 const resetBookmarkForm = () => {
-    bookmarkForm.id = "";
-    bookmarkForm.url = "";
-    bookmarkForm.title = "";
-    bookmarkForm.description = "";
-    bookmarkForm.folder_id = "";
-    bookmarkForm.tag_ids = [];
+    Object.assign(bookmarkForm, createEmptyBookmarkForm());
 };
 
 const loadBookmarkForm = (bookmark: BookmarkResponse) => {
@@ -454,18 +371,10 @@ const openCreateModal = () => {
     modalOpen.value = true;
 };
 
-const closeModal = () => {
-    modalOpen.value = false;
-};
-
 const setPage = async (nextPage: number) => {
     const next = Math.min(Math.max(nextPage, 1), pageCount.value);
     if (next === page.value) return;
     page.value = next;
-};
-
-const refreshAll = async () => {
-    await loadData();
 };
 
 const validateBookmarkForm = () => {
@@ -516,12 +425,12 @@ const saveBookmark = async () => {
                 body: JSON.stringify(payload),
             });
         } else {
-            const created = (await request("/bookmarks", {
+            const created = await request<BookmarkResponse>("/bookmarks", {
                 method: "POST",
                 body: JSON.stringify({
                     ...payload,
                 }),
-            })) as BookmarkResponse;
+            });
             if (created?.id) {
                 bookmarkForm.id = String(created.id);
             }
@@ -529,7 +438,7 @@ const saveBookmark = async () => {
 
         modalOpen.value = false;
         resetBookmarkForm();
-        await refreshAll();
+        await loadData();
     } catch (err) {
         toast.show({
             title: "Failed to save bookmark.",
@@ -545,7 +454,7 @@ const saveBookmark = async () => {
 const removeBookmark = async (id: number) => {
     try {
         await request(`/bookmarks/${id}`, { method: "DELETE" });
-        await refreshAll();
+        await loadData();
     } catch (err) {
         toast.show({
             title: "Failed to delete bookmark.",
@@ -556,24 +465,26 @@ const removeBookmark = async (id: number) => {
     }
 };
 
-onMounted(refreshAll);
-
-watch([searchQ, filterFolder, filterTag], async () => {
-    page.value = 1;
-    syncQuery();
-    await loadData();
-});
-
-watch(page, async (next, prev) => {
-    if (next === prev) return;
-    await loadData();
-    syncQuery();
-});
+watch(
+    [searchQ, filterFolder, filterTag, page],
+    async ([nextSearch, nextFolder, nextTag, nextPage]) => {
+        await router.replace(
+            toBookmarkRouteQuery({
+                searchQ: nextSearch,
+                folderId: nextFolder,
+                tagId: nextTag,
+                page: nextPage,
+            }),
+        );
+        await loadData();
+    },
+    { immediate: true },
+);
 
 watch(
     () => route.query.page,
     async (next) => {
-        const nextPage = Number(next || 1) || 1;
+        const nextPage = parsePositiveInteger(next, 1);
         if (nextPage !== page.value) {
             page.value = nextPage;
         }

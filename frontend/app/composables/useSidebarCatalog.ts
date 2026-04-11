@@ -3,6 +3,7 @@ import {
   createSidebarCatalogState,
   type SidebarCatalogState,
 } from "~/utils/sidebarCatalog";
+import type { FolderResponse, TagResponse } from "~/types";
 
 export const useSidebarCatalog = () => {
   const state = useState<SidebarCatalogState>(
@@ -23,8 +24,8 @@ export const useSidebarCatalog = () => {
       loading.value = true;
       try {
         const [foldersRes, tagsRes] = await Promise.all([
-          request("/folders"),
-          request("/tags"),
+          request<FolderResponse[]>("/folders"),
+          request<TagResponse[]>("/tags"),
         ]);
 
         applySidebarCatalogResults(state.value, foldersRes, tagsRes);

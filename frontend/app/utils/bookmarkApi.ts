@@ -1,36 +1,44 @@
 export const DEFAULT_API_BASE = "http://localhost:8000";
 export const SETTINGS_PATH = "/settings";
 
-export const trimTrailingSlash = (value: string) => value.replace(/\/$/, "");
+export type ApiErrorBody = {
+  detail?: string | string[];
+};
+
+export type ApiSettingsBody = {
+  api_base_url?: string;
+};
+
+export const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
 export const resolveApiBase = (
   value: unknown,
   fallback: string = DEFAULT_API_BASE,
-) => {
-  return typeof value === "string" && value ? value : fallback;
-};
+) => (typeof value === "string" && value ? value : fallback);
 
-export const buildRequestHeaders = (
-  options: Record<string, any> = {},
-) => {
+export const buildRequestHeaders = (options: RequestInit = {}) => {
   const { headers, ...rest } = options;
 
   return {
     headers: {
       ...(rest.body ? { "Content-Type": "application/json" } : {}),
       ...(headers || {}),
-    },
+    } satisfies HeadersInit,
     rest,
   };
 };
 
 export const extractErrorMessage = (
   status: number,
-  body: Record<string, any> | null,
+  body: ApiErrorBody | null,
 ) => {
   if (Array.isArray(body?.detail)) {
-    return JSON.stringify(body.detail);
+    return body.detail.join(", ");
   }
 
   return body?.detail || `HTTP ${status}`;
+};
+
+export const parseJsonBody = async <T>(response: Response) => {
+  return response.json().catch(() => null) as Promise<T | null>;
 };

@@ -3,8 +3,11 @@ import {
   SETTINGS_PATH,
   buildRequestHeaders,
   extractErrorMessage,
+  parseJsonBody,
   resolveApiBase,
   trimTrailingSlash,
+  type ApiErrorBody,
+  type ApiSettingsBody,
 } from "~/utils/bookmarkApi";
 
 export const useBookmarkApi = () => {
@@ -22,14 +25,16 @@ export const useBookmarkApi = () => {
 
     apiBaseLoadPromise = (async () => {
       try {
-        const res = await fetch(`${trimTrailingSlash(settingsApiBase.value)}${SETTINGS_PATH}`);
+        const res = await fetch(
+          `${trimTrailingSlash(settingsApiBase.value)}${SETTINGS_PATH}`,
+        );
         if (!res.ok) {
           apiBase.value = defaultApiBase;
           return defaultApiBase;
         }
 
-        const body = await res.json();
-        apiBase.value = body.api_base_url || defaultApiBase;
+        const body = await parseJsonBody<ApiSettingsBody>(res);
+        apiBase.value = resolveApiBase(body?.api_base_url, defaultApiBase);
         return apiBase.value;
       } catch {
         apiBase.value = defaultApiBase;
@@ -41,30 +46,32 @@ export const useBookmarkApi = () => {
   };
 
   const saveApiBase = async (value: string) => {
-    const res = await fetch(`${trimTrailingSlash(settingsApiBase.value)}${SETTINGS_PATH}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ api_base_url: value }),
-    });
+    const res = await fetch(
+      `${trimTrailingSlash(settingsApiBase.value)}${SETTINGS_PATH}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ api_base_url: value }),
+      },
+    );
 
     if (!res.ok) {
-      const body = await res.json().catch(() => null);
-      throw new Error(body?.detail || `HTTP ${res.status}`);
+      const body = await parseJsonBody<ApiErrorBody>(res);
+      throw new Error(extractErrorMessage(res.status, body));
     }
 
-    const body = await res.json();
-    const nextApiBase = body.api_base_url || defaultApiBase;
+    const body = await parseJsonBody<ApiSettingsBody>(res);
+    const nextApiBase = resolveApiBase(body?.api_base_url, defaultApiBase);
     apiBase.value = nextApiBase;
     settingsApiBase.value = nextApiBase;
     return nextApiBase;
   };
 
-  const request = async (path: string, options: Record<string, any> = {}) => {
-    if (!apiBaseLoadPromise) {
-      await loadApiBase();
-    } else {
-      await apiBaseLoadPromise;
-    }
+  const request = async <T = unknown>(
+    path: string,
+    options: RequestInit = {},
+  ): Promise<T> => {
+    await loadApiBase();
 
     const { headers: mergedHeaders, rest } = buildRequestHeaders(options);
 
@@ -73,12 +80,12 @@ export const useBookmarkApi = () => {
       ...rest,
     });
 
-    const body = await res.json().catch(() => null);
+    const body = await parseJsonBody<T>(res);
     if (!res.ok) {
-      throw new Error(extractErrorMessage(res.status, body));
+      throw new Error(extractErrorMessage(res.status, body as ApiErrorBody | null));
     }
 
-    return body;
+    return body as T;
   };
 
   return { apiBase, defaultApiBase, loadApiBase, saveApiBase, request };
