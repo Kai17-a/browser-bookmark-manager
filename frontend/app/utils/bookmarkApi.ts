@@ -1,4 +1,5 @@
 export const DEFAULT_API_BASE = "http://localhost:8000";
+export const DEFAULT_API_PORT = "8000";
 
 export type ApiErrorBody = {
   detail?: string | string[];
@@ -6,9 +7,9 @@ export type ApiErrorBody = {
 
 export const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
-export const deriveBrowserApiBase = (href: string) => {
+export const deriveBrowserApiBase = (href: string, apiPort = DEFAULT_API_PORT) => {
   const url = new URL(href);
-  url.port = "8000";
+  url.port = apiPort;
   return url.origin;
 };
 

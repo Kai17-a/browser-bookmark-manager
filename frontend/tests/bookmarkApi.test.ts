@@ -24,6 +24,9 @@ describe("bookmarkApi helpers", () => {
             "http://example.com:8000",
         );
         expect(
+            deriveBrowserApiBase("http://example.com:3000/bookmarks", "9000"),
+        ).toBe("http://example.com:9000");
+        expect(
             deriveBrowserApiBase("https://bookmarks.example.com/settings"),
         ).toBe("https://bookmarks.example.com:8000");
     });

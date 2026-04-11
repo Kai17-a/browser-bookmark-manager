@@ -50,7 +50,7 @@ GitHub Actions のワークフローをローカルで再現する場合は `mis
 ### Docker を使う場合
 
 ```bash
-docker compose up --build
+./scripts/docker-compose-up-fresh.sh
 ```
 
 `docker-compose.yml` はローカル開発向けのサンプルで、`Dockerfile` をビルドして起動する。
@@ -64,15 +64,16 @@ services:
             dockerfile: Dockerfile
         environment:
             DATABASE_URL: /data/bookmark.db
-            API_BASE_URL: http://127.0.0.1:${API_PORT:-8000}
+            API_BASE_URL: http://127.0.0.1:8000
         ports:
-            - "${FRONTEND_PORT:-3000}:3000"
-            - "${API_PORT:-8000}:8000"
+            - "3001:3000"
+            - "8005:8000"
         volumes:
-            - ./local-data:/data
+            - ./data:/data
 ```
 
-Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコンテナでフロントエンドと API を利用できる。公開ポートを変える場合は `API_PORT` と `FRONTEND_PORT` を変更する。
+Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコンテナでフロントエンドと API を利用できる。`API_PORT` を変えない限り、コンテナ内ではフロントが `http://127.0.0.1:8000` の API を使う。
+`API_PORT` を変更した場合は、コンテナ内の API 待受ポートとフロントエンドの既定接続先もその値に追従する。
 
 ## Push 前チェック
 

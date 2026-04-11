@@ -31,10 +31,13 @@ COPY api /app/api
 COPY --from=frontend-build /app/frontend/.output /app/frontend/.output
 COPY --from=frontend-build /app/frontend/node_modules /app/frontend/node_modules
 COPY --from=frontend-build /app/frontend/package.json /app/frontend/package.json
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Runtime defaults; users can override these with `docker run -e` or compose
 ENV DATABASE_URL=/data/bookmark.db
+ENV API_PORT=8000
 
 EXPOSE 3000 8000
 
-CMD ["sh", "-c", "fastapi run api/main.py --host 0.0.0.0 --port 8000 & API_PID=$!; cd /app/frontend; bun run start & FRONTEND_PID=$!; trap 'kill $API_PID $FRONTEND_PID 2>/dev/null || true' INT TERM EXIT; wait $API_PID $FRONTEND_PID"]
+CMD ["/app/start.sh"]
