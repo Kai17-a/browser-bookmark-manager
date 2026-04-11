@@ -24,7 +24,11 @@
                             placeholder="New tag name"
                             class="flex-1"
                         />
-                        <UButton type="submit" icon="i-lucide-plus" @click="createTag">
+                        <UButton
+                            type="submit"
+                            icon="i-lucide-plus"
+                            @click="createTag"
+                        >
                             Add tag
                         </UButton>
                     </form>
@@ -32,17 +36,18 @@
 
                 <UPageCard
                     title="Tag list"
-                    description="All tags in the database"
                     :ui="{ body: 'space-y-3' }"
                 >
-                    <div v-if="tags.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <div
+                        v-if="tags.length"
+                        class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+                    >
                         <CardsEntityCard
                             v-for="tag in tags"
                             :key="tag.id"
                             :title="tag.name"
                             :to="`/tags/${tag.id}`"
                             :meta="`Tag ID ${tag.id}`"
-                            description="Manage this tag and review its associated bookmarks from the detail page."
                             @edit="openEdit(tag)"
                             @remove="askDelete(tag)"
                         />
@@ -81,7 +86,9 @@
                                 >
                                     Cancel
                                 </UButton>
-                                <UButton @click="saveEdit">Save changes</UButton>
+                                <UButton @click="saveEdit"
+                                    >Save changes</UButton
+                                >
                             </div>
                         </div>
                     </template>

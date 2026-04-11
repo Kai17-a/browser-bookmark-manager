@@ -24,7 +24,11 @@
                             placeholder="New folder name"
                             class="flex-1"
                         />
-                        <UButton type="submit" icon="i-lucide-plus" @click="createFolder">
+                        <UButton
+                            type="submit"
+                            icon="i-lucide-plus"
+                            @click="createFolder"
+                        >
                             Add folder
                         </UButton>
                     </form>
@@ -32,17 +36,18 @@
 
                 <UPageCard
                     title="Folder list"
-                    description="All folders in the database"
                     :ui="{ body: 'space-y-3' }"
                 >
-                    <div v-if="folders.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <div
+                        v-if="folders.length"
+                        class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+                    >
                         <CardsEntityCard
                             v-for="folder in folders"
                             :key="folder.id"
                             :title="folder.name"
                             :to="`/folders/${folder.id}`"
                             :meta="`Folder ID ${folder.id}`"
-                            description="Manage this folder and review bookmarks assigned to it from the detail page."
                             @edit="openEdit(folder)"
                             @remove="askDelete(folder)"
                         />
