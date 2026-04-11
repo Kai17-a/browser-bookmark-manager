@@ -21,7 +21,7 @@
                 <UPageGrid class="grid gap-4 lg:grid-cols-2">
                     <UPageCard
                         title="API Base URL"
-                        description="Configure where the frontend sends requests"
+                        description="Configured from runtime environment"
                         :ui="{ body: 'space-y-5' }"
                     >
                         <div class="space-y-2">
@@ -33,28 +33,13 @@
                                     v-model="form.apiBaseUrl"
                                     placeholder="http://localhost:8000"
                                     class="w-full"
+                                    readonly
                                 />
                             </UFormField>
                         </div>
 
                         <div class="flex flex-wrap gap-3">
-                            <UButton
-                                icon="i-lucide-save"
-                                size="sm"
-                                :loading="saving"
-                                @click="saveSettings"
-                            >
-                                Save settings
-                            </UButton>
-                            <UButton
-                                size="sm"
-                                variant="ghost"
-                                color="neutral"
-                                icon="i-lucide-rotate-ccw"
-                                @click="resetSettings"
-                            >
-                                Reset
-                            </UButton>
+                            <UBadge :label="connectionLabel" :color="statusColor" />
                         </div>
                     </UPageCard>
 
@@ -104,11 +89,10 @@
 </template>
 
 <script setup lang="ts">
-const { apiBase, loadApiBase } = useBookmarkApi();
+const { loadApiBase } = useBookmarkApi();
 const toast = useSingleToast();
 const connectionLabel = ref("Connecting...");
 const statusColor = ref<"warning" | "success" | "error">("warning");
-const saving = ref(false);
 const checking = ref(false);
 const form = reactive({
     apiBaseUrl: "",
@@ -195,59 +179,6 @@ const checkHealth = async () => {
         });
     } finally {
         checking.value = false;
-    }
-};
-
-const resetSettings = () => {
-    form.apiBaseUrl = apiBase.value || "";
-};
-
-const saveSettings = async () => {
-    if (!form.apiBaseUrl) {
-        statusColor.value = "error";
-        connectionLabel.value = "Serverに接続できない";
-        toast.show({
-            title: "API base URL is empty.",
-            color: "error",
-            icon: "i-lucide-circle-alert",
-        });
-        return;
-    }
-    saving.value = true;
-    try {
-        const targetBase = form.apiBaseUrl.replace(/\/$/, "");
-        const res = await fetch(`${targetBase}/settings`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ api_base_url: form.apiBaseUrl }),
-        });
-
-        if (!res.ok) {
-            const body = await res.json().catch(() => null);
-            throw new Error(body?.detail || `HTTP ${res.status}`);
-        }
-
-        const body = await res.json();
-        const next = body.api_base_url || form.apiBaseUrl;
-        form.apiBaseUrl = next;
-        apiBase.value = next;
-        statusColor.value = "success";
-        connectionLabel.value = "Connected";
-        toast.show({
-            title: "Settings saved.",
-            color: "success",
-            icon: "i-lucide-check",
-        });
-    } catch (error) {
-        statusColor.value = "error";
-        toast.show({
-            title: "Failed to save settings.",
-            description: error instanceof Error ? error.message : undefined,
-            color: "error",
-            icon: "i-lucide-circle-alert",
-        });
-    } finally {
-        saving.value = false;
     }
 };
 
