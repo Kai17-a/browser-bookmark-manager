@@ -5,14 +5,6 @@
                 <template #leading>
                     <UDashboardSidebarCollapse />
                 </template>
-
-                <template #trailing>
-                    <UBadge
-                        :label="connectionLabel"
-                        variant="subtle"
-                        :color="connectionColor"
-                    />
-                </template>
             </UDashboardNavbar>
         </template>
 

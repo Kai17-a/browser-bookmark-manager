@@ -5,84 +5,43 @@
                 <template #leading>
                     <UDashboardSidebarCollapse />
                 </template>
-
-                <template #trailing>
-                    <UBadge
-                        :label="connectionLabel"
-                        variant="soft"
-                        :color="statusColor"
-                    />
-                </template>
             </UDashboardNavbar>
         </template>
 
         <template #body>
             <div class="space-y-6">
-                <UPageGrid class="grid gap-4 lg:grid-cols-2">
-                    <UPageCard
-                        title="API Base URL"
-                        description="Configured from runtime environment"
-                        :ui="{ body: 'space-y-5' }"
-                    >
-                        <div class="space-y-2">
-                            <UFormField
-                                label="Current value"
-                                description="This is the base URL used by the app"
-                            >
-                                <UInput
-                                    v-model="form.apiBaseUrl"
-                                    placeholder="http://localhost:8000"
-                                    class="w-full"
-                                    readonly
-                                />
-                            </UFormField>
-                        </div>
-
-                        <div class="flex flex-wrap gap-3">
-                            <UBadge :label="connectionLabel" :color="statusColor" />
-                        </div>
-                    </UPageCard>
-
-                    <UPageCard
-                        title="Connection Check"
-                        description="Verify the API server is reachable"
-                        :ui="{ body: 'space-y-4' }"
-                    >
-                        <div
-                            class="flex items-center justify-between gap-4 rounded-2xl border p-4"
-                            :class="statusTone"
+                <UPageCard
+                    title="API Base URL"
+                    description="Configured from runtime environment"
+                    :ui="{ body: 'space-y-5' }"
+                >
+                    <div class="space-y-2">
+                        <UFormField
+                            label="Current value"
+                            description="This is the base URL used by the app"
                         >
-                            <div class="min-w-0">
-                                <p class="text-xs uppercase tracking-[0.08em] text-muted">
-                                    Health
+                            <div class="flex flex-wrap items-center gap-3">
+                                <p
+                                    class="rounded-xl border border-default bg-elevated px-4 py-3 text-sm text-default"
+                                >
+                                    {{
+                                        form.apiBaseUrl ||
+                                        "http://localhost:8000"
+                                    }}
                                 </p>
-                                <p class="mt-1 break-words text-sm text-default">
-                                    {{ message }}
-                                </p>
-                            </div>
-                            <UButton
-                                size="xs"
-                                variant="soft"
-                                icon="i-lucide-refresh-cw"
-                                :loading="checking"
-                                @click="checkHealth"
-                            >
-                                Recheck
-                            </UButton>
-                        </div>
 
-                        <div class="space-y-2">
-                            <p class="text-xs uppercase tracking-[0.08em] text-muted">
-                                Endpoint
-                            </p>
-                            <code
-                                class="block break-all rounded-xl bg-elevated px-3 py-3 text-sm text-default"
-                            >
-                                {{ healthUrl }}
-                            </code>
-                        </div>
-                    </UPageCard>
-                </UPageGrid>
+                                <UButton
+                                    icon="i-lucide-heart-pulse"
+                                    variant="soft"
+                                    :loading="checking"
+                                    @click="checkHealth"
+                                >
+                                    /health
+                                </UButton>
+                            </div>
+                        </UFormField>
+                    </div>
+                </UPageCard>
             </div>
         </template>
     </UDashboardPanel>
@@ -97,19 +56,6 @@ const checking = ref(false);
 const form = reactive({
     apiBaseUrl: "",
 });
-
-const healthUrl = computed(
-    () => `${form.apiBaseUrl.replace(/\/$/, "")}/health`,
-);
-
-const statusTone = computed(
-    () =>
-        ({
-            warning: "border-amber-500/30 bg-amber-500/10",
-            success: "border-emerald-500/30 bg-emerald-500/10",
-            error: "border-rose-500/30 bg-rose-500/10",
-        })[statusColor.value],
-);
 
 const syncSettings = async () => {
     try {
@@ -145,9 +91,10 @@ const checkHealth = async () => {
         });
         return;
     }
+
     checking.value = true;
     try {
-        const res = await fetch(healthUrl.value);
+        const res = await fetch(`${form.apiBaseUrl.replace(/\/$/, "")}/health`);
         if (!res.ok) {
             throw new Error(`HTTP ${res.status}`);
         }
@@ -184,6 +131,5 @@ const checkHealth = async () => {
 
 onMounted(async () => {
     await syncSettings();
-    await checkHealth();
 });
 </script>

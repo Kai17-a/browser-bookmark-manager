@@ -6,14 +6,6 @@
                     <UDashboardSidebarCollapse />
                 </template>
 
-                <template #trailing>
-                    <UBadge
-                        :label="connectionLabel"
-                        variant="soft"
-                        :color="connectionColor"
-                    />
-                </template>
-
                 <template #right>
                     <UButton
                         label="Register"
