@@ -8,7 +8,10 @@ RUN apk add --no-cache bash
 COPY frontend/package.json frontend/bun.lock ./
 RUN bun install
 
-COPY frontend/ ./
+COPY frontend/nuxt.config.ts ./nuxt.config.ts
+COPY frontend/tsconfig.json ./tsconfig.json
+COPY frontend/app ./app
+COPY frontend/public ./public
 RUN bun run build
 
 

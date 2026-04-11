@@ -4,7 +4,11 @@ WORKDIR /app
 
 RUN apk add --no-cache bash
 
-COPY frontend /app
+COPY frontend/package.json frontend/bun.lock /app/
+COPY frontend/nuxt.config.ts /app/nuxt.config.ts
+COPY frontend/tsconfig.json /app/tsconfig.json
+COPY frontend/app /app/app
+COPY frontend/public /app/public
 
 RUN bun install
 RUN bun run build
