@@ -24,10 +24,7 @@
                                 <p
                                     class="rounded-xl border border-default bg-elevated px-4 py-3 text-sm text-default"
                                 >
-                                    {{
-                                        form.apiBaseUrl ||
-                                        "http://localhost:8000"
-                                    }}
+                                    {{ form.apiBaseUrl || defaultApiBase }}
                                 </p>
 
                                 <UButton
@@ -48,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-const { loadApiBase } = useBookmarkApi();
+const { defaultApiBase, loadApiBase } = useBookmarkApi();
 const toast = useSingleToast();
 const checking = ref(false);
 const form = reactive({

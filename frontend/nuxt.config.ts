@@ -46,7 +46,7 @@ export default defineNuxtConfig({
             apiBaseUrl:
                 env.NUXT_PUBLIC_API_BASE_URL ||
                 env.NUXT_PUBLIC_API_BASE ||
-                "http://localhost:8000",
+                "",
         },
     },
 });

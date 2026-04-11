@@ -88,7 +88,8 @@ APIはPythonで実装し、データストアにはSQLiteを使用する。
 #### 受け入れ基準
 
 1. WHEN ClientがGETリクエストを `/settings` に送信したとき、THE API SHALL `api_base_url` を含む設定オブジェクトを返す。
-2. THE API SHALL 設定値として `API_BASE_URL` 環境変数を使用する。
+2. IF `API_BASE_URL` 環境変数が設定されているとき、THEN THE API SHALL その値を返す。
+3. IF `API_BASE_URL` 環境変数が未設定のとき、THEN THE API SHALL リクエストのオリジンをもとに `api_base_url` を解決して返す。
 
 ---
 

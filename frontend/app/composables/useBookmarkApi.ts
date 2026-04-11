@@ -3,6 +3,7 @@ import {
   SETTINGS_PATH,
   buildRequestHeaders,
   extractErrorMessage,
+  getDefaultApiBase,
   parseJsonBody,
   resolveApiBase,
   trimTrailingSlash,
@@ -12,7 +13,7 @@ import {
 
 export const useBookmarkApi = () => {
   const config = useRuntimeConfig();
-  const defaultApiBase = DEFAULT_API_BASE;
+  const defaultApiBase = getDefaultApiBase();
   const configuredBase = resolveApiBase(config.public.apiBaseUrl, defaultApiBase);
   const settingsApiBase = ref(configuredBase);
   const apiBase = ref(defaultApiBase);

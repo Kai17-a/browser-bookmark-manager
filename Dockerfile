@@ -33,8 +33,6 @@ COPY --from=frontend-build /app/frontend/node_modules /app/frontend/node_modules
 COPY --from=frontend-build /app/frontend/package.json /app/frontend/package.json
 
 # Runtime defaults; users can override these with `docker run -e` or compose
-ENV NUXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
-ENV API_BASE_URL=http://127.0.0.1:8000
 ENV DATABASE_URL=/data/bookmark.db
 
 EXPOSE 3000 8000

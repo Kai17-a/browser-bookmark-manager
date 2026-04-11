@@ -26,8 +26,6 @@
 docker pull ghcr.io/<github-owner>/bookmark-manager:latest
 docker run --rm -p 3000:3000 -p 8000:8000 \
   -e DATABASE_URL=/data/bookmark.db \
-  -e API_BASE_URL=http://127.0.0.1:8000 \
-  -e NUXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 \
   -v "$(pwd)/data:/data" \
   ghcr.io/<github-owner>/bookmark-manager:latest
 ```
@@ -38,17 +36,18 @@ docker run --rm -p 3000:3000 -p 8000:8000 \
 services:
     bookmark-manager:
         container_name: bookmark-manager
-        image: ghcr.io/<github-owner>/bookmark-manager:latest
+        image: ghcr.io/kai17-a/browser-bookmark-manager:latest
         environment:
             DATABASE_URL: /data/bookmark.db
-            API_BASE_URL: http://127.0.0.1:8000
-            NUXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8000
         ports:
             - "3000:3000"
             - "8000:8000"
         volumes:
             - ./data:/data
 ```
+
+`API_BASE_URL` と `NUXT_PUBLIC_API_BASE_URL` は、API を別ホストや別ポートに公開するときだけ上書きする。
+同じホストで `3000` と `8000` を公開する標準構成では、未設定のほうが外部端末からも正しく解決される。
 
 GitHub Packages の Docker image 公開機能を使う場合は、別途ワークフローを用意してください。
 `GITHUB_TOKEN` に `packages: write` 権限が付くように設定してください。

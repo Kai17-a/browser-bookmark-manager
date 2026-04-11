@@ -207,6 +207,6 @@ class ApiBaseUrlResponse(BaseModel):
 
 ## 運用上の補足
 
-- `API_BASE_URL` は `/settings` の返却値に使う
+- `/settings` は `API_BASE_URL` が設定されていればその値を返し、未設定なら受信したリクエストのオリジンを返す
 - 未知の SQLite エラーは 500 に変換する
 - アプリ起動時に初期化処理を実行する

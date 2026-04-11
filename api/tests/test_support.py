@@ -6,7 +6,9 @@ from urllib.parse import parse_qs, urlparse
 
 from fastapi import HTTPException
 from pydantic import ValidationError
+from starlette.requests import Request
 
+from api.config import resolve_api_base_url
 from api.model.models import (
     BookmarkCreate,
     BookmarkUpdate,
@@ -55,6 +57,7 @@ class CompatTestClient:
 
     def __init__(self, app, **kwargs):
         self.app = app
+        self.base_url = kwargs.get("base_url", "http://testserver")
 
     def __enter__(self):
         return self
@@ -76,10 +79,32 @@ class CompatTestClient:
     def _serialize(self, items):
         return [item.model_dump() for item in items]
 
+    def _build_request(self, path: str) -> Request:
+        parsed = urlparse(self.base_url)
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        scope = {
+            "type": "http",
+            "scheme": parsed.scheme or "http",
+            "server": (parsed.hostname or "testserver", port),
+            "method": "GET",
+            "path": path,
+            "raw_path": path.encode(),
+            "query_string": b"",
+            "headers": [],
+            "client": ("testclient", 50000),
+        }
+        return Request(scope)
+
     def request(self, method: str, url: str, json=None, **kwargs):
         path, query = self._parse(url)
 
         try:
+            if method == "GET" and path == "/settings":
+                payload = {"api_base_url": resolve_api_base_url(self._build_request(path))}
+                return self._ok(payload, 200)
+            if method == "GET" and path == "/health":
+                return self._ok({"status": "ok"}, 200)
+
             if method == "POST" and path == "/folders":
                 body = FolderCreate(**(json or {}))
                 payload = FolderService().create(body).model_dump()

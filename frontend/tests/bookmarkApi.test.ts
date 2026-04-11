@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
     DEFAULT_API_BASE,
     buildRequestHeaders,
+    deriveBrowserApiBase,
+    getDefaultApiBase,
     extractErrorMessage,
     resolveApiBase,
     trimTrailingSlash,
@@ -23,6 +25,34 @@ describe("bookmarkApi helpers", () => {
         expect(resolveApiBase("https://api.example.com")).toBe(
             "https://api.example.com",
         );
+    });
+
+    it("derives the API base from the current browser host", () => {
+        expect(deriveBrowserApiBase("http://example.com:3000/bookmarks")).toBe(
+            "http://example.com:8000",
+        );
+        expect(
+            deriveBrowserApiBase("https://bookmarks.example.com/settings"),
+        ).toBe("https://bookmarks.example.com:8000");
+    });
+
+    it("uses the browser host for the default API base when available", () => {
+        const originalWindow = globalThis.window;
+        Object.defineProperty(globalThis, "window", {
+            configurable: true,
+            value: {
+                location: {
+                    href: "http://demo.example.net:3000/folders",
+                },
+            },
+        });
+
+        expect(getDefaultApiBase()).toBe("http://demo.example.net:8000");
+
+        Object.defineProperty(globalThis, "window", {
+            configurable: true,
+            value: originalWindow,
+        });
     });
 
     it("adds JSON content type only when a request body is present", () => {

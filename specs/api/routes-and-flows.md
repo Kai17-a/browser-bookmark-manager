@@ -231,8 +231,11 @@ Response:
 Response:
 
 ```json
-{ "api_base_url": "http://localhost:8000" }
+{ "api_base_url": "https://bookmarks.example.com:8000" }
 ```
+
+- `API_BASE_URL` 環境変数がある場合はその値を返す
+- 未設定の場合は受信したリクエストのオリジンを返す
 
 ### `GET /health`
 

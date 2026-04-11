@@ -67,7 +67,8 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `bookmarks.url` は正規化後に一意扱いする
 - フォルダ削除時は関連ブックマークの `folder_id` を `NULL` にする
 - ブックマークまたはタグ削除時は `bookmark_tags` を連動削除する
-- `API_BASE_URL` は `/settings` の返却値として使う
+- `API_BASE_URL` は `/settings` の返却値を明示的に固定したいときだけ使う
+- `API_BASE_URL` が未設定なら `/settings` は受信したリクエストのオリジンを返す
 - SQLite の外部キー制約は `PRAGMA foreign_keys = ON` で有効化する
 - DB 障害は 500 として返す
 
