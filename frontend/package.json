@@ -4,7 +4,7 @@
     "type": "module",
     "scripts": {
         "dev": "nuxt dev --host 0.0.0.0",
-        "build": "nuxt build",
+        "build": "bash -lc 'set -o pipefail; nuxt build 2>&1 | grep -v \"Sourcemap is likely to be incorrect\"'",
         "start": "node .output/server/index.mjs",
         "generate": "nuxt generate",
         "preview": "nuxt preview",
@@ -26,7 +26,7 @@
         "date-fns": "^4.1.0",
         "nuxt": "^4.4.2",
         "scule": "^1.3.0",
-        "tailwindcss": "^4.2.2",
+        "tailwindcss": "^4.1.13",
         "vue": "^3.5.31",
         "zod": "^4.3.6"
     },

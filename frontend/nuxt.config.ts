@@ -1,3 +1,5 @@
+import tailwindcss from "@tailwindcss/vite";
+
 const env =
     (globalThis as {
         process?: { env?: Record<string, string | undefined> };
@@ -9,17 +11,21 @@ export default defineNuxtConfig({
     devtools: { enabled: false },
     css: ["~/assets/css/main.css"],
     ssr: false,
-    sourcemap: false,
-    cssSourceMap: false,
+    sourcemap: {
+        client: true,
+        server: false,
+    },
+    cssSourceMap: true,
     vite: {
+        logLevel: "error",
         build: {
-            sourcemap: false,
+            sourcemap: true,
             modulePreload: {
                 polyfill: false,
             },
         },
         css: {
-            devSourcemap: false,
+            devSourcemap: true,
         },
     },
     app: {
