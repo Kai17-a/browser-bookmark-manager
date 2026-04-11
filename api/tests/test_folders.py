@@ -3,7 +3,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api.main import app
-from api.database import init_db, get_db
+from api.database import init_db
 
 
 @pytest.fixture
@@ -85,6 +85,21 @@ def test_create_folder_without_name_returns_422(client):
 def test_create_folder_with_empty_name_returns_422(client):
     response = client.post("/folders", json={"name": "   "})
     assert response.status_code == 422
+
+
+def test_create_duplicate_folder_returns_409(client):
+    client.post("/folders", json={"name": "Work"})
+    response = client.post("/folders", json={"name": "Work"})
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Folder name already exists"
+
+
+def test_update_folder_to_duplicate_name_returns_409(client):
+    first = client.post("/folders", json={"name": "A"}).json()["id"]
+    client.post("/folders", json={"name": "B"})
+    response = client.patch(f"/folders/{first}", json={"name": "B"})
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Folder name already exists"
 
 
 def test_delete_nonexistent_folder_returns_404(client):

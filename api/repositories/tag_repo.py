@@ -19,6 +19,13 @@ class TagRepository:
         rows = self.conn.execute("SELECT * FROM tags").fetchall()
         return [dict(row) for row in rows]
 
+    def find_by_name(self, name: str) -> dict | None:
+        row = self.conn.execute(
+            "SELECT * FROM tags WHERE name = ?",
+            (name,),
+        ).fetchone()
+        return dict(row) if row else None
+
     def find_by_id(self, tag_id: int) -> dict | None:
         row = self.conn.execute(
             "SELECT * FROM tags WHERE id = ?", (tag_id,)

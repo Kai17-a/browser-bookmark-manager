@@ -7,7 +7,15 @@ from urllib.parse import parse_qs, urlparse
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from api.model.models import BookmarkCreate, BookmarkUpdate, FolderCreate, TagAttach, TagCreate
+from api.model.models import (
+    BookmarkCreate,
+    BookmarkUpdate,
+    FolderCreate,
+    FolderUpdate,
+    TagAttach,
+    TagCreate,
+    TagUpdate,
+)
 from api.services.bookmark_service import BookmarkService
 from api.services.folder_service import FolderService
 from api.services.tag_service import TagService
@@ -78,6 +86,10 @@ class CompatTestClient:
                 return self._ok(payload, 201)
             if method == "GET" and path == "/folders":
                 return self._ok(self._serialize(FolderService().list()), 200)
+            if method == "PATCH" and path.startswith("/folders/"):
+                body = FolderUpdate(**(json or {}))
+                payload = FolderService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+                return self._ok(payload, 200)
             if method == "DELETE" and path.startswith("/folders/"):
                 FolderService().delete(int(path.rsplit("/", 1)[1]))
                 return self._ok(status_code=204)
@@ -88,6 +100,10 @@ class CompatTestClient:
                 return self._ok(payload, 201)
             if method == "GET" and path == "/tags":
                 return self._ok(self._serialize(TagService().list()), 200)
+            if method == "PATCH" and path.startswith("/tags/"):
+                body = TagUpdate(**(json or {}))
+                payload = TagService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+                return self._ok(payload, 200)
             if method == "DELETE" and path.startswith("/tags/"):
                 TagService().delete(int(path.rsplit("/", 1)[1]))
                 return self._ok(status_code=204)

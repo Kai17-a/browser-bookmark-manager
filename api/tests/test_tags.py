@@ -86,6 +86,14 @@ def test_create_tag_with_empty_name_returns_422(client):
     assert response.status_code == 422
 
 
+def test_update_tag_to_duplicate_name_returns_409(client):
+    first = client.post("/tags", json={"name": "alpha"}).json()["id"]
+    client.post("/tags", json={"name": "beta"})
+    response = client.patch(f"/tags/{first}", json={"name": "beta"})
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Tag name already exists"
+
+
 def test_delete_nonexistent_tag_returns_404(client):
     response = client.delete("/tags/99999")
     assert response.status_code == 404

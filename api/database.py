@@ -51,8 +51,24 @@ def init_db(database_url: str = DATABASE_URL) -> None:
         )
         conn.execute(
             """
+            DELETE FROM folders
+            WHERE id NOT IN (
+                SELECT MIN(id)
+                FROM folders
+                GROUP BY name
+            )
+            """
+        )
+        conn.execute(
+            """
             CREATE UNIQUE INDEX IF NOT EXISTS idx_bookmarks_url_unique
             ON bookmarks(url)
+            """
+        )
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_folders_name_unique
+            ON folders(name)
             """
         )
         conn.commit()

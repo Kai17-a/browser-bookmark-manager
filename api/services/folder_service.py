@@ -1,3 +1,5 @@
+import sqlite3
+
 from fastapi import HTTPException
 
 from api.database import get_db
@@ -8,15 +10,24 @@ MAX_FOLDERS = 20
 
 
 class FolderService:
+    def _ensure_name_available(self, repo: FolderRepository, name: str, folder_id: int | None = None) -> None:
+        existing = repo.find_by_name(name)
+        if existing is not None and existing["id"] != folder_id:
+            raise HTTPException(status_code=409, detail="Folder name already exists")
+
     def create(self, data: FolderCreate) -> FolderResponse:
         with get_db() as conn:
             repo = FolderRepository(conn)
+            self._ensure_name_available(repo, data.name)
             if len(repo.find_all()) >= MAX_FOLDERS:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Folder limit reached: maximum {MAX_FOLDERS} folders",
                 )
-            row = repo.insert(data.name)
+            try:
+                row = repo.insert(data.name)
+            except sqlite3.IntegrityError:
+                raise HTTPException(status_code=409, detail="Folder name already exists")
             return FolderResponse(**row)
 
     def list(self) -> list[FolderResponse]:
@@ -28,7 +39,11 @@ class FolderService:
     def update(self, folder_id: int, data: FolderUpdate) -> FolderResponse:
         with get_db() as conn:
             repo = FolderRepository(conn)
-            row = repo.update(folder_id, data.name)
+            self._ensure_name_available(repo, data.name, folder_id=folder_id)
+            try:
+                row = repo.update(folder_id, data.name)
+            except sqlite3.IntegrityError:
+                raise HTTPException(status_code=409, detail="Folder name already exists")
             if not row:
                 raise HTTPException(status_code=404, detail="Folder not found")
             return FolderResponse(**row)

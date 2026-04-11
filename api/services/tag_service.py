@@ -1,5 +1,3 @@
-import sqlite3
-
 from fastapi import HTTPException
 
 from api.database import get_db
@@ -10,18 +8,21 @@ MAX_TAGS = 20
 
 
 class TagService:
+    def _ensure_name_available(self, repo: TagRepository, name: str, tag_id: int | None = None) -> None:
+        existing = repo.find_by_name(name)
+        if existing is not None and existing["id"] != tag_id:
+            raise HTTPException(status_code=409, detail="Tag name already exists")
+
     def create(self, data: TagCreate) -> TagResponse:
         with get_db() as conn:
             repo = TagRepository(conn)
+            self._ensure_name_available(repo, data.name)
             if len(repo.find_all()) >= MAX_TAGS:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Tag limit reached: maximum {MAX_TAGS} tags",
                 )
-            try:
-                row = repo.insert(data.name)
-            except sqlite3.IntegrityError:
-                raise HTTPException(status_code=409, detail="Tag name already exists")
+            row = repo.insert(data.name)
             return TagResponse(**row)
 
     def list(self) -> list[TagResponse]:
@@ -33,10 +34,8 @@ class TagService:
     def update(self, tag_id: int, data: TagUpdate) -> TagResponse:
         with get_db() as conn:
             repo = TagRepository(conn)
-            try:
-                row = repo.update(tag_id, data.name)
-            except sqlite3.IntegrityError:
-                raise HTTPException(status_code=409, detail="Tag name already exists")
+            self._ensure_name_available(repo, data.name, tag_id=tag_id)
+            row = repo.update(tag_id, data.name)
             if not row:
                 raise HTTPException(status_code=404, detail="Tag not found")
             return TagResponse(**row)

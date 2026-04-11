@@ -18,6 +18,13 @@ class FolderRepository:
         rows = self.conn.execute("SELECT * FROM folders").fetchall()
         return [dict(row) for row in rows]
 
+    def find_by_name(self, name: str) -> dict | None:
+        row = self.conn.execute(
+            "SELECT * FROM folders WHERE name = ?",
+            (name,),
+        ).fetchone()
+        return dict(row) if row else None
+
     def find_by_id(self, folder_id: int) -> dict | None:
         row = self.conn.execute(
             "SELECT * FROM folders WHERE id = ?", (folder_id,)
