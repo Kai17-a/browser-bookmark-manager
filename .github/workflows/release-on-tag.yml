@@ -1,0 +1,75 @@
+name: Release On Tag
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up mise
+        uses: jdx/mise-action@v2
+
+      - name: Install git-cliff
+        run: mise use git-cliff
+
+      - name: Generate changelog
+        id: generate-changelog
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          mise x -- git-cliff --output CHANGELOG.md
+          mise x -- git-cliff --latest --strip header --output RELEASE_CHANGELOG.md
+          {
+            echo "tag=${TAG_NAME}"
+            echo "notes_path=RELEASE_CHANGELOG.md"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        id: create-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.generate-changelog.outputs.tag }}" \
+            --title "${{ steps.generate-changelog.outputs.tag }}" \
+            --notes-file "${{ steps.generate-changelog.outputs.notes_path }}"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
