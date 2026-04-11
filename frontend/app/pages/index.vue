@@ -50,7 +50,7 @@
                                         external
                                         target="_blank"
                                         rel="noreferrer"
-                                        class="block break-words text-sm font-semibold text-default hover:underline"
+                                        class="block wrap-break-word text-sm font-semibold text-default hover:underline"
                                     >
                                         {{ bookmark.title }}
                                     </NuxtLink>
@@ -163,8 +163,6 @@ import type {
 
 const { request } = useBookmarkApi();
 const toast = useSingleToast();
-const connectionLabel = ref("Connecting...");
-const connectionColor = ref("warning");
 const bookmarks = ref<BookmarkListResponse>({
     items: [],
     total: 0,
@@ -201,13 +199,11 @@ onMounted(async () => {
                 request("/bookmarks"),
                 request("/tags"),
                 request("/folders"),
-            ]);
+        ]);
 
         bookmarks.value = bookmarksRes;
         tags.value = tagsRes;
         folders.value = foldersRes;
-        connectionLabel.value = "Connected";
-        connectionColor.value = "success";
         toast.show({
             title:
                 healthRes?.status === "ok"
@@ -224,8 +220,6 @@ onMounted(async () => {
         stats.value[1].value = folders.value.length;
         stats.value[2].value = tags.value.length;
     } catch (error) {
-        connectionLabel.value = "Serverに接続できない";
-        connectionColor.value = "error";
         toast.show({
             title: "Failed to load dashboard.",
             description:
