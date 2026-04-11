@@ -18,6 +18,11 @@
 
 ローカル開発は [DEVELOPMENT.md](/home/kaito/workspaces/bookmark-manager/DEVELOPMENT.md) を参照する。
 
+GitHub Actions をローカルで実行したい場合は、`act` を `mise` 経由で使う。
+
+1. `mise x -- act -l` で GitHub Actions のジョブ一覧を取得する
+2. `mise x -- act -j <JobID> --container-architecture linux/amd64` で対象ジョブをローカル実行する
+
 ### OSS 利用者向け
 
 公開イメージを使う場合は、GitHub Container Registry から pull して実行する。
