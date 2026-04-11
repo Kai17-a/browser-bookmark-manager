@@ -11,6 +11,7 @@ export default defineNuxtConfig({
     ssr: false,
     vite: {
         build: {
+            sourcemap: false,
             modulePreload: {
                 polyfill: false,
             },
