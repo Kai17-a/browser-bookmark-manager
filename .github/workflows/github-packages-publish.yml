@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  dockerhub:
+  github-packages:
     runs-on: ubuntu-latest
 
     permissions:
