@@ -43,6 +43,7 @@ describe("bookmarkApi helpers", () => {
         });
 
         expect(getDefaultApiBase()).toBe("http://demo.example.net:8000");
+        expect(getDefaultApiBase("9000")).toBe("http://demo.example.net:9000");
 
         Object.defineProperty(globalThis, "window", {
             configurable: true,

@@ -13,9 +13,9 @@ export const deriveBrowserApiBase = (href: string, apiPort = DEFAULT_API_PORT) =
   return url.origin;
 };
 
-export const getDefaultApiBase = () => {
+export const getDefaultApiBase = (apiPort = DEFAULT_API_PORT) => {
   if (typeof window !== "undefined" && typeof window.location?.href === "string") {
-    return deriveBrowserApiBase(window.location.href);
+    return deriveBrowserApiBase(window.location.href, apiPort);
   }
 
   return DEFAULT_API_BASE;

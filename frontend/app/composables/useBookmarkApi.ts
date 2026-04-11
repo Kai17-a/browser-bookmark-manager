@@ -10,7 +10,7 @@ import {
 
 export const useBookmarkApi = () => {
   const config = useRuntimeConfig();
-  const defaultApiBase = getDefaultApiBase();
+  const defaultApiBase = getDefaultApiBase(config.public.apiPort);
   const apiBase = ref(
     typeof config.public.apiBaseUrl === "string" && config.public.apiBaseUrl
       ? config.public.apiBaseUrl
