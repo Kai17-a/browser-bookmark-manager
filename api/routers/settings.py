@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from api.database import API_BASE_URL
+from api.config import API_BASE_URL
 from api.model.models_settings import ApiBaseUrlResponse
 
 router = APIRouter(prefix="/settings", tags=["settings"])

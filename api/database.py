@@ -1,9 +1,7 @@
 import sqlite3
-import os
 from contextlib import contextmanager
 
-DATABASE_URL = os.getenv("DATABASE_URL", "bookmarks.db")
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+from api.config import DATABASE_URL
 
 
 def init_db(database_url: str = DATABASE_URL) -> None:

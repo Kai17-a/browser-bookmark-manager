@@ -1,6 +1,4 @@
 import sqlite3
-from datetime import datetime
-from typing import cast
 
 from fastapi import HTTPException
 
@@ -10,28 +8,14 @@ from api.model.models import (
     BookmarkListResponse,
     BookmarkResponse,
     BookmarkUpdate,
-    TagResponse,
 )
 from api.repositories.bookmark_repo import BookmarkRepository
 from api.repositories.folder_repo import FolderRepository
 from api.repositories.tag_repo import TagRepository
+from api.services.bookmark_base import BookmarkServiceBase
 
 
-class BookmarkService:
-    def _to_response(self, repo: BookmarkRepository, row: dict[str, object]) -> BookmarkResponse:
-        bookmark_id = cast(int, row["id"])
-        tags = [TagResponse(**t) for t in repo.get_tags(bookmark_id)]
-        return BookmarkResponse(
-            id=bookmark_id,
-            url=cast(str, row["url"]),
-            title=cast(str, row["title"]),
-            description=cast(str | None, row["description"]),
-            folder_id=cast(int | None, row["folder_id"]),
-            tags=tags,
-            created_at=cast(datetime, row["created_at"]),
-            updated_at=cast(datetime, row["updated_at"]),
-        )
-
+class BookmarkService(BookmarkServiceBase):
     def _verify_folder(self, conn, folder_id: int) -> None:
         folder_repo = FolderRepository(conn)
         if folder_repo.find_by_id(folder_id) is None:
@@ -66,7 +50,7 @@ class BookmarkService:
             self._sync_tags(repo, row["id"], data.tag_ids)
             row = repo.find_by_id(row["id"])
             assert row is not None
-            return self._to_response(repo, row)
+            return self._build_bookmark_response(repo, row)
 
     def list(
         self,
@@ -85,7 +69,7 @@ class BookmarkService:
                 page = total_pages
             offset = (page - 1) * per_page
             rows = repo.find_all(folder_id=folder_id, tag_id=tag_id, q=q, limit=per_page, offset=offset)
-            items = [self._to_response(repo, row) for row in rows]
+            items = [self._build_bookmark_response(repo, row) for row in rows]
             return BookmarkListResponse(
                 items=items,
                 total=total,
@@ -99,15 +83,15 @@ class BookmarkService:
             repo = BookmarkRepository(conn)
             row = repo.find_by_id(bookmark_id)
             if row is None:
-                raise HTTPException(status_code=404, detail="Bookmark not found")
-            return self._to_response(repo, row)
+                self._raise_not_found("Bookmark")
+            return self._build_bookmark_response(repo, row)
 
     def update(self, bookmark_id: int, data: BookmarkUpdate) -> BookmarkResponse:
         with get_db() as conn:
             # Verify bookmark exists first
             repo = BookmarkRepository(conn)
             if repo.find_by_id(bookmark_id) is None:
-                raise HTTPException(status_code=404, detail="Bookmark not found")
+                self._raise_not_found("Bookmark")
 
             # Build fields dict with only non-None values
             fields: dict[str, object] = {}
@@ -129,7 +113,7 @@ class BookmarkService:
             self._sync_tags(repo, bookmark_id, data.tag_ids)
             row = repo.find_by_id(bookmark_id)
             assert row is not None
-            return self._to_response(repo, row)
+            return self._build_bookmark_response(repo, row)
 
     def delete(self, bookmark_id: int) -> None:
         with get_db() as conn:
@@ -142,11 +126,11 @@ class BookmarkService:
         with get_db() as conn:
             repo = BookmarkRepository(conn)
             if repo.find_by_id(bookmark_id) is None:
-                raise HTTPException(status_code=404, detail="Bookmark not found")
+                self._raise_not_found("Bookmark")
 
             tag_repo = TagRepository(conn)
             if tag_repo.find_by_id(tag_id) is None:
-                raise HTTPException(status_code=404, detail="Tag not found")
+                self._raise_not_found("Tag")
 
             try:
                 repo.add_tag(bookmark_id, tag_id)
@@ -155,13 +139,13 @@ class BookmarkService:
 
             row = repo.find_by_id(bookmark_id)
             assert row is not None
-            return self._to_response(repo, row)
+            return self._build_bookmark_response(repo, row)
 
     def remove_tag(self, bookmark_id: int, tag_id: int) -> None:
         with get_db() as conn:
             repo = BookmarkRepository(conn)
             if repo.find_by_id(bookmark_id) is None:
-                raise HTTPException(status_code=404, detail="Bookmark not found")
+                self._raise_not_found("Bookmark")
 
             removed = repo.remove_tag(bookmark_id, tag_id)
             if not removed:
