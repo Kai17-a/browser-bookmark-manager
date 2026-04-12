@@ -73,42 +73,13 @@
           </div>
 
           <div v-if="feedList.items.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <UCard
+            <RSSFeedCard
               v-for="feed in feedList.items"
               :key="feed.id"
-              class="border border-default bg-elevated/30"
-              :ui="{ body: 'space-y-4' }"
-            >
-              <template #header>
-                <div class="space-y-1">
-                  <h3 class="text-base font-semibold text-default">
-                    {{ feed.title }}
-                  </h3>
-                  <p class="break-all text-sm text-muted">
-                    {{ feed.url }}
-                  </p>
-                </div>
-              </template>
-
-              <p v-if="feed.description" class="text-sm text-default">
-                {{ feed.description }}
-              </p>
-              <p v-else class="text-sm text-muted">No description.</p>
-
-              <div class="flex items-center justify-between gap-3 pt-2">
-                <div class="text-xs text-muted">
-                  Updated {{ formatDate(feed.updated_at) }}
-                </div>
-                <div class="flex gap-2">
-                  <UButton size="xs" variant="ghost" color="neutral" @click="openEditModal(feed)">
-                    Edit
-                  </UButton>
-                  <UButton size="xs" color="error" variant="ghost" @click="askDelete(feed)">
-                    Delete
-                  </UButton>
-                </div>
-              </div>
-            </UCard>
+              :feed="feed"
+              @edit="openEditModal"
+              @remove="askDelete"
+            />
           </div>
 
           <div
@@ -239,12 +210,6 @@ const paginationItems = computed<PaginationItem[]>(() => {
       return items;
     }, []);
 });
-
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("ja-JP", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
 
 const openCreateModal = () => {
   feedForm.id = "";
