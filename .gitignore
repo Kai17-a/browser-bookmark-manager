@@ -19,3 +19,4 @@ api/__pycache__/
 local-data/*
 */test-results/
 .actrc
+data/*
