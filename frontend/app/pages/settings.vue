@@ -24,14 +24,14 @@
             <UTabs
               v-model="selectedTheme"
               :items="themeOptions"
-              class="w-full max-w-md"
+              class="w-full max-w-sm"
               color="primary"
               variant="soft"
               orientation="horizontal"
               :ui="{
-                list: 'bg-default/60 border border-default p-1 rounded-2xl gap-1',
+                list: 'bg-default/60 p-1 rounded-full gap-1',
                 trigger:
-                  'rounded-xl px-4 py-2 text-sm font-medium text-muted transition-colors data-[state=active]:bg-primary data-[state=active]:text-inverted data-[state=active]:shadow-sm',
+                  'rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors data-[state=active]:bg-primary data-[state=active]:text-inverted data-[state=active]:shadow-sm',
                 indicator: 'hidden',
               }"
             />
@@ -79,9 +79,9 @@ const form = reactive({
 });
 
 const themeOptions = [
-  { label: "System", value: "system" },
-  { label: "Light", value: "light" },
-  { label: "Dark", value: "dark" },
+  { label: "System", value: "system", icon: "i-lucide-monitor" },
+  { label: "Light", value: "light", icon: "i-lucide-sun-medium" },
+  { label: "Dark", value: "dark", icon: "i-lucide-moon-star" },
 ] as const;
 
 const selectedTheme = computed({
