@@ -18,3 +18,4 @@ api/.ruff_cache/
 api/__pycache__/
 local-data/*
 */test-results/
+.actrc
