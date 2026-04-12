@@ -2,9 +2,9 @@
 
 ## 概要
 
-本ドキュメントは、ブックマーク管理REST APIの技術設計を定義する。
+本ドキュメントは、ブックマーク管理 REST API の技術設計を定義する。
 PythonでAPIサーバーを実装し、SQLiteをデータストアとして使用する。
-ブックマーク・フォルダ・タグのCRUD操作と、ブックマークへのタグ付与・解除を提供する。
+ブックマーク・RSS フィード・フォルダ・タグ・設定の CRUD と、ブックマークへのタグ付与・解除、RSS 実行による Discord webhook 通知を提供する。
 
 ### 技術スタック
 
@@ -90,6 +90,9 @@ bookmark-manager/
 | GET    | `/tags`                         | タグ一覧取得             |
 | PATCH  | `/tags/{id}`                    | タグ更新                 |
 | DELETE | `/tags/{id}`                    | タグ削除                 |
+| PUT    | `/settings/webhook`             | Discord webhook 設定     |
+| GET    | `/settings/webhook`             | Discord webhook 取得     |
+| POST   | `/rss-feeds/{id}/execute`       | RSS 実行と webhook 通知  |
 | GET    | `/health`                       | ヘルスチェック           |
 
 ### レスポンス方針
@@ -118,13 +121,30 @@ CREATE TABLE IF NOT EXISTS bookmarks (
     title       TEXT    NOT NULL,
     description TEXT,
     folder_id   INTEGER REFERENCES folders(id) ON DELETE SET NULL,
+    is_favorite INTEGER NOT NULL DEFAULT 0,
     created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS rss_feeds (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    url         TEXT    NOT NULL,
+    title       TEXT    NOT NULL,
+    description TEXT,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+    key         TEXT    PRIMARY KEY,
+    value       TEXT    NOT NULL,
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS tags (
     id   INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE
+    name TEXT NOT NULL UNIQUE,
+    description TEXT
 );
 
 CREATE TABLE IF NOT EXISTS bookmark_tags (
@@ -139,7 +159,10 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `folders.id` は削除時に `bookmarks.folder_id` を `NULL` にする
 - `bookmark_tags` はブックマーク・タグ削除時に連動削除する
 - SQLite の外部キー制約は接続時に `PRAGMA foreign_keys = ON` で有効化する
-- `bookmarks.url` と `folders.name` はアプリ側で重複を除去し、DB一意性を保つ
+- `bookmarks.url`、`rss_feeds.url`、`folders.name` はアプリ側で重複を除去し、DB一意性を保つ
+- `app_settings` はアプリ全体設定のキーバリューストアとして扱う
+- `default_webhook_url` は Discord webhook URL だけを許可する
+- RSS 実行 API は `default_webhook_url` 未設定時に 400 を返す
 
 ### Pydanticスキーマ
 
@@ -160,26 +183,45 @@ class BookmarkUpdate(BaseModel):
 
 class FolderCreate(BaseModel):
     name: str
+    description: str | None = None
 
 class FolderUpdate(BaseModel):
     name: str
+    description: str | None = None
 
 class TagCreate(BaseModel):
     name: str
+    description: str | None = None
 
 class TagUpdate(BaseModel):
     name: str
+    description: str | None = None
 
 class TagAttach(BaseModel):
     tag_id: int
 
+class RSSFeedCreate(BaseModel):
+    url: AnyHttpUrl
+    title: str
+    description: str | None = None
+
+class RSSFeedUpdate(BaseModel):
+    url: AnyHttpUrl | None = None
+    title: str | None = None
+    description: str | None = None
+
+class SettingsWebhookUpdate(BaseModel):
+    webhook_url: AnyHttpUrl
+
 class TagResponse(BaseModel):
     id: int
     name: str
+    description: str | None = None
 
 class FolderResponse(BaseModel):
     id: int
     name: str
+    description: str | None = None
     created_at: datetime
 
 class BookmarkResponse(BaseModel):
@@ -197,6 +239,29 @@ class BookmarkListResponse(BaseModel):
     total: int
     page: int
     per_page: int
+
+class RSSFeedResponse(BaseModel):
+    id: int
+    url: str
+    title: str
+    description: str | None
+    created_at: datetime
+    updated_at: datetime
+
+class RSSFeedListResponse(BaseModel):
+    items: list[RSSFeedResponse]
+    total: int
+    page: int
+    per_page: int
+
+class RSSFeedExecuteResponse(BaseModel):
+    feed_id: int
+    title: str
+    webhook_url: str
+    delivered: bool
+
+class SettingsWebhookResponse(BaseModel):
+    webhook_url: str
 ```
 
 ---
@@ -205,3 +270,5 @@ class BookmarkListResponse(BaseModel):
 
 - 未知の SQLite エラーは 500 に変換する
 - アプリ起動時に初期化処理を実行する
+- RSS 実行は実際の RSS/Atom フィード URL のみ許可する
+- Webhook は現時点では Discord のみを正式対応とする

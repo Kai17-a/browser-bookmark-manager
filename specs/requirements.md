@@ -4,14 +4,16 @@
 
 本ドキュメントは、ブックマーク管理Webアプリケーション向けREST APIの要件を定義する。
 APIはPythonで実装し、データストアにはSQLiteを使用する。
-データモデルは `bookmarks`、`folders`、`tags`、`bookmark_tags` の4テーブルで構成する。
+データモデルは `bookmarks`、`rss_feeds`、`folders`、`tags`、`bookmark_tags`、`app_settings` の各テーブルで構成する。
 
 ## 用語集
 
 - **API**: ブックマーク管理アプリケーションのREST APIサーバー
 - **Bookmark**: URLとそのメタデータ（タイトル、説明、お気に入り状態など）を保持するリソース
+- **RSS Feed**: RSS または Atom フィードの URL とメタデータを保持するリソース
 - **Folder**: ブックマークを階層的に整理するためのコンテナリソース
 - **Tag**: ブックマークに付与できるラベルリソース（多対多の関係）
+- **Webhook**: 外部サービスに通知を送るための URL
 - **Client**: APIを呼び出すブラウザまたはフロントエンドアプリケーション
 - **DB**: SQLiteデータベース
 
@@ -88,6 +90,40 @@ APIはPythonで実装し、データストアにはSQLiteを使用する。
 #### 受け入れ基準
 
 1. THE API SHALL 全データをSQLiteデータベースファイルに永続化する。
-2. THE API SHALL 起動時に `bookmarks`・`folders`・`tags`・`bookmark_tags` テーブルが存在しない場合、自動作成する。
+2. THE API SHALL 起動時に `bookmarks`・`rss_feeds`・`folders`・`tags`・`bookmark_tags`・`app_settings` テーブルが存在しない場合、自動作成する。
 3. WHILE APIが動作中のとき、THE API SHALL 全ての書き込み操作をトランザクション内で実行し、エラー発生時にはロールバックする。
 4. IF データベースへの接続または書き込みに失敗したとき、THEN THE API SHALL HTTPステータス500を返す。
+
+---
+
+### 要件6: RSS フィード管理
+
+**ユーザーストーリー:** 開発者として、RSS フィード URL を登録・更新・削除したい。
+
+#### 受け入れ基準
+
+1. WHEN Clientが有効なフィード URL・タイトルを含む POST リクエストを `/rss-feeds` に送信したとき、THE API SHALL 新しい RSS フィードを DB に保存し、HTTP ステータス 201 と作成された RSS フィードオブジェクトを返す。
+2. WHEN Clientが `GET /rss-feeds` にリクエストを送信したとき、THE API SHALL RSS フィード一覧を返し、`q`、`page`、`per_page` による検索とページングをサポートする。
+3. WHEN Clientが `GET /rss-feeds/{id}` にリクエストを送信したとき、THE API SHALL 指定 ID の RSS フィードを返す。
+4. WHEN Clientが `PATCH /rss-feeds/{id}` にリクエストを送信したとき、THE API SHALL 指定 RSS フィードを部分更新し、更新後の RSS フィードを返す。
+5. WHEN Clientが `DELETE /rss-feeds/{id}` にリクエストを送信したとき、THE API SHALL 指定 RSS フィードを削除し、HTTP ステータス 204 を返す。
+6. IF Clientが無効な URL 形式を送信したとき、THEN THE API SHALL HTTP ステータス 422 を返す。
+7. IF Clientが RSS または Atom フィードではない URL を送信したとき、THEN THE API SHALL HTTP ステータス 422 を返す。
+8. IF Clientが重複する RSS フィード URL を作成または更新しようとしたとき、THEN THE API SHALL HTTP ステータス 409 を返す。
+
+---
+
+### 要件7: Webhook 設定と RSS 実行
+
+**ユーザーストーリー:** 開発者として、アプリ全体の webhook URL を設定し、RSS 実行結果を外部サービスに通知したい。
+
+#### 受け入れ基準
+
+1. WHEN Clientが有効な Discord webhook URL を含む `PUT /settings/webhook` を送信したとき、THE API SHALL その URL をアプリ全体設定として保存し、保存結果を返す。
+2. WHEN Clientが `GET /settings/webhook` にリクエストを送信したとき、THE API SHALL 現在設定されている webhook URL を返す。
+3. IF webhook URL がまだ設定されていない状態で `GET /settings/webhook` が呼ばれたとき、THEN THE API SHALL HTTP ステータス 404 を返す。
+4. IF Clientが Discord webhook URL ではない URL を `PUT /settings/webhook` に送信したとき、THEN THE API SHALL HTTP ステータス 422 を返す。
+5. WHEN Clientが `POST /rss-feeds/{id}/execute` にリクエストを送信したとき、THE API SHALL 指定 RSS フィードを検証し、登録済み webhook URL に通知を送信し、実行結果を返す。
+6. IF webhook URL が未設定の状態で `POST /rss-feeds/{id}/execute` が呼ばれたとき、THEN THE API SHALL HTTP ステータス 400 を返す。
+7. IF webhook 通知に失敗したとき、THEN THE API SHALL HTTP ステータス 502 を返す。
+8. THE API SHALL アルファ版では Discord webhook のみを正式対応とする。
