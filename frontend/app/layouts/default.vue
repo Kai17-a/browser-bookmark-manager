@@ -51,6 +51,12 @@ const primaryLinks = computed<NavigationMenuItem[]>(() => [
     onSelect: closeSidebar,
   },
   {
+    label: "RSS",
+    icon: "i-lucide-rss",
+    to: "/rss",
+    onSelect: closeSidebar,
+  },
+  {
     label: "Folders",
     icon: "i-lucide-folder",
     to: "/folders",
