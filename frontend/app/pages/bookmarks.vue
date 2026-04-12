@@ -7,6 +7,15 @@
         </template>
 
         <template #right>
+          <UButton
+            label="Refresh"
+            icon="i-lucide-refresh-cw"
+            size="sm"
+            color="neutral"
+            variant="ghost"
+            :loading="loading"
+            @click="loadData"
+          />
           <UButton label="Register" icon="i-lucide-plus" size="sm" @click="openCreateModal" />
         </template>
       </UDashboardNavbar>

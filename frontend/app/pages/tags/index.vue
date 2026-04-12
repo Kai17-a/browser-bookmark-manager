@@ -5,6 +5,18 @@
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
+
+        <template #right>
+          <UButton
+            label="Refresh"
+            icon="i-lucide-refresh-cw"
+            size="sm"
+            color="neutral"
+            variant="ghost"
+            :loading="false"
+            @click="refresh"
+          />
+        </template>
       </UDashboardNavbar>
     </template>
 
