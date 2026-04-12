@@ -1,23 +1,7 @@
 <template>
   <UDashboardPanel id="tags">
     <template #header>
-      <UDashboardNavbar title="Tags" :ui="{ right: 'gap-3' }">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-
-        <template #right>
-          <UButton
-            label="Refresh"
-            icon="i-lucide-refresh-cw"
-            size="sm"
-            color="neutral"
-            variant="ghost"
-            :loading="false"
-            @click="refresh"
-          />
-        </template>
-      </UDashboardNavbar>
+      <PageHeaderActions title="Tags" :loading="false" @refresh="refresh" />
     </template>
 
     <template #body>
@@ -91,25 +75,14 @@
           </template>
         </UModal>
 
-        <UModal
+        <DeleteConfirmModal
           v-model:open="confirmOpen"
           title="Delete tag"
-          description="This action cannot be undone."
-        >
-          <template #content>
-            <div class="space-y-4 p-6">
-              <p class="text-sm text-default">
-                Delete
-                <strong>{{ pendingTag?.name }}</strong>
-                and remove it from the list?
-              </p>
-              <div class="flex justify-end gap-3">
-                <UButton color="neutral" variant="ghost" @click="closeConfirm"> Cancel </UButton>
-                <UButton color="error" @click="confirmDelete"> Delete tag </UButton>
-              </div>
-            </div>
-          </template>
-        </UModal>
+          :subject="pendingTag?.name"
+          confirm-label="Delete tag"
+          @cancel="pendingTag = null"
+          @confirm="confirmDelete"
+        />
       </div>
     </template>
   </UDashboardPanel>
@@ -222,16 +195,12 @@ const askDelete = (tag: TagResponse) => {
   confirmOpen.value = true;
 };
 
-const closeConfirm = () => {
-  confirmOpen.value = false;
-  pendingTag.value = null;
-};
-
 const confirmDelete = async () => {
   if (!pendingTag.value) return;
   try {
     await request(`/tags/${pendingTag.value.id}`, { method: "DELETE" });
-    closeConfirm();
+    confirmOpen.value = false;
+    pendingTag.value = null;
     await refresh();
   } catch (err) {
     toast.show({

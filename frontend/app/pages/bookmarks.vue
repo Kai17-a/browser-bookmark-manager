@@ -1,24 +1,11 @@
 <template>
   <UDashboardPanel id="bookmarks">
     <template #header>
-      <UDashboardNavbar title="Bookmarks" :ui="{ right: 'gap-3' }">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-
-        <template #right>
-          <UButton
-            label="Refresh"
-            icon="i-lucide-refresh-cw"
-            size="sm"
-            color="neutral"
-            variant="ghost"
-            :loading="loading"
-            @click="loadData"
-          />
+      <PageHeaderActions title="Bookmarks" :loading="loading" @refresh="refreshBookmarks">
+        <template #actions>
           <UButton label="Register" icon="i-lucide-plus" size="sm" @click="openCreateModal" />
         </template>
-      </UDashboardNavbar>
+      </PageHeaderActions>
     </template>
 
     <template #body>
@@ -122,89 +109,30 @@
           </div>
         </UPageCard>
 
-        <UModal
+        <BookmarkEditorModal
           v-model:open="modalOpen"
+          v-model:selected-folder="selectedBookmarkFolder"
+          :form="bookmarkForm"
+          :folder-options="bookmarkFolderOptions"
+          :tag-options="bookmarkTagOptions"
           :title="bookmarkForm.id ? 'Edit bookmark' : 'Register bookmark'"
           :description="
             bookmarkForm.id ? 'Update the bookmark details.' : 'Create a bookmark and attach tags.'
           "
-        >
-          <template #content="{ close }">
-            <form class="space-y-4 p-6" @submit.prevent="saveBookmark">
-              <UFormField label="URL" required class="w-full">
-                <UInput
-                  v-model="bookmarkForm.url"
-                  placeholder="https://example.com"
-                  class="w-full"
-                />
-              </UFormField>
+          :submit-label="saving ? 'Saving...' : 'Save bookmark'"
+          :saving="saving"
+          @save="saveBookmark"
+        />
 
-              <UFormField label="Title" required class="w-full">
-                <UInput v-model="bookmarkForm.title" placeholder="Bookmark title" class="w-full" />
-              </UFormField>
-
-              <UFormField label="Description" class="w-full">
-                <UTextarea
-                  v-model="bookmarkForm.description"
-                  placeholder="Optional description"
-                  :rows="4"
-                  class="w-full"
-                />
-              </UFormField>
-
-              <UFormField label="Folder" class="w-full">
-                <USelectMenu
-                  v-model="selectedBookmarkFolder"
-                  :items="bookmarkFolderOptions"
-                  placeholder="No folder"
-                  class="w-full"
-                />
-              </UFormField>
-
-              <UFormField
-                label="Tags"
-                description="Attach one or more tags to this bookmark."
-                class="w-full"
-              >
-                <USelectMenu
-                  v-model="bookmarkForm.tag_ids"
-                  :items="bookmarkTagOptions"
-                  placeholder="No tags"
-                  multiple
-                  value-key="value"
-                  class="w-full"
-                />
-              </UFormField>
-
-              <div class="flex justify-end gap-3">
-                <UButton color="neutral" variant="ghost" @click="close"> Cancel </UButton>
-                <UButton type="submit" :loading="saving"> Save bookmark </UButton>
-              </div>
-            </form>
-          </template>
-        </UModal>
-
-        <UModal
+        <DeleteConfirmModal
           v-model:open="deleteOpen"
           title="Delete bookmark"
-          description="This action cannot be undone."
-        >
-          <template #content>
-            <div class="space-y-4 p-6">
-              <p class="text-sm text-default">
-                Delete
-                <strong>{{ pendingBookmark?.title }}</strong>
-                and remove it from the list?
-              </p>
-              <div class="flex justify-end gap-3">
-                <UButton color="neutral" variant="ghost" @click="closeDelete"> Cancel </UButton>
-                <UButton color="error" :loading="deleting" @click="confirmDelete">
-                  Delete bookmark
-                </UButton>
-              </div>
-            </div>
-          </template>
-        </UModal>
+          subject="this bookmark"
+          confirm-label="Delete bookmark"
+          :loading="deleting"
+          @cancel="pendingDeleteBookmark = null"
+          @confirm="confirmDelete"
+        />
       </div>
     </template>
   </UDashboardPanel>
@@ -215,13 +143,11 @@ import type { BookmarkListResponse, BookmarkResponse, FolderResponse, TagRespons
 import {
   buildBookmarkQuery,
   buildPaginationItems,
-  createEmptyBookmarkForm,
   createSelectOptions,
   mapBookmarksWithFolderNames,
   normalizeSelectValue,
   parsePositiveInteger,
   toBookmarkRouteQuery,
-  type BookmarkFormState,
   type PaginationItem,
 } from "~/utils/bookmarkList";
 
@@ -231,12 +157,7 @@ const { request } = useBookmarkApi();
 const toast = useSingleToast();
 
 const loading = ref(false);
-const saving = ref(false);
-const deleting = ref(false);
 const loadError = ref("");
-const modalOpen = ref(false);
-const deleteOpen = ref(false);
-const pendingBookmark = ref<BookmarkResponse | null>(null);
 const bookmarkList = ref<BookmarkListResponse>({
   items: [],
   total: 0,
@@ -250,8 +171,6 @@ const searchQ = ref(String(route.query.q || ""));
 const filterFolder = ref(String(route.query.folder_id || ""));
 const filterTag = ref(String(route.query.tag_id || ""));
 const page = ref(parsePositiveInteger(route.query.page, 1));
-const bookmarkForm = reactive<BookmarkFormState>(createEmptyBookmarkForm());
-
 const filterFolderOptions = computed(() => [
   { label: "All folders", value: "" },
   ...createSelectOptions(
@@ -269,6 +188,20 @@ const filterTagOptions = computed(() => [
     (tag) => tag.id,
   ),
 ]);
+
+const selectedFilterFolder = computed({
+  get: () => filterFolder.value,
+  set: (value) => {
+    filterFolder.value = normalizeSelectValue(value);
+  },
+});
+
+const selectedFilterTag = computed({
+  get: () => filterTag.value,
+  set: (value) => {
+    filterTag.value = normalizeSelectValue(value);
+  },
+});
 
 const bookmarkFolderOptions = computed(() => [
   { label: "No folder", value: "" },
@@ -292,18 +225,21 @@ type SelectOption = {
   value: string;
 };
 
-const selectedFilterFolder = computed({
-  get: () => filterFolder.value,
-  set: (value) => {
-    filterFolder.value = normalizeSelectValue(value);
-  },
-});
-
-const selectedFilterTag = computed({
-  get: () => filterTag.value,
-  set: (value) => {
-    filterTag.value = normalizeSelectValue(value);
-  },
+const {
+  bookmarkForm,
+  confirmDelete,
+  deleteOpen,
+  deleting,
+  loadBookmarkForm,
+  modalOpen,
+  openCreateModal,
+  removeBookmark,
+  saveBookmark,
+  saving,
+} = useBookmarkEditor({
+  request,
+  refresh: loadData,
+  findBookmarkById: (id) => bookmarkCards.value.find((bookmark) => bookmark.id === id) || null,
 });
 
 const selectedBookmarkFolder = computed<SelectOption | null>({
@@ -326,7 +262,7 @@ const paginationItems = computed<PaginationItem[]>(() =>
   buildPaginationItems(page.value, pageCount.value),
 );
 
-const loadData = async () => {
+async function loadData() {
   loading.value = true;
   loadError.value = "";
   try {
@@ -357,175 +293,23 @@ const loadData = async () => {
   } finally {
     loading.value = false;
   }
-};
+}
 
-const resetBookmarkForm = () => {
-  Object.assign(bookmarkForm, createEmptyBookmarkForm());
-};
-
-const loadBookmarkForm = (bookmark: BookmarkResponse) => {
-  bookmarkForm.id = String(bookmark.id);
-  bookmarkForm.url = bookmark.url;
-  bookmarkForm.title = bookmark.title;
-  bookmarkForm.description = bookmark.description || "";
-  bookmarkForm.folder_id = bookmark.folder_id ? String(bookmark.folder_id) : "";
-  bookmarkForm.tag_ids = bookmark.tags.map((tag) => String(tag.id));
-  modalOpen.value = true;
-};
-
-const openCreateModal = () => {
-  resetBookmarkForm();
-  modalOpen.value = true;
+const refreshBookmarks = async () => {
+  await loadData();
+  if (!loadError.value) {
+    toast.show({
+      title: "Bookmarks refreshed.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  }
 };
 
 const setPage = async (nextPage: number) => {
   const next = Math.min(Math.max(nextPage, 1), pageCount.value);
   if (next === page.value) return;
   page.value = next;
-};
-
-const validateBookmarkForm = () => {
-  if (!bookmarkForm.url.trim()) {
-    return "URL is required.";
-  }
-
-  try {
-    new URL(bookmarkForm.url.trim());
-  } catch {
-    return "Please enter a valid URL.";
-  }
-
-  if (!bookmarkForm.title.trim()) {
-    return "Title is required.";
-  }
-
-  return "";
-};
-
-const saveBookmark = async () => {
-  const validationError = validateBookmarkForm();
-  if (validationError) {
-    toast.show({
-      title: "Failed to save bookmark.",
-      description: validationError,
-      color: "error",
-      icon: "i-lucide-circle-alert",
-    });
-    return;
-  }
-
-  const payload = {
-    url: bookmarkForm.url.trim(),
-    title: bookmarkForm.title.trim(),
-    description: bookmarkForm.description || null,
-    folder_id: bookmarkForm.folder_id ? Number(bookmarkForm.folder_id) : null,
-    tag_ids: bookmarkForm.tag_ids.map((tagId) => Number(tagId)),
-  };
-
-  saving.value = true;
-  try {
-    const isEditing = Boolean(bookmarkForm.id);
-    if (bookmarkForm.id) {
-      await request(`/bookmarks/${bookmarkForm.id}`, {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      });
-    } else {
-      const created = await request<BookmarkResponse>("/bookmarks", {
-        method: "POST",
-        body: JSON.stringify({
-          ...payload,
-        }),
-      });
-      if (created?.id) {
-        bookmarkForm.id = String(created.id);
-      }
-    }
-
-    modalOpen.value = false;
-    resetBookmarkForm();
-    await loadData();
-    toast.show({
-      title: isEditing ? "Bookmark updated." : "Bookmark created.",
-      color: "success",
-      icon: "i-lucide-check",
-    });
-  } catch (err) {
-    toast.show({
-      title: "Failed to save bookmark.",
-      description: err instanceof Error ? err.message : undefined,
-      color: "error",
-      icon: "i-lucide-circle-alert",
-    });
-  } finally {
-    saving.value = false;
-  }
-};
-
-const removeBookmark = async (id: number) => {
-  const bookmark = bookmarkCards.value.find((item) => item.id === id) || null;
-  if (!bookmark) return;
-  pendingBookmark.value = bookmark;
-  deleteOpen.value = true;
-};
-
-const toggleFavorite = async (bookmark: BookmarkResponse) => {
-  try {
-    const updated = await request<BookmarkResponse>("/bookmarks/favorite", {
-      method: "PATCH",
-      body: JSON.stringify({
-        bookmark_id: bookmark.id,
-        is_favorite: !bookmark.is_favorite,
-      }),
-    });
-
-    const index = bookmarkList.value.items.findIndex((item) => item.id === updated.id);
-    if (index >= 0) {
-      bookmarkList.value.items[index] = updated;
-    }
-
-    toast.show({
-      title: updated.is_favorite ? "Added to favorites." : "Removed from favorites.",
-      color: "success",
-      icon: "i-lucide-check",
-    });
-  } catch (err) {
-    toast.show({
-      title: "Failed to update favorite.",
-      description: err instanceof Error ? err.message : undefined,
-      color: "error",
-      icon: "i-lucide-circle-alert",
-    });
-  }
-};
-
-const closeDelete = () => {
-  deleteOpen.value = false;
-  pendingBookmark.value = null;
-};
-
-const confirmDelete = async () => {
-  if (!pendingBookmark.value) return;
-  deleting.value = true;
-  try {
-    await request(`/bookmarks/${pendingBookmark.value.id}`, { method: "DELETE" });
-    closeDelete();
-    await loadData();
-    toast.show({
-      title: "Bookmark deleted.",
-      color: "success",
-      icon: "i-lucide-check",
-    });
-  } catch (err) {
-    toast.show({
-      title: "Failed to delete bookmark.",
-      description: err instanceof Error ? err.message : undefined,
-      color: "error",
-      icon: "i-lucide-circle-alert",
-    });
-  } finally {
-    deleting.value = false;
-  }
 };
 
 watch(

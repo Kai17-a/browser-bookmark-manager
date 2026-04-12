@@ -1,23 +1,7 @@
 <template>
   <UDashboardPanel id="folders">
     <template #header>
-      <UDashboardNavbar title="Folders" :ui="{ right: 'gap-3' }">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-
-        <template #right>
-          <UButton
-            label="Refresh"
-            icon="i-lucide-refresh-cw"
-            size="sm"
-            color="neutral"
-            variant="ghost"
-            :loading="false"
-            @click="refresh"
-          />
-        </template>
-      </UDashboardNavbar>
+      <PageHeaderActions title="Folders" show-refresh :loading="false" @refresh="refresh" />
     </template>
 
     <template #body>
@@ -91,25 +75,14 @@
           </template>
         </UModal>
 
-        <UModal
+        <DeleteConfirmModal
           v-model:open="confirmOpen"
           title="Delete folder"
-          description="This action cannot be undone."
-        >
-          <template #content>
-            <div class="space-y-4 p-6">
-              <p class="text-sm text-default">
-                Delete
-                <strong>{{ pendingFolder?.name }}</strong>
-                and remove it from the list?
-              </p>
-              <div class="flex justify-end gap-3">
-                <UButton color="neutral" variant="ghost" @click="closeConfirm"> Cancel </UButton>
-                <UButton color="error" @click="confirmDelete"> Delete folder </UButton>
-              </div>
-            </div>
-          </template>
-        </UModal>
+          :subject="pendingFolder?.name"
+          confirm-label="Delete folder"
+          @cancel="pendingFolder = null"
+          @confirm="confirmDelete"
+        />
       </div>
     </template>
   </UDashboardPanel>
@@ -222,18 +195,14 @@ const askDelete = (folder: FolderResponse) => {
   confirmOpen.value = true;
 };
 
-const closeConfirm = () => {
-  confirmOpen.value = false;
-  pendingFolder.value = null;
-};
-
 const confirmDelete = async () => {
   if (!pendingFolder.value) return;
   try {
     await request(`/folders/${pendingFolder.value.id}`, {
       method: "DELETE",
     });
-    closeConfirm();
+    confirmOpen.value = false;
+    pendingFolder.value = null;
     await refresh();
   } catch (err) {
     toast.show({

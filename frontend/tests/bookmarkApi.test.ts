@@ -1,11 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { ref } from "vue";
 
 import {
-  DEFAULT_API_BASE,
+  createHttpFetcher,
   buildRequestHeaders,
-  deriveBrowserApiBase,
   getDefaultApiBase,
-  getWindowBookmarkConfig,
   extractErrorMessage,
   trimTrailingSlash,
 } from "../app/utils/bookmarkApi";
@@ -16,59 +15,9 @@ describe("bookmarkApi helpers", () => {
     expect(trimTrailingSlash("http://localhost:8000")).toBe("http://localhost:8000");
   });
 
-  it("derives the API base from the current browser host", () => {
-    expect(deriveBrowserApiBase("http://example.com:3000/bookmarks")).toBe(
-      "http://example.com:8000",
-    );
-    expect(deriveBrowserApiBase("http://example.com:3000/bookmarks", "9000")).toBe(
-      "http://example.com:9000",
-    );
-    expect(deriveBrowserApiBase("https://bookmarks.example.com/settings")).toBe(
-      "https://bookmarks.example.com:8000",
-    );
-  });
-
-  it("uses the browser host for the default API base when available", () => {
-    const originalWindow = globalThis.window;
-    Object.defineProperty(globalThis, "window", {
-      configurable: true,
-      value: {
-        location: {
-          href: "http://demo.example.net:3000/folders",
-        },
-      },
-    });
-
-    expect(getDefaultApiBase()).toBe("http://demo.example.net:8000");
-    expect(getDefaultApiBase("9000")).toBe("http://demo.example.net:9000");
-
-    Object.defineProperty(globalThis, "window", {
-      configurable: true,
-      value: originalWindow,
-    });
-  });
-
-  it("reads runtime config injected into window", () => {
-    const originalWindow = globalThis.window;
-    Object.defineProperty(globalThis, "window", {
-      configurable: true,
-      value: {
-        __BOOKMARK_MANAGER_CONFIG__: {
-          apiBaseUrl: "http://localhost:9000",
-          apiPort: "9000",
-        },
-      },
-    });
-
-    expect(getWindowBookmarkConfig()).toEqual({
-      apiBaseUrl: "http://localhost:9000",
-      apiPort: "9000",
-    });
-
-    Object.defineProperty(globalThis, "window", {
-      configurable: true,
-      value: originalWindow,
-    });
+  it("builds the default api base from the configured port", () => {
+    expect(getDefaultApiBase()).toBe("http://localhost:8000");
+    expect(getDefaultApiBase("9000")).toBe("http://localhost:9000");
   });
 
   it("adds JSON content type only when a request body is present", () => {
@@ -97,5 +46,104 @@ describe("bookmarkApi helpers", () => {
     expect(extractErrorMessage(400, { detail: "Bad request" })).toBe("Bad request");
     expect(extractErrorMessage(400, { detail: ["name is required"] })).toBe("name is required");
     expect(extractErrorMessage(500, null)).toBe("HTTP 500");
+  });
+
+  it("builds requests from the current base url and handles json responses", async () => {
+    const originalFetch = globalThis.fetch;
+    const fetchMock = vi.fn(async () => {
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+
+    Object.defineProperty(globalThis, "fetch", {
+      configurable: true,
+      value: fetchMock,
+    });
+
+    const baseUrl = ref("http://localhost:8000/");
+    const { request } = createHttpFetcher(() => baseUrl.value);
+
+    await expect(request<{ ok: boolean }>("/health")).resolves.toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:8000/health", expect.any(Object));
+
+    Object.defineProperty(globalThis, "fetch", {
+      configurable: true,
+      value: originalFetch,
+    });
+  });
+
+  it("can reach every frontend api path through the shared fetcher", async () => {
+    const originalFetch = globalThis.fetch;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.toString();
+      const method = init?.method ?? "GET";
+
+      if (method === "GET" && url.endsWith("/health")) {
+        return new Response(JSON.stringify({ status: "ok" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+
+    Object.defineProperty(globalThis, "fetch", {
+      configurable: true,
+      value: fetchMock,
+    });
+
+    const baseUrl = ref("http://localhost:8000/");
+    const { request } = createHttpFetcher(() => baseUrl.value);
+
+    await expect(request("/health")).resolves.toEqual({ status: "ok" });
+
+    const cases = [
+      { path: "/bookmarks", options: { method: "GET" } },
+      { path: "/bookmarks?per_page=100&page=1", options: { method: "GET" } },
+      { path: "/bookmarks/123", options: { method: "GET" } },
+      { path: "/bookmarks", options: { method: "POST", body: JSON.stringify({ url: "https://example.com", title: "Example" }) } },
+      { path: "/bookmarks/123", options: { method: "PATCH", body: JSON.stringify({ title: "Updated" }) } },
+      { path: "/bookmarks/123", options: { method: "DELETE" } },
+      { path: "/bookmarks/favorite", options: { method: "PATCH", body: JSON.stringify({ bookmark_id: 123, is_favorite: true }) } },
+      { path: "/bookmarks/123/tags", options: { method: "POST", body: JSON.stringify({ tag_id: 456 }) } },
+      { path: "/bookmarks/123/tags/456", options: { method: "DELETE" } },
+      { path: "/folders", options: { method: "GET" } },
+      { path: "/folders", options: { method: "POST", body: JSON.stringify({ name: "Folder" }) } },
+      { path: "/folders/123", options: { method: "GET" } },
+      { path: "/folders/123", options: { method: "PATCH", body: JSON.stringify({ name: "Folder 2" }) } },
+      { path: "/folders/123", options: { method: "DELETE" } },
+      { path: "/tags", options: { method: "GET" } },
+      { path: "/tags", options: { method: "POST", body: JSON.stringify({ name: "Tag" }) } },
+      { path: "/tags/123", options: { method: "GET" } },
+      { path: "/tags/123", options: { method: "PATCH", body: JSON.stringify({ name: "Tag 2" }) } },
+      { path: "/tags/123", options: { method: "DELETE" } },
+      { path: "/rss-feeds", options: { method: "GET" } },
+      { path: "/rss-feeds", options: { method: "POST", body: JSON.stringify({ url: "https://example.com/feed.xml", title: "Feed" }) } },
+      { path: "/rss-feeds/123", options: { method: "GET" } },
+      { path: "/rss-feeds/123", options: { method: "PATCH", body: JSON.stringify({ title: "Feed 2" }) } },
+      { path: "/rss-feeds/123", options: { method: "DELETE" } },
+      { path: "/rss-feeds/123/execute", options: { method: "POST" } },
+      { path: "/metrics/dashboard", options: { method: "GET" } },
+      { path: "/settings/webhook", options: { method: "GET" } },
+      { path: "/settings/webhook", options: { method: "PUT", body: JSON.stringify({ webhook_url: "https://example.com/webhook" }) } },
+      { path: "/settings/webhook/ping", options: { method: "POST", body: JSON.stringify({ webhook_url: "https://example.com/webhook" }) } },
+    ] as const;
+
+    for (const testCase of cases) {
+      await expect(request(testCase.path, testCase.options)).resolves.toEqual({ ok: true });
+    }
+
+    expect(fetchMock).toHaveBeenCalled();
+
+    Object.defineProperty(globalThis, "fetch", {
+      configurable: true,
+      value: originalFetch,
+    });
   });
 });

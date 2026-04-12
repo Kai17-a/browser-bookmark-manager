@@ -1,38 +1,13 @@
-export const DEFAULT_API_BASE = "http://localhost:8000";
 export const DEFAULT_API_PORT = "8000";
 
 export type ApiErrorBody = {
   detail?: string | string[];
 };
 
-export type RuntimeBookmarkConfig = {
-  apiBaseUrl?: string;
-  apiPort?: string;
-};
-
 export const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
-export const getWindowBookmarkConfig = () => {
-  if (typeof window === "undefined") {
-    return {};
-  }
-
-  return (window as typeof window & { __BOOKMARK_MANAGER_CONFIG__?: RuntimeBookmarkConfig })
-    .__BOOKMARK_MANAGER_CONFIG__ ?? {};
-};
-
-export const deriveBrowserApiBase = (href: string, apiPort = DEFAULT_API_PORT) => {
-  const url = new URL(href);
-  url.port = apiPort;
-  return url.origin;
-};
-
 export const getDefaultApiBase = (apiPort = DEFAULT_API_PORT) => {
-  if (typeof window !== "undefined" && typeof window.location?.href === "string") {
-    return deriveBrowserApiBase(window.location.href, apiPort);
-  }
-
-  return DEFAULT_API_BASE;
+  return `http://localhost:${apiPort}`;
 };
 
 export const buildRequestHeaders = (options: RequestInit = {}) => {
@@ -57,4 +32,24 @@ export const extractErrorMessage = (status: number, body: ApiErrorBody | null) =
 
 export const parseJsonBody = async <T>(response: Response) => {
   return response.json().catch(() => null) as Promise<T | null>;
+};
+
+export const createHttpFetcher = (getBaseUrl: () => string) => {
+  const request = async <T = unknown>(path: string, options: RequestInit = {}): Promise<T> => {
+    const { headers: mergedHeaders, rest } = buildRequestHeaders(options);
+
+    const res = await fetch(`${trimTrailingSlash(getBaseUrl())}${path}`, {
+      headers: mergedHeaders,
+      ...rest,
+    });
+
+    const body = await parseJsonBody<T>(res);
+    if (!res.ok) {
+      throw new Error(extractErrorMessage(res.status, body as ApiErrorBody | null));
+    }
+
+    return body as T;
+  };
+
+  return { request };
 };

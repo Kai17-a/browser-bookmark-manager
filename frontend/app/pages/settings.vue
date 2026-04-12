@@ -1,11 +1,7 @@
 <template>
   <UDashboardPanel id="settings">
     <template #header>
-      <UDashboardNavbar title="Settings" :ui="{ right: 'gap-3' }">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-      </UDashboardNavbar>
+      <PageHeaderActions title="Settings" :show-refresh="false" />
     </template>
 
     <template #body>

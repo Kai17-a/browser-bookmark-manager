@@ -1,23 +1,7 @@
 <template>
   <UDashboardPanel id="tag-detail">
     <template #header>
-      <UDashboardNavbar title="Tag" :ui="{ right: 'gap-3' }">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-
-        <template #right>
-          <UButton
-            label="Refresh"
-            icon="i-lucide-refresh-cw"
-            size="sm"
-            color="neutral"
-            variant="ghost"
-            :loading="state === 'loading'"
-            @click="loadTag"
-          />
-        </template>
-      </UDashboardNavbar>
+      <PageHeaderActions title="Tag" :loading="state === 'loading'" @refresh="loadTag" />
     </template>
 
     <template #body>
@@ -187,49 +171,27 @@
           </template>
         </UModal>
 
-        <UModal
+        <DeleteConfirmModal
           v-model:open="deleteBookmarkOpen"
           title="Delete bookmark"
-          description="This action cannot be undone."
-        >
-          <template #content>
-            <div class="space-y-4 p-6">
-              <p class="text-sm text-default">
-                Delete <strong>{{ pendingBookmark?.title }}</strong
-                >?
-              </p>
-              <div class="flex justify-end gap-3">
-                <UButton color="neutral" variant="ghost" @click="closeBookmarkDelete">
-                  Cancel
-                </UButton>
-                <UButton color="error" :loading="deletingBookmark" @click="confirmDeleteBookmark">
-                  Delete bookmark
-                </UButton>
-              </div>
-            </div>
-          </template>
-        </UModal>
+          :subject="pendingBookmark?.title"
+          confirm-label="Delete bookmark"
+          :loading="deletingBookmark"
+          prompt="?"
+          @cancel="pendingBookmark = null"
+          @confirm="confirmDeleteBookmark"
+        />
 
-        <UModal
+        <DeleteConfirmModal
           v-model:open="confirmOpen"
           title="Delete tag"
-          description="This action cannot be undone."
-        >
-          <template #content>
-            <div class="space-y-4 p-6">
-              <p class="text-sm text-default">
-                Delete <strong>{{ tag?.name }}</strong
-                >?
-              </p>
-              <div class="flex justify-end gap-3">
-                <UButton color="neutral" variant="ghost" @click="confirmOpen = false">
-                  Cancel
-                </UButton>
-                <UButton color="error" :loading="deleting" @click="deleteTag"> Delete tag </UButton>
-              </div>
-            </div>
-          </template>
-        </UModal>
+          :subject="tag?.name"
+          confirm-label="Delete tag"
+          :loading="deleting"
+          prompt="?"
+          @cancel="confirmOpen = false"
+          @confirm="deleteTag"
+        />
       </div>
     </template>
   </UDashboardPanel>
@@ -425,18 +387,14 @@ const askDeleteBookmark = (bookmark: BookmarkResponse) => {
   deleteBookmarkOpen.value = true;
 };
 
-const closeBookmarkDelete = () => {
-  deleteBookmarkOpen.value = false;
-  pendingBookmark.value = null;
-};
-
 const confirmDeleteBookmark = async () => {
   if (!pendingBookmark.value) return;
 
   deletingBookmark.value = true;
   try {
     await request(`/bookmarks/${pendingBookmark.value.id}`, { method: "DELETE" });
-    closeBookmarkDelete();
+    deleteBookmarkOpen.value = false;
+    pendingBookmark.value = null;
     await loadTag();
     toast.show({
       title: "Bookmark deleted.",

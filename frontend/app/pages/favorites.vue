@@ -1,23 +1,7 @@
 <template>
   <UDashboardPanel id="favorites">
     <template #header>
-      <UDashboardNavbar title="Favorites" :ui="{ right: 'gap-3' }">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-
-        <template #right>
-          <UButton
-            label="Refresh"
-            icon="i-lucide-refresh-cw"
-            size="sm"
-            color="neutral"
-            variant="ghost"
-            :loading="loading"
-            @click="loadFavorites"
-          />
-        </template>
-      </UDashboardNavbar>
+      <PageHeaderActions title="Favorites" :loading="loading" @refresh="refreshFavorites" />
     </template>
 
     <template #body>
@@ -62,16 +46,44 @@
               :bookmark="bookmark"
               :show-folder="true"
               :show-tags="true"
+              @edit="loadBookmarkForm"
+              @remove="removeBookmark"
               @favorite="toggleFavorite"
             />
           </div>
-
           <div
             v-else
             class="rounded-2xl border border-dashed border-default p-6 text-sm text-muted"
           >
             No favorites yet.
           </div>
+
+          <BookmarkEditorModal
+            v-model:open="modalOpen"
+            v-model:selected-folder="selectedBookmarkFolder"
+            :form="bookmarkForm"
+            :folder-options="bookmarkFolderOptions"
+            :tag-options="bookmarkTagOptions"
+            :title="bookmarkForm.id ? 'Edit bookmark' : 'Register bookmark'"
+            :description="
+              bookmarkForm.id
+                ? 'Update the bookmark details.'
+                : 'Create a bookmark and attach tags.'
+            "
+            :submit-label="saving ? 'Saving...' : 'Save bookmark'"
+            :saving="saving"
+            @save="saveBookmark"
+          />
+
+          <DeleteConfirmModal
+            v-model:open="deleteOpen"
+            title="Delete bookmark"
+            subject="this bookmark"
+            confirm-label="Delete bookmark"
+            :loading="deleting"
+            @cancel="pendingBookmark = null"
+            @confirm="confirmDelete"
+          />
         </UPageCard>
       </div>
     </template>
@@ -89,6 +101,10 @@ const loading = ref(false);
 const loadError = ref("");
 const allBookmarks = ref<BookmarkResponse[]>([]);
 const folders = ref<FolderResponse[]>([]);
+const bookmarkFolderOptions = computed(() => [
+  { label: "No folder", value: "" },
+  ...folders.value.map((folder) => ({ label: folder.name, value: String(folder.id) })),
+]);
 
 const favoriteBookmarks = computed(() =>
   allBookmarks.value.filter((bookmark) => bookmark.is_favorite),
@@ -96,6 +112,12 @@ const favoriteBookmarks = computed(() =>
 
 const favoriteBookmarksWithFolderNames = computed(() =>
   mapBookmarksWithFolderNames(favoriteBookmarks.value, folders.value),
+);
+
+const bookmarkTagOptions = computed(() =>
+  favoriteBookmarks.value.flatMap((bookmark) =>
+    bookmark.tags.map((tag) => ({ label: tag.name, value: String(tag.id) })),
+  ),
 );
 
 const loadAllBookmarks = async () => {
@@ -111,7 +133,7 @@ const loadAllBookmarks = async () => {
   folders.value = await request<FolderResponse[]>("/folders");
 };
 
-const loadFavorites = async () => {
+async function loadFavorites() {
   loading.value = true;
   loadError.value = "";
   try {
@@ -127,7 +149,42 @@ const loadFavorites = async () => {
   } finally {
     loading.value = false;
   }
+}
+
+const refreshFavorites = async () => {
+  await loadFavorites();
+  if (!loadError.value) {
+    toast.show({
+      title: "Favorites refreshed.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  }
 };
+
+const {
+  bookmarkForm,
+  confirmDelete,
+  deleteOpen,
+  deleting,
+  loadBookmarkForm,
+  modalOpen,
+  removeBookmark,
+  saveBookmark,
+  saving,
+} = useBookmarkEditor({
+  request,
+  refresh: loadFavorites,
+  findBookmarkById: (id) => allBookmarks.value.find((item) => item.id === id) || null,
+});
+
+const selectedBookmarkFolder = computed({
+  get: () =>
+    bookmarkFolderOptions.value.find((option) => option.value === bookmarkForm.folder_id) || null,
+  set: (value) => {
+    bookmarkForm.folder_id = value?.value || "";
+  },
+});
 
 const toggleFavorite = async (bookmark: BookmarkResponse) => {
   try {
@@ -156,7 +213,6 @@ const toggleFavorite = async (bookmark: BookmarkResponse) => {
       color: "error",
       icon: "i-lucide-circle-alert",
     });
-  } finally {
   }
 };
 

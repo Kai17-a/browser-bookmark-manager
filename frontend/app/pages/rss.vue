@@ -1,24 +1,11 @@
 <template>
   <UDashboardPanel id="rss">
     <template #header>
-      <UDashboardNavbar title="RSS" :ui="{ right: 'gap-3' }">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-
-        <template #right>
-          <UButton
-            label="Refresh"
-            icon="i-lucide-refresh-cw"
-            size="sm"
-            color="neutral"
-            variant="ghost"
-            :loading="loading"
-            @click="loadFeeds"
-          />
+      <PageHeaderActions title="RSS" :loading="loading" @refresh="refreshFeeds">
+        <template #actions>
           <UButton label="Register" icon="i-lucide-plus" size="sm" @click="openCreateModal" />
         </template>
-      </UDashboardNavbar>
+      </PageHeaderActions>
     </template>
 
     <template #body>
@@ -138,27 +125,15 @@
           </template>
         </UModal>
 
-        <UModal
+        <DeleteConfirmModal
           v-model:open="deleteOpen"
           title="Delete RSS feed"
-          description="This action cannot be undone."
-        >
-          <template #content>
-            <div class="space-y-4 p-6">
-              <p class="text-sm text-default">
-                Delete
-                <strong>{{ pendingFeed?.title }}</strong>
-                and remove it from the list?
-              </p>
-              <div class="flex justify-end gap-3">
-                <UButton color="neutral" variant="ghost" @click="closeDelete"> Cancel </UButton>
-                <UButton color="error" :loading="deleting" @click="confirmDelete">
-                  Delete feed
-                </UButton>
-              </div>
-            </div>
-          </template>
-        </UModal>
+          :subject="pendingFeed?.title"
+          confirm-label="Delete feed"
+          :loading="deleting"
+          @cancel="pendingFeed = null"
+          @confirm="confirmDelete"
+        />
       </div>
     </template>
   </UDashboardPanel>
@@ -252,6 +227,17 @@ const loadFeeds = async () => {
   }
 };
 
+const refreshFeeds = async () => {
+  await loadFeeds();
+  if (!loadError.value) {
+    toast.show({
+      title: "RSS feeds refreshed.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  }
+};
+
 const setPage = async (nextPage: number) => {
   page.value = Math.min(Math.max(nextPage, 1), pageCount.value);
   await loadFeeds();
@@ -334,11 +320,6 @@ const executeFeed = async (feed: RSSFeedResponse) => {
   }
 };
 
-const closeDelete = () => {
-  deleteOpen.value = false;
-  pendingFeed.value = null;
-};
-
 const confirmDelete = async () => {
   if (!pendingFeed.value) return;
   deleting.value = true;
@@ -349,7 +330,8 @@ const confirmDelete = async () => {
       color: "success",
       icon: "i-lucide-check",
     });
-    closeDelete();
+    deleteOpen.value = false;
+    pendingFeed.value = null;
     await loadFeeds();
   } catch (err) {
     toast.show({
