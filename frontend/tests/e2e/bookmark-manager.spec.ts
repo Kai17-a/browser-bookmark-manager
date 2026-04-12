@@ -1,7 +1,44 @@
 import { expect, test } from "@playwright/test";
+import { createServer } from "node:http";
 import process from "node:process";
 
 const apiBaseUrl = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:8000";
+
+const startRssServer = async (suffix: string) => {
+  const server = createServer((_, res) => {
+    res.writeHead(200, { "content-type": "application/rss+xml; charset=utf-8" });
+    res.end(`<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>RSS Feed ${suffix}</title>
+    <link>https://example.com/${suffix}</link>
+    <description>RSS description</description>
+    <item>
+      <title>Item ${suffix}</title>
+      <link>https://example.com/${suffix}/1</link>
+      <description>Item description</description>
+    </item>
+  </channel>
+</rss>`);
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(0, "127.0.0.1", resolve);
+  });
+
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Failed to start RSS test server");
+  }
+
+  return {
+    url: `http://127.0.0.1:${address.port}/feed.xml`,
+    close: () =>
+      new Promise<void>((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      }),
+  };
+};
 
 test.describe.configure({ mode: "serial" });
 
@@ -114,29 +151,34 @@ test.describe("tags", () => {
 test.describe("rss feeds", () => {
   test("creates, edits, opens, and deletes rss feeds", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
-    const created = await page.request.post(`${apiBaseUrl}/rss-feeds`, {
-      data: {
-        url: `https://example.com/feed-${suffix}.xml`,
-        title: `RSS Feed ${suffix}`,
-        description: "RSS description",
-      },
-    });
-    expect(created.status()).toBe(201);
-    const createdBody = (await created.json()) as { id: number };
+    const rssServer = await startRssServer(suffix);
+    try {
+      const created = await page.request.post(`${apiBaseUrl}/rss-feeds`, {
+        data: {
+          url: rssServer.url,
+          title: `RSS Feed ${suffix}`,
+          description: "RSS description",
+        },
+      });
+      expect(created.status()).toBe(201);
+      const createdBody = (await created.json()) as { id: number };
 
-    await page.goto("/rss");
-    await expect(page.getByRole("heading", { name: "RSS" })).toBeVisible();
-    await expect(page.getByText(`RSS Feed ${suffix}`)).toBeVisible();
-    await expect(page.getByText("RSS description")).toBeVisible();
+      await page.goto("/rss");
+      await expect(page.getByRole("heading", { name: "RSS" })).toBeVisible();
+      await expect(page.getByText(`RSS Feed ${suffix}`)).toBeVisible();
+      await expect(page.getByText("RSS description")).toBeVisible();
 
-    await page.getByRole("button", { name: "Edit" }).first().click();
-    await page.getByLabel("Title").fill(`RSS Feed ${suffix} Updated`);
-    await page.getByRole("button", { name: "Save feed" }).click();
-    await expect(page.getByText(`RSS Feed ${suffix} Updated`)).toBeVisible();
+      await page.getByRole("button", { name: "Edit" }).first().click();
+      await page.getByLabel("Title").fill(`RSS Feed ${suffix} Updated`);
+      await page.getByRole("button", { name: "Save feed" }).click();
+      await expect(page.getByText(`RSS Feed ${suffix} Updated`)).toBeVisible();
 
-    const deleted = await page.request.delete(`${apiBaseUrl}/rss-feeds/${createdBody.id}`);
-    expect(deleted.status()).toBe(204);
-    await page.reload();
-    await expect(page.getByText(`RSS Feed ${suffix} Updated`)).toHaveCount(0);
+      const deleted = await page.request.delete(`${apiBaseUrl}/rss-feeds/${createdBody.id}`);
+      expect(deleted.status()).toBe(204);
+      await page.reload();
+      await expect(page.getByText(`RSS Feed ${suffix} Updated`)).toHaveCount(0);
+    } finally {
+      await rssServer.close();
+    }
   });
 });
