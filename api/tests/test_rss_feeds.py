@@ -34,17 +34,24 @@ def client(tmp_path, monkeypatch):
 
     def fake_parse(content):
         class ParsedEntry:
+            def __init__(self, title, link):
+                self._title = title
+                self._link = link
+
             def get(self, key, default=None):
                 data = {
-                    "title": "Item 1",
-                    "link": "https://example.com/item-1",
+                    "title": self._title,
+                    "link": self._link,
                 }
                 return data.get(key, default)
 
         class ParsedFeed:
             bozo = False
             feed = {"title": "Parsed Example"}
-            entries = [ParsedEntry()]
+            entries = [
+                ParsedEntry("Item 1", "https://example.com/item-1"),
+                ParsedEntry("Item 2", "https://example.com/item-2"),
+            ]
 
         return ParsedFeed()
 
@@ -164,17 +171,24 @@ def test_execute_rss_feed_uses_feedparser_content(client, monkeypatch):
         return Response()
 
     class ParsedEntry:
+        def __init__(self, title, link):
+            self._title = title
+            self._link = link
+
         def get(self, key, default=None):
             data = {
-                "title": "Item 1",
-                "link": "https://example.com/item-1",
+                "title": self._title,
+                "link": self._link,
             }
             return data.get(key, default)
 
     class ParsedFeed:
         bozo = False
         feed = {"title": "Parsed Example"}
-        entries = [ParsedEntry()]
+        entries = [
+            ParsedEntry("Item 1", "https://example.com/item-1"),
+            ParsedEntry("Item 2", "https://example.com/item-2"),
+        ]
 
     def fake_get(url, timeout=5.0, follow_redirects=True):
         class Response:
@@ -192,8 +206,10 @@ def test_execute_rss_feed_uses_feedparser_content(client, monkeypatch):
     assert captured["json"]["content"] == (
         "RSS feed executed: Parsed Example\n"
         "https://example.com/feed.xml\n"
-        "Latest entry: Item 1\n"
-        "https://example.com/item-1"
+        "Entry 1: Item 1\n"
+        "https://example.com/item-1\n"
+        "Entry 2: Item 2\n"
+        "https://example.com/item-2"
     )
 
 

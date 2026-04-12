@@ -163,21 +163,16 @@ class RSSFeedService:
 
             parsed_feed = self._parse_rss_feed(response.content)
             feed_title = parsed_feed.feed.get("title") or row["title"]
-            latest_entry = parsed_feed.entries[0] if parsed_feed.entries else None
-            latest_entry_title = None
-            latest_entry_link = None
-            if latest_entry is not None:
-                latest_entry_title = latest_entry.get("title")
-                latest_entry_link = latest_entry.get("link")
-
             content_lines = [
                 f"RSS feed executed: {feed_title}",
                 row["url"],
             ]
-            if latest_entry_title:
-                content_lines.append(f"Latest entry: {latest_entry_title}")
-            if latest_entry_link:
-                content_lines.append(latest_entry_link)
+            for index, entry in enumerate(parsed_feed.entries, start=1):
+                entry_title = entry.get("title")
+                entry_link = entry.get("link")
+                content_lines.append(f"Entry {index}: {entry_title or '(no title)'}")
+                if entry_link:
+                    content_lines.append(entry_link)
 
             try:
                 response = httpx.post(
