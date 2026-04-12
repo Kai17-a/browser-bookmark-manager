@@ -31,6 +31,22 @@ def client(tmp_path, monkeypatch):
 
         return Response()
 
+    def fake_parse(url):
+        class ParsedEntry:
+            def get(self, key, default=None):
+                data = {
+                    "title": "Item 1",
+                    "link": "https://example.com/item-1",
+                }
+                return data.get(key, default)
+
+        class ParsedFeed:
+            bozo = False
+            feed = {"title": "Parsed Example"}
+            entries = [ParsedEntry()]
+
+        return ParsedFeed()
+
     @contextmanager
     def patched_get_db(database_url=db_path):
         conn = sqlite3.connect(db_path)
@@ -50,6 +66,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(settings_module, "get_db", patched_get_db)
     monkeypatch.setattr(rss_module.httpx, "get", fake_get)
     monkeypatch.setattr(rss_module.httpx, "post", fake_post)
+    monkeypatch.setattr(rss_module.feedparser, "parse", fake_parse)
     monkeypatch.setattr(settings_module.httpx, "post", fake_post)
 
     with TestClient(app) as c:
@@ -124,6 +141,51 @@ def test_execute_rss_feed_returns_200(client):
     assert resp.status_code == 200
     assert resp.json()["feed_id"] == feed_id
     assert resp.json()["delivered"] is True
+
+
+def test_execute_rss_feed_uses_feedparser_content(client, monkeypatch):
+    import api.services.rss_feed_service as rss_module
+
+    client.put(
+        "/settings/webhook",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    feed_id = create_feed(client, url="https://example.com/feed.xml", title="Example").json()["id"]
+
+    captured = {}
+
+    def fake_post(url, json, timeout=5.0):
+        captured["json"] = json
+
+        class Response:
+            status_code = 204
+
+        return Response()
+
+    class ParsedEntry:
+        def get(self, key, default=None):
+            data = {
+                "title": "Item 1",
+                "link": "https://example.com/item-1",
+            }
+            return data.get(key, default)
+
+    class ParsedFeed:
+        bozo = False
+        feed = {"title": "Parsed Example"}
+        entries = [ParsedEntry()]
+
+    monkeypatch.setattr(rss_module.httpx, "post", fake_post)
+    monkeypatch.setattr(rss_module.feedparser, "parse", lambda url: ParsedFeed())
+
+    resp = client.post(f"/rss-feeds/{feed_id}/execute")
+    assert resp.status_code == 200
+    assert captured["json"]["content"] == (
+        "RSS feed executed: Parsed Example\n"
+        "https://example.com/feed.xml\n"
+        "Latest entry: Item 1\n"
+        "https://example.com/item-1"
+    )
 
 
 def test_execute_rss_feed_without_webhook_returns_400(client):

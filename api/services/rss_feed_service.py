@@ -1,6 +1,7 @@
 import sqlite3
 import xml.etree.ElementTree as ET
 
+import feedparser
 import httpx
 from fastapi import HTTPException
 
@@ -18,6 +19,18 @@ from api.services.settings_service import WEBHOOK_SETTING_KEY
 
 
 class RSSFeedService:
+    def _parse_rss_feed(self, url: str) -> feedparser.FeedParserDict:
+        parsed = feedparser.parse(url)
+        if parsed.bozo:
+            raise HTTPException(
+                status_code=422, detail="RSS feed URL is not a valid RSS feed"
+            )
+        if not parsed.feed and not parsed.entries:
+            raise HTTPException(
+                status_code=422, detail="RSS feed URL is not a valid RSS feed"
+            )
+        return parsed
+
     def _validate_rss_feed_url(self, url: str) -> None:
         try:
             response = httpx.get(url, timeout=5.0, follow_redirects=True)
@@ -136,14 +149,30 @@ class RSSFeedService:
                     status_code=400, detail="Webhook URL is not configured"
                 )
 
-            self._validate_rss_feed_url(row["url"])
+            parsed_feed = self._parse_rss_feed(row["url"])
+            feed_title = parsed_feed.feed.get("title") or row["title"]
+            latest_entry = parsed_feed.entries[0] if parsed_feed.entries else None
+            latest_entry_title = None
+            latest_entry_link = None
+            if latest_entry is not None:
+                latest_entry_title = latest_entry.get("title")
+                latest_entry_link = latest_entry.get("link")
+
+            content_lines = [
+                f"RSS feed executed: {feed_title}",
+                row["url"],
+            ]
+            if latest_entry_title:
+                content_lines.append(f"Latest entry: {latest_entry_title}")
+            if latest_entry_link:
+                content_lines.append(latest_entry_link)
 
             try:
                 response = httpx.post(
                     webhook_url,
                     json={
                         "username": "Bookmark Manager",
-                        "content": f"RSS feed executed: {row['title']}\n{row['url']}",
+                        "content": "\n".join(content_lines),
                     },
                     timeout=5.0,
                 )
