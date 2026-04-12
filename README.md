@@ -1,41 +1,23 @@
-# Bookmark Manager モノレポ
+# Bookmark Manager
 
-このリポジトリはモノレポ構成です。
+ブラウザのブックマークを一覧・整理するためのアプリケーションです。
+OSS 利用者向けの利用方法をこの `README.md` にまとめ、開発手順は [DEVELOPMENT.md](DEVELOPMENT.md) に分離しています。
 
-## 構成
+## 使い方
 
-- [api/README.md](api/README.md) - FastAPI のバックエンド本体とテスト
-- [frontend/README.md](frontend/README.md) - Nuxt 4 の SPA
-- `chrome-extension/` - Chrome 拡張のクイック追加ポップアップ
-- `specs/` - 要件・設計・タスク・テスト観点の整理
-- `specs/api/` - API 仕様
-- `specs/frontend/` - フロントエンド仕様
-- `docs/commit-policy.md` - コミット規約
-
-## 利用方法
-
-### 開発者向け
-
-ローカル開発は [DEVELOPMENT.md](/home/kaito/workspaces/bookmark-manager/DEVELOPMENT.md) を参照する。
-
-GitHub Actions をローカルで実行したい場合は、`act` を `mise` 経由で使う。
-
-1. `mise x -- act -l` で GitHub Actions のジョブ一覧を取得する
-2. `mise x -- act -j <JobID> --container-architecture linux/amd64` で対象ジョブをローカル実行する
-
-### OSS 利用者向け
-
-公開イメージを使う場合は、GitHub Container Registry から pull して実行する。
+公開イメージを使う場合は、GitHub Container Registry から pull して実行します。
 
 ```bash
-docker pull ghcr.io/<github-owner>/bookmark-manager:latest
+docker pull ghcr.io/kai17-a/bookmark-manager:latest
 docker run --rm -p 3000:3000 -p 8000:8000 \
   -e DATABASE_URL=/data/bookmark.db \
   -v "$(pwd)/data:/data" \
-  ghcr.io/<github-owner>/bookmark-manager:latest
+  ghcr.io/kai17-a/bookmark-manager:latest
 ```
 
-実際に使うときの `docker-compose.yml` は次の形です。
+起動後はフロントエンドを `http://127.0.0.1:3000`、API を `http://127.0.0.1:8000` で利用できます。
+
+`docker compose` を使う場合は、次のような構成を使います。
 
 ```yaml
 services:
@@ -60,7 +42,16 @@ services:
 GitHub Packages の Docker image 公開機能を使う場合は、別途ワークフローを用意してください。
 `GITHUB_TOKEN` に `packages: write` 権限が付くように設定してください。
 
-## テスト仕様
+## リポジトリ構成
+
+- [api/README.md](api/README.md) - FastAPI のバックエンド本体とテスト
+- [frontend/README.md](frontend/README.md) - Nuxt 4 の SPA
+- `chrome-extension/` - Chrome 拡張のクイック追加ポップアップ
+- `specs/` - 要件・設計・タスク・テスト観点の整理
+- [docs/commit-policy.md](docs/commit-policy.md) - コミット規約
+- [DEVELOPMENT.md](/home/kaito/workspaces/bookmark-manager/DEVELOPMENT.md) - ローカル開発手順
+
+## ドキュメント
 
 要件・設計・タスク・テスト観点の整理は `specs/` にあります。
 

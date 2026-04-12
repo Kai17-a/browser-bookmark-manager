@@ -1,7 +1,7 @@
 # 開発ガイド
 
 このドキュメントはローカル開発向けの手順をまとめる。
-OSS 利用者向けの案内は [README.md](/home/kaito/workspaces/bookmark-manager/README.md) を参照する。
+OSS 利用者向けの案内は [README.md](./README.md) を参照する。
 
 ## ローカル起動
 
@@ -64,7 +64,7 @@ services:
             dockerfile: Dockerfile
         environment:
             DATABASE_URL: /data/bookmark.db
-            API_BASE_URL: http://127.0.0.1:8000
+            API_BASE_URL: http://127.0.0.1:8005
         ports:
             - "3001:3000"
             - "8005:8000"
