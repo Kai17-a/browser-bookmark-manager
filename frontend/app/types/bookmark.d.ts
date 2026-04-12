@@ -49,4 +49,5 @@ export interface DashboardMetricsResponse {
   folders_total: number;
   tags_total: number;
   favorites_total: number;
+  rss_feeds_total: number;
 }

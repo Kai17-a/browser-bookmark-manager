@@ -53,6 +53,7 @@ def test_dashboard_metrics_returns_zero_counts(client):
         "folders_total": 0,
         "tags_total": 0,
         "favorites_total": 0,
+        "rss_feeds_total": 0,
     }
 
 
@@ -88,4 +89,5 @@ def test_dashboard_metrics_counts_resources(client):
         "folders_total": 1,
         "tags_total": 1,
         "favorites_total": 1,
+        "rss_feeds_total": 0,
     }

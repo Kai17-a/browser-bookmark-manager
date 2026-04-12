@@ -204,6 +204,7 @@ class DashboardMetricsResponse(BaseModel):
     folders_total: int
     tags_total: int
     favorites_total: int
+    rss_feeds_total: int
 
 
 class ErrorResponse(BaseModel):

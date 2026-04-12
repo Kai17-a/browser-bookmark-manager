@@ -110,3 +110,33 @@ test.describe("tags", () => {
     await expect(page).toHaveURL(/\/tags$/);
   });
 });
+
+test.describe("rss feeds", () => {
+  test("creates, edits, opens, and deletes rss feeds", async ({ page }) => {
+    const suffix = `${Date.now()}-${test.info().workerIndex}`;
+    const created = await page.request.post(`${apiBaseUrl}/rss-feeds`, {
+      data: {
+        url: `https://example.com/feed-${suffix}.xml`,
+        title: `RSS Feed ${suffix}`,
+        description: "RSS description",
+      },
+    });
+    expect(created.status()).toBe(201);
+    const createdBody = (await created.json()) as { id: number };
+
+    await page.goto("/rss");
+    await expect(page.getByRole("heading", { name: "RSS" })).toBeVisible();
+    await expect(page.getByText(`RSS Feed ${suffix}`)).toBeVisible();
+    await expect(page.getByText("RSS description")).toBeVisible();
+
+    await page.getByRole("button", { name: "Edit" }).first().click();
+    await page.getByLabel("Title").fill(`RSS Feed ${suffix} Updated`);
+    await page.getByRole("button", { name: "Save feed" }).click();
+    await expect(page.getByText(`RSS Feed ${suffix} Updated`)).toBeVisible();
+
+    const deleted = await page.request.delete(`${apiBaseUrl}/rss-feeds/${createdBody.id}`);
+    expect(deleted.status()).toBe(204);
+    await page.reload();
+    await expect(page.getByText(`RSS Feed ${suffix} Updated`)).toHaveCount(0);
+  });
+});

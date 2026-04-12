@@ -136,6 +136,11 @@ const stats = computed(() => [
     to: "/tags",
     value: metrics.value.tags_total,
   },
+  {
+    title: "RSS feeds",
+    to: "/rss",
+    value: metrics.value.rss_feeds_total,
+  },
 ]);
 
 onMounted(async () => {
