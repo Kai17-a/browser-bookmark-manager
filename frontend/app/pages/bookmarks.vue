@@ -108,6 +108,7 @@
                             :bookmark="bookmark"
                             @edit="loadBookmarkForm"
                             @remove="removeBookmark"
+                            @favorite="toggleFavorite"
                         />
                     </div>
 
@@ -492,6 +493,36 @@ const removeBookmark = async (id: number) => {
     if (!bookmark) return;
     pendingBookmark.value = bookmark;
     deleteOpen.value = true;
+};
+
+const toggleFavorite = async (bookmark: BookmarkResponse) => {
+    try {
+        const updated = await request<BookmarkResponse>("/bookmarks/favorite", {
+            method: "PATCH",
+            body: JSON.stringify({
+                bookmark_id: bookmark.id,
+                is_favorite: !bookmark.is_favorite,
+            }),
+        });
+
+        const index = bookmarkList.value.items.findIndex((item) => item.id === updated.id);
+        if (index >= 0) {
+            bookmarkList.value.items[index] = updated;
+        }
+
+        toast.show({
+            title: updated.is_favorite ? "Added to favorites." : "Removed from favorites.",
+            color: "success",
+            icon: "i-lucide-check",
+        });
+    } catch (err) {
+        toast.show({
+            title: "Failed to update favorite.",
+            description: err instanceof Error ? err.message : undefined,
+            color: "error",
+            icon: "i-lucide-circle-alert",
+        });
+    }
 };
 
 const closeDelete = () => {

@@ -95,6 +95,7 @@
                             :show-tags="true"
                             @edit="loadBookmarkForm"
                             @remove="askDeleteBookmark"
+                            @favorite="toggleFavorite"
                         />
                     </div>
                     <div
@@ -407,6 +408,36 @@ const confirmDeleteBookmark = async () => {
         });
     } finally {
         deletingBookmark.value = false;
+    }
+};
+
+const toggleFavorite = async (bookmark: BookmarkResponse) => {
+    try {
+        const updated = await request<BookmarkResponse>("/bookmarks/favorite", {
+            method: "PATCH",
+            body: JSON.stringify({
+                bookmark_id: bookmark.id,
+                is_favorite: !bookmark.is_favorite,
+            }),
+        });
+
+        const index = bookmarks.value.findIndex((item) => item.id === updated.id);
+        if (index >= 0) {
+            bookmarks.value[index] = updated;
+        }
+
+        toast.show({
+            title: updated.is_favorite ? "Added to favorites." : "Removed from favorites.",
+            color: "success",
+            icon: "i-lucide-check",
+        });
+    } catch (err) {
+        toast.show({
+            title: "Failed to update favorite.",
+            description: err instanceof Error ? err.message : undefined,
+            color: "error",
+            icon: "i-lucide-circle-alert",
+        });
     }
 };
 
