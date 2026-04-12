@@ -28,6 +28,12 @@
               color="primary"
               variant="soft"
               orientation="horizontal"
+              :ui="{
+                list: 'bg-default/60 border border-default p-1 rounded-2xl gap-1',
+                trigger:
+                  'rounded-xl px-4 py-2 text-sm font-medium text-muted transition-colors data-[state=active]:bg-primary data-[state=active]:text-inverted data-[state=active]:shadow-sm',
+                indicator: 'hidden',
+              }"
             />
           </div>
         </UPageCard>
