@@ -2,7 +2,7 @@
   <article class="rounded-2xl border border-default bg-elevated/40 p-4 space-y-4">
     <div class="flex items-start justify-between gap-4">
       <div class="min-w-0">
-        <div class="flex items-center gap-1.5">
+        <div class="flex min-w-0 items-center gap-1.5">
           <UButton
             type="button"
             size="xs"
@@ -21,7 +21,7 @@
             external
             target="_blank"
             rel="noreferrer"
-            class="block truncate text-base font-semibold text-default hover:underline"
+            class="block min-w-0 w-full truncate text-base font-semibold text-default hover:underline"
           >
             {{ bookmark.title }}
           </NuxtLink>
