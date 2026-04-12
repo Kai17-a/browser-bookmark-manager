@@ -19,6 +19,7 @@ class BookmarkServiceBase:
             title=cast(str, row["title"]),
             description=cast(str | None, row["description"]),
             folder_id=cast(int | None, row["folder_id"]),
+            is_favorite=cast(bool, row["is_favorite"]),
             tags=tags,
             created_at=cast(datetime, row["created_at"]),
             updated_at=cast(datetime, row["updated_at"]),

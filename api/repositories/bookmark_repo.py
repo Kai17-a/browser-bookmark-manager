@@ -5,10 +5,17 @@ class BookmarkRepository:
     def __init__(self, conn: sqlite3.Connection) -> None:
         self.conn = conn
 
-    def insert(self, url: str, title: str, description: str | None, folder_id: int | None) -> dict:
+    def insert(
+        self,
+        url: str,
+        title: str,
+        description: str | None,
+        folder_id: int | None,
+        is_favorite: bool,
+    ) -> dict:
         cursor = self.conn.execute(
-            "INSERT INTO bookmarks (url, title, description, folder_id) VALUES (?, ?, ?, ?)",
-            (url, title, description, folder_id),
+            "INSERT INTO bookmarks (url, title, description, folder_id, is_favorite) VALUES (?, ?, ?, ?, ?)",
+            (url, title, description, folder_id, int(is_favorite)),
         )
         row = self.conn.execute(
             "SELECT * FROM bookmarks WHERE id = ?", (cursor.lastrowid,)
@@ -91,6 +98,9 @@ class BookmarkRepository:
         if not fields:
             return self.find_by_id(bookmark_id)
 
+        if "is_favorite" in fields:
+            fields = {**fields, "is_favorite": int(bool(fields["is_favorite"]))}
+
         set_clauses = ", ".join(f"{key} = ?" for key in fields)
         set_clauses += ", updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now')"
         params = list(fields.values()) + [bookmark_id]
@@ -134,6 +144,11 @@ class BookmarkRepository:
             (bookmark_id,),
         ).fetchall()
         return [dict(row) for row in rows]
+
+    def normalize_row(self, row: dict) -> dict:
+        normalized = dict(row)
+        normalized["is_favorite"] = bool(normalized["is_favorite"])
+        return normalized
 
     def set_tags(self, bookmark_id: int, tag_ids: list[int]) -> None:
         self.conn.execute(

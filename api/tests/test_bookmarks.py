@@ -65,6 +65,7 @@ def test_create_bookmark_returns_201(client):
     data = resp.json()
     assert data["url"] == "https://example.com/"
     assert data["title"] == "Example"
+    assert data["is_favorite"] is False
     assert "id" in data
     assert "created_at" in data
     assert "updated_at" in data
@@ -153,6 +154,19 @@ def test_update_bookmark_changes_updated_at(client):
     old_updated = bm["updated_at"]
     resp = client.patch(f"/bookmarks/{bm_id}", json={"title": "Changed"})
     assert resp.json()["updated_at"] != old_updated
+
+
+def test_create_bookmark_accepts_is_favorite(client):
+    resp = create_bookmark(client, is_favorite=True)
+    assert resp.status_code == 201
+    assert resp.json()["is_favorite"] is True
+
+
+def test_update_bookmark_can_toggle_is_favorite(client):
+    bm_id = create_bookmark(client).json()["id"]
+    resp = client.patch(f"/bookmarks/{bm_id}", json={"is_favorite": True})
+    assert resp.status_code == 200
+    assert resp.json()["is_favorite"] is True
 
 
 def test_delete_bookmark_returns_204(client):

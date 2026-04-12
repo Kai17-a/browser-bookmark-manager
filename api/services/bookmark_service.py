@@ -46,11 +46,12 @@ class BookmarkService(BookmarkServiceBase):
                 title=data.title,
                 description=data.description,
                 folder_id=data.folder_id,
+                is_favorite=data.is_favorite,
             )
             self._sync_tags(repo, row["id"], data.tag_ids)
             row = repo.find_by_id(row["id"])
             assert row is not None
-            return self._build_bookmark_response(repo, row)
+            return self._build_bookmark_response(repo, repo.normalize_row(row))
 
     def list(
         self,
@@ -69,7 +70,7 @@ class BookmarkService(BookmarkServiceBase):
                 page = total_pages
             offset = (page - 1) * per_page
             rows = repo.find_all(folder_id=folder_id, tag_id=tag_id, q=q, limit=per_page, offset=offset)
-            items = [self._build_bookmark_response(repo, row) for row in rows]
+            items = [self._build_bookmark_response(repo, repo.normalize_row(row)) for row in rows]
             return BookmarkListResponse(
                 items=items,
                 total=total,
@@ -84,7 +85,7 @@ class BookmarkService(BookmarkServiceBase):
             row = repo.find_by_id(bookmark_id)
             if row is None:
                 self._raise_not_found("Bookmark")
-            return self._build_bookmark_response(repo, row)
+            return self._build_bookmark_response(repo, repo.normalize_row(row))
 
     def update(self, bookmark_id: int, data: BookmarkUpdate) -> BookmarkResponse:
         with get_db() as conn:
@@ -101,6 +102,8 @@ class BookmarkService(BookmarkServiceBase):
                 fields["title"] = data.title
             if data.description is not None:
                 fields["description"] = data.description
+            if data.is_favorite is not None:
+                fields["is_favorite"] = data.is_favorite
             if data.folder_id is not None:
                 self._verify_folder(conn, data.folder_id)
                 fields["folder_id"] = data.folder_id
@@ -113,7 +116,7 @@ class BookmarkService(BookmarkServiceBase):
             self._sync_tags(repo, bookmark_id, data.tag_ids)
             row = repo.find_by_id(bookmark_id)
             assert row is not None
-            return self._build_bookmark_response(repo, row)
+            return self._build_bookmark_response(repo, repo.normalize_row(row))
 
     def delete(self, bookmark_id: int) -> None:
         with get_db() as conn:
@@ -139,7 +142,7 @@ class BookmarkService(BookmarkServiceBase):
 
             row = repo.find_by_id(bookmark_id)
             assert row is not None
-            return self._build_bookmark_response(repo, row)
+            return self._build_bookmark_response(repo, repo.normalize_row(row))
 
     def remove_tag(self, bookmark_id: int, tag_id: int) -> None:
         with get_db() as conn:

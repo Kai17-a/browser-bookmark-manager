@@ -29,6 +29,7 @@
 - 一覧で検索・ページング・絞り込みを行う
 - 詳細を確認して編集または削除する
 - 必要に応じてタグを追加・削除する
+- 必要に応じてお気に入り状態を切り替える
 
 ### フォルダ
 
@@ -112,6 +113,7 @@ Response:
   "title": "Example",
   "description": "Optional",
   "folder_id": 1,
+  "is_favorite": false,
   "tags": [
     { "id": 1, "name": "tag-a" },
     { "id": 2, "name": "tag-b" }
@@ -122,6 +124,7 @@ Response:
 ```
 
 - 成功時の `tags` は空配列または関連タグ配列になる
+- `is_favorite` は作成時に指定しなければ `false` になる
 - `tag_ids` は重複不可で、重複時は 422 を返す
 - 既存 URL は 409 を返す
 

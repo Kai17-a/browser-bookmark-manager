@@ -9,7 +9,7 @@ APIはPythonで実装し、データストアにはSQLiteを使用する。
 ## 用語集
 
 - **API**: ブックマーク管理アプリケーションのREST APIサーバー
-- **Bookmark**: URLとそのメタデータ（タイトル、説明など）を保持するリソース
+- **Bookmark**: URLとそのメタデータ（タイトル、説明、お気に入り状態など）を保持するリソース
 - **Folder**: ブックマークを階層的に整理するためのコンテナリソース
 - **Tag**: ブックマークに付与できるラベルリソース（多対多の関係）
 - **Client**: APIを呼び出すブラウザまたはフロントエンドアプリケーション
@@ -25,7 +25,7 @@ APIはPythonで実装し、データストアにはSQLiteを使用する。
 
 #### 受け入れ基準
 
-1. WHEN Clientが有効なURL・タイトルを含むPOSTリクエストを `/bookmarks` に送信したとき、THE API SHALL 新しいブックマークをDBに保存し、HTTPステータス201と作成されたブックマークオブジェクト（id, url, title, description, folder_id, tags, created_at, updated_at）を返す。
+1. WHEN Clientが有効なURL・タイトルを含むPOSTリクエストを `/bookmarks` に送信したとき、THE API SHALL 新しいブックマークをDBに保存し、HTTPステータス201と作成されたブックマークオブジェクト（id, url, title, description, folder_id, is_favorite, tags, created_at, updated_at）を返す。
 2. WHEN Clientが `folder_id` を指定してブックマークを作成したとき、THE API SHALL 指定されたフォルダが存在することを確認してから保存する。
 3. IF Clientが無効なURL形式を送信したとき、THEN THE API SHALL HTTPステータス422を返す。
 4. IF Clientが `title` を省略したとき、THEN THE API SHALL HTTPステータス422を返す。

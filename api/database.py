@@ -23,6 +23,7 @@ def init_db(database_url: str = DATABASE_URL) -> None:
                 title       TEXT    NOT NULL,
                 description TEXT,
                 folder_id   INTEGER REFERENCES folders(id) ON DELETE SET NULL,
+                is_favorite INTEGER NOT NULL DEFAULT 0,
                 created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
                 updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
             );
@@ -77,6 +78,13 @@ def init_db(database_url: str = DATABASE_URL) -> None:
         }
         if "description" not in folder_columns:
             conn.execute("ALTER TABLE folders ADD COLUMN description TEXT")
+        bookmark_columns = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(bookmarks)").fetchall()
+        }
+        if "is_favorite" not in bookmark_columns:
+            conn.execute("ALTER TABLE bookmarks ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0")
+            conn.execute("UPDATE bookmarks SET is_favorite = 0 WHERE is_favorite IS NULL")
         tag_columns = {
             row[1]
             for row in conn.execute("PRAGMA table_info(tags)").fetchall()

@@ -10,6 +10,7 @@ class BookmarkCreate(BaseModel):
     description: str | None = None
     folder_id: int | None = None
     tag_ids: list[int] | None = None
+    is_favorite: bool = False
 
     @field_validator("title")
     @classmethod
@@ -35,6 +36,7 @@ class BookmarkUpdate(BaseModel):
     description: str | None = None
     folder_id: int | None = None
     tag_ids: list[int] | None = None
+    is_favorite: bool | None = None
 
     @field_validator("title")
     @classmethod
@@ -133,6 +135,7 @@ class BookmarkResponse(BaseModel):
     title: str
     description: str | None
     folder_id: int | None
+    is_favorite: bool
     tags: list[TagResponse]
     created_at: datetime
     updated_at: datetime
