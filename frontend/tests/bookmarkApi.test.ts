@@ -5,6 +5,7 @@ import {
   buildRequestHeaders,
   deriveBrowserApiBase,
   getDefaultApiBase,
+  getWindowBookmarkConfig,
   extractErrorMessage,
   trimTrailingSlash,
 } from "../app/utils/bookmarkApi";
@@ -40,6 +41,29 @@ describe("bookmarkApi helpers", () => {
 
     expect(getDefaultApiBase()).toBe("http://demo.example.net:8000");
     expect(getDefaultApiBase("9000")).toBe("http://demo.example.net:9000");
+
+    Object.defineProperty(globalThis, "window", {
+      configurable: true,
+      value: originalWindow,
+    });
+  });
+
+  it("reads runtime config injected into window", () => {
+    const originalWindow = globalThis.window;
+    Object.defineProperty(globalThis, "window", {
+      configurable: true,
+      value: {
+        __BOOKMARK_MANAGER_CONFIG__: {
+          apiBaseUrl: "http://localhost:9000",
+          apiPort: "9000",
+        },
+      },
+    });
+
+    expect(getWindowBookmarkConfig()).toEqual({
+      apiBaseUrl: "http://localhost:9000",
+      apiPort: "9000",
+    });
 
     Object.defineProperty(globalThis, "window", {
       configurable: true,

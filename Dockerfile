@@ -3,6 +3,11 @@ FROM oven/bun:1.3.12-alpine AS frontend-build
 
 WORKDIR /app/frontend
 
+ARG API_BASE_URL=http://127.0.0.1:8005
+ARG API_PORT=8000
+ENV API_BASE_URL=$API_BASE_URL
+ENV API_PORT=$API_PORT
+
 RUN apk add --no-cache bash
 
 COPY frontend/package.json frontend/bun.lock ./

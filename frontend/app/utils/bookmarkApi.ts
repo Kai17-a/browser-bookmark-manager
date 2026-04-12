@@ -5,7 +5,21 @@ export type ApiErrorBody = {
   detail?: string | string[];
 };
 
+export type RuntimeBookmarkConfig = {
+  apiBaseUrl?: string;
+  apiPort?: string;
+};
+
 export const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
+
+export const getWindowBookmarkConfig = () => {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  return (window as typeof window & { __BOOKMARK_MANAGER_CONFIG__?: RuntimeBookmarkConfig })
+    .__BOOKMARK_MANAGER_CONFIG__ ?? {};
+};
 
 export const deriveBrowserApiBase = (href: string, apiPort = DEFAULT_API_PORT) => {
   const url = new URL(href);

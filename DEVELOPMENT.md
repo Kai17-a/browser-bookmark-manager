@@ -74,6 +74,7 @@ services:
 
 Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコンテナでフロントエンドと API を利用できる。`API_PORT` を変えない限り、コンテナ内ではフロントが `http://127.0.0.1:8000` の API を使う。
 `API_PORT` を変更した場合は、コンテナ内の API 待受ポートとフロントエンドの既定接続先もその値に追従する。
+`docker run -e` や `docker compose` の `environment` で `API_BASE_URL` を変えると、起動時に frontend の静的ファイルへ実行時設定が注入される。
 
 ## Push 前チェック
 

@@ -23,18 +23,21 @@ docker run --rm -p 3000:3000 -p 8000:8000 \
 services:
   bookmark-manager:
     container_name: bookmark-manager
-    image: ghcr.io/kai17-a/browser-bookmark-manager:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
       DATABASE_URL: /data/bookmark.db
-      API_BASE_URL: http://127.0.0.1:8000
+      API_BASE_URL: http://127.0.0.1:8005
     ports:
-      - "3000:3000"
-      - "8000:8000"
+      - "3001:3000"
+      - "8005:8000"
     volumes:
       - ./data:/data
 ```
 
 `API_BASE_URL` は、API を別ホストや別ポートに公開するときだけ上書きする。
+コンテナ起動時に `index.html` へ実行時設定を注入するため、`docker run -e` や `docker compose` の `environment` で変更した値がフロントエンドにも反映される。
 フロントエンド内部ではこの値を `NUXT_PUBLIC_API_BASE_URL` として扱う。
 `API_PORT` を変えると、コンテナ内で起動する API の待受ポートもフロントエンドの接続先も同じ値に揃う。
 `docker compose` でホスト側の公開ポートを変えても、コンテナ内のフロントと API は `3000` と `API_PORT` で参照し合う。

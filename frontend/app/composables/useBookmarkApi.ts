@@ -4,16 +4,20 @@ import {
   extractErrorMessage,
   getDefaultApiBase,
   parseJsonBody,
+  getWindowBookmarkConfig,
   trimTrailingSlash,
   type ApiErrorBody,
 } from "~/utils/bookmarkApi";
 
 export const useBookmarkApi = () => {
   const config = useRuntimeConfig();
-  const defaultApiBase = getDefaultApiBase(config.public.apiPort);
+  const runtimeConfig = getWindowBookmarkConfig();
+  const defaultApiBase = getDefaultApiBase(runtimeConfig.apiPort || config.public.apiPort);
   const apiBase = ref(
-    typeof config.public.apiBaseUrl === "string" && config.public.apiBaseUrl
-      ? config.public.apiBaseUrl
+    typeof runtimeConfig.apiBaseUrl === "string" && runtimeConfig.apiBaseUrl
+      ? runtimeConfig.apiBaseUrl
+      : typeof config.public.apiBaseUrl === "string" && config.public.apiBaseUrl
+        ? config.public.apiBaseUrl
       : defaultApiBase,
   );
 
