@@ -219,6 +219,60 @@ def test_execute_rss_feed_uses_feedparser_content(client, monkeypatch):
     ]
 
 
+def test_execute_rss_feed_splits_embeds_into_batches(client, monkeypatch):
+    import api.services.rss_feed_service as rss_module
+
+    client.put(
+        "/settings/webhook",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    feed_id = create_feed(client, url="https://example.com/feed.xml", title="Example").json()["id"]
+
+    payloads = []
+
+    def fake_post(url, json, timeout=5.0):
+        payloads.append(json)
+
+        class Response:
+            status_code = 204
+
+        return Response()
+
+    class ParsedEntry:
+        def __init__(self, index):
+            self._index = index
+
+        def get(self, key, default=None):
+            data = {
+                "title": f"Item {self._index}",
+                "link": f"https://example.com/item-{self._index}",
+            }
+            return data.get(key, default)
+
+    class ParsedFeed:
+        bozo = False
+        feed = {"title": "Parsed Example"}
+        entries = [ParsedEntry(index) for index in range(1, 13)]
+
+    def fake_get(url, timeout=5.0, follow_redirects=True):
+        class Response:
+            status_code = 200
+            content = b"feed"
+
+        return Response()
+
+    monkeypatch.setattr(rss_module.httpx, "get", fake_get)
+    monkeypatch.setattr(rss_module.httpx, "post", fake_post)
+    monkeypatch.setattr(rss_module.feedparser, "parse", lambda content: ParsedFeed())
+
+    resp = client.post(f"/rss-feeds/{feed_id}/execute")
+    assert resp.status_code == 200
+    assert len(payloads) == 2
+    assert len(payloads[0]["embeds"]) == 10
+    assert len(payloads[1]["embeds"]) == 2
+    assert payloads[1]["content"] == "*New articles* (12 items) [batch 2]"
+
+
 def test_execute_rss_feed_without_webhook_returns_400(client):
     feed_id = create_feed(client).json()["id"]
     resp = client.post(f"/rss-feeds/{feed_id}/execute")

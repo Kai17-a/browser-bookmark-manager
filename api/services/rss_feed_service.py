@@ -64,6 +64,11 @@ class RSSFeedService:
             status_code=422, detail="RSS feed URL is not a valid RSS feed"
         )
 
+    def _chunk_embeds(
+        self, embeds: list[dict[str, object]], chunk_size: int = 10
+    ) -> list[list[dict[str, object]]]:
+        return [embeds[index : index + chunk_size] for index in range(0, len(embeds), chunk_size)]
+
     def create(self, data: RSSFeedCreate) -> RSSFeedResponse:
         with get_db() as conn:
             repo = RSSFeedRepository(conn)
@@ -177,15 +182,22 @@ class RSSFeedService:
                 embeds.append(embed)
 
             try:
-                response = httpx.post(
-                    webhook_url,
-                    json={
-                        "username": feed_title,
-                        "content": f"*New articles* ({len(embeds)} items)",
-                        "embeds": embeds,
-                    },
-                    timeout=5.0,
-                )
+                embed_chunks = self._chunk_embeds(embeds) or [[]]
+                for index, chunk in enumerate(embed_chunks, start=1):
+                    content = f"*New articles* ({len(embeds)} items)"
+                    if len(embeds) > 10:
+                        content = f"{content} [batch {index}]"
+                    response = httpx.post(
+                        webhook_url,
+                        json={
+                            "username": feed_title,
+                            "content": content,
+                            "embeds": chunk,
+                        },
+                        timeout=5.0,
+                    )
+                    if response.status_code >= 400:
+                        break
             except httpx.HTTPError as exc:
                 raise HTTPException(
                     status_code=502, detail="Failed to notify Discord webhook"
