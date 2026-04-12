@@ -11,6 +11,47 @@
     <template #body>
       <div class="space-y-6">
         <UPageCard
+          title="Webhook"
+          description="Configure the global Discord webhook used by RSS execution"
+          :ui="{ body: 'space-y-5' }"
+        >
+          <form class="space-y-4" @submit.prevent="saveWebhook">
+            <UFormField
+              label="Discord webhook URL"
+              description="This single webhook setting is shared across app integrations."
+              class="w-full"
+            >
+              <UInput
+                v-model="webhookForm.webhookUrl"
+                class="w-full"
+                placeholder="https://discord.com/api/webhooks/..."
+              />
+            </UFormField>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <UButton
+                type="button"
+                color="neutral"
+                variant="ghost"
+                icon="i-lucide-refresh-cw"
+                :loading="webhookLoading"
+                @click="loadWebhook"
+              >
+                Refresh
+              </UButton>
+              <UButton type="submit" icon="i-lucide-save" :loading="webhookSaving">
+                Save webhook
+              </UButton>
+            </div>
+
+            <p class="text-sm text-muted">
+              <span v-if="webhookConfigured">Webhook is configured.</span>
+              <span v-else>No webhook is configured yet.</span>
+            </p>
+          </form>
+        </UPageCard>
+
+        <UPageCard
           title="Theme"
           description="Switch the app appearance between light, dark, and system"
           :ui="{ body: 'space-y-5' }"
@@ -70,12 +111,20 @@
 </template>
 
 <script setup lang="ts">
-const { apiBase, defaultApiBase } = useBookmarkApi();
+import type { SettingsWebhookResponse } from "~/types";
+
+const { apiBase, defaultApiBase, request } = useBookmarkApi();
 const toast = useSingleToast();
 const colorMode = useColorMode();
 const checking = ref(false);
+const webhookLoading = ref(false);
+const webhookSaving = ref(false);
+const webhookConfigured = ref(false);
 const form = reactive({
   apiBaseUrl: "",
+});
+const webhookForm = reactive({
+  webhookUrl: "",
 });
 
 const themeOptions = [
@@ -136,7 +185,67 @@ const checkHealth = async () => {
   }
 };
 
+const loadWebhook = async () => {
+  webhookLoading.value = true;
+  try {
+    const response = await request<SettingsWebhookResponse>("/settings/webhook");
+    webhookForm.webhookUrl = response.webhook_url;
+    webhookConfigured.value = true;
+  } catch (err) {
+    webhookForm.webhookUrl = "";
+    webhookConfigured.value = false;
+    if (err instanceof Error && err.message.includes("404")) {
+      return;
+    }
+    toast.show({
+      title: "Failed to load webhook setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    webhookLoading.value = false;
+  }
+};
+
+const saveWebhook = async () => {
+  const webhookUrl = webhookForm.webhookUrl.trim();
+  if (!webhookUrl) {
+    toast.show({
+      title: "Webhook URL is required.",
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+    return;
+  }
+
+  webhookSaving.value = true;
+  try {
+    const response = await request<SettingsWebhookResponse>("/settings/webhook", {
+      method: "PUT",
+      body: JSON.stringify({ webhook_url: webhookUrl }),
+    });
+    webhookForm.webhookUrl = response.webhook_url;
+    webhookConfigured.value = true;
+    toast.show({
+      title: "Webhook setting saved.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  } catch (err) {
+    toast.show({
+      title: "Failed to save webhook setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    webhookSaving.value = false;
+  }
+};
+
 onMounted(async () => {
   syncSettings();
+  await loadWebhook();
 });
 </script>

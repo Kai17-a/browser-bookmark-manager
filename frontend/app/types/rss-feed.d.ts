@@ -26,3 +26,14 @@ export interface RSSFeedListResponse {
   per_page: number;
   total_pages: number;
 }
+
+export interface RSSFeedExecuteResponse {
+  feed_id: number;
+  title: string;
+  webhook_url: string;
+  delivered: boolean;
+}
+
+export interface SettingsWebhookResponse {
+  webhook_url: string;
+}

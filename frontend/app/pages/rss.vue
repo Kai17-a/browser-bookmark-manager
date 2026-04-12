@@ -77,7 +77,9 @@
               v-for="feed in feedList.items"
               :key="feed.id"
               :feed="feed"
+              :running="executingFeedId === feed.id"
               @edit="openEditModal"
+              @execute="executeFeed"
               @remove="askDelete"
             />
           </div>
@@ -163,7 +165,7 @@
 </template>
 
 <script setup lang="ts">
-import type { RSSFeedListResponse, RSSFeedResponse } from "~/types";
+import type { RSSFeedExecuteResponse, RSSFeedListResponse, RSSFeedResponse } from "~/types";
 
 type PaginationItem = { type: "page"; label: string; value: number } | { type: "ellipsis" };
 
@@ -173,6 +175,7 @@ const toast = useSingleToast();
 const loading = ref(false);
 const saving = ref(false);
 const deleting = ref(false);
+const executingFeedId = ref<number | null>(null);
 const loadError = ref("");
 const modalOpen = ref(false);
 const deleteOpen = ref(false);
@@ -305,6 +308,30 @@ const saveFeed = async () => {
 const askDelete = (feed: RSSFeedResponse) => {
   pendingFeed.value = feed;
   deleteOpen.value = true;
+};
+
+const executeFeed = async (feed: RSSFeedResponse) => {
+  executingFeedId.value = feed.id;
+  try {
+    const result = await request<RSSFeedExecuteResponse>(`/rss-feeds/${feed.id}/execute`, {
+      method: "POST",
+    });
+    toast.show({
+      title: "RSS feed executed.",
+      description: `Delivered to ${result.webhook_url}`,
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  } catch (err) {
+    toast.show({
+      title: "Failed to execute RSS feed.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    executingFeedId.value = null;
+  }
 };
 
 const closeDelete = () => {

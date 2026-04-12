@@ -14,6 +14,17 @@
         <UButton
           type="button"
           size="xs"
+          variant="soft"
+          color="primary"
+          icon="i-lucide-play"
+          :loading="running"
+          @click.stop="$emit('execute', feed)"
+        >
+          Run
+        </UButton>
+        <UButton
+          type="button"
+          size="xs"
           variant="ghost"
           color="neutral"
           icon="i-lucide-pencil"
@@ -41,6 +52,17 @@
       <UButton
         type="button"
         size="xs"
+        variant="soft"
+        color="primary"
+        icon="i-lucide-play"
+        :loading="running"
+        @click.stop="$emit('execute', feed)"
+      >
+        Run
+      </UButton>
+      <UButton
+        type="button"
+        size="xs"
         variant="ghost"
         color="neutral"
         icon="i-lucide-pencil"
@@ -65,10 +87,12 @@ import type { RSSFeedResponse } from "~/types";
 
 defineProps<{
   feed: RSSFeedResponse;
+  running?: boolean;
 }>();
 
 defineEmits<{
   edit: [feed: RSSFeedResponse];
+  execute: [feed: RSSFeedResponse];
   remove: [feed: RSSFeedResponse];
 }>();
 </script>
