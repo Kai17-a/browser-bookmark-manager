@@ -1,5 +1,7 @@
 import sqlite3
+import xml.etree.ElementTree as ET
 
+import httpx
 from fastapi import HTTPException
 
 from api.database import get_db
@@ -8,11 +10,37 @@ from api.repositories.rss_feed_repo import RSSFeedRepository
 
 
 class RSSFeedService:
+    def _validate_rss_feed_url(self, url: str) -> None:
+        try:
+            response = httpx.get(url, timeout=5.0, follow_redirects=True)
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=422, detail="RSS feed URL is not reachable") from exc
+
+        if response.status_code >= 400:
+            raise HTTPException(status_code=422, detail="RSS feed URL is not reachable")
+
+        try:
+            root = ET.fromstring(response.text)
+        except ET.ParseError as exc:
+            raise HTTPException(status_code=422, detail="RSS feed URL is not a valid RSS feed") from exc
+
+        tag = root.tag.split("}", 1)[-1].lower()
+        if tag == "rss":
+            channel = root.find("channel")
+            if channel is None:
+                raise HTTPException(status_code=422, detail="RSS feed URL is not a valid RSS feed")
+            return
+        if tag == "feed":
+            return
+
+        raise HTTPException(status_code=422, detail="RSS feed URL is not a valid RSS feed")
+
     def create(self, data: RSSFeedCreate) -> RSSFeedResponse:
         with get_db() as conn:
             repo = RSSFeedRepository(conn)
             if repo.find_by_url(str(data.url)) is not None:
                 raise HTTPException(status_code=409, detail="RSS feed URL already exists")
+            self._validate_rss_feed_url(str(data.url))
             try:
                 row = repo.insert(str(data.url), data.title, data.description)
             except sqlite3.IntegrityError:
@@ -50,6 +78,7 @@ class RSSFeedService:
                 existing = repo.find_by_url(str(data.url))
                 if existing is not None and existing["id"] != feed_id:
                     raise HTTPException(status_code=409, detail="RSS feed URL already exists")
+                self._validate_rss_feed_url(str(data.url))
                 fields["url"] = str(data.url)
             if data.title is not None:
                 fields["title"] = data.title

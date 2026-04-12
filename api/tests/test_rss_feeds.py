@@ -17,6 +17,13 @@ def client(tmp_path, monkeypatch):
     import api.database as db_module
     import api.services.rss_feed_service as rss_module
 
+    def fake_get(url, timeout=5.0, follow_redirects=True):
+        class Response:
+            status_code = 200
+            text = "<?xml version='1.0'?><rss><channel><title>Example</title></channel></rss>"
+
+        return Response()
+
     @contextmanager
     def patched_get_db(database_url=db_path):
         conn = sqlite3.connect(db_path)
@@ -33,6 +40,7 @@ def client(tmp_path, monkeypatch):
 
     monkeypatch.setattr(db_module, "get_db", patched_get_db)
     monkeypatch.setattr(rss_module, "get_db", patched_get_db)
+    monkeypatch.setattr(rss_module.httpx, "get", fake_get)
 
     with TestClient(app) as c:
         yield c
@@ -94,6 +102,22 @@ def test_create_rss_feed_with_invalid_url_returns_422(client):
 
 def test_create_rss_feed_with_empty_title_returns_422(client):
     resp = client.post("/rss-feeds", json={"url": "https://example.com/feed", "title": "   "})
+    assert resp.status_code == 422
+
+
+def test_create_rss_feed_with_non_feed_url_returns_422(client, monkeypatch):
+    import api.services.rss_feed_service as rss_module
+
+    def fake_get(url, timeout=5.0, follow_redirects=True):
+        class Response:
+            status_code = 200
+            text = "<html><body>Not a feed</body></html>"
+
+        return Response()
+
+    monkeypatch.setattr(rss_module.httpx, "get", fake_get)
+
+    resp = create_feed(client, url="https://example.com/not-a-feed.xml")
     assert resp.status_code == 422
 
 
