@@ -16,6 +16,7 @@ from api.model.models import (
     FolderUpdate,
     RSSFeedCreate,
     RSSFeedUpdate,
+    SettingsWebhookUpdate,
     TagAttach,
     TagCreate,
     TagUpdate,
@@ -24,6 +25,7 @@ from api.services.bookmark_service import BookmarkService
 from api.services.dashboard_service import DashboardService
 from api.services.folder_service import FolderService
 from api.services.rss_feed_service import RSSFeedService
+from api.services.settings_service import SettingsService
 from api.services.tag_service import TagService
 
 
@@ -141,6 +143,13 @@ class CompatTestClient:
                 body = RSSFeedCreate(**(json or {}))
                 payload = RSSFeedService().create(body).model_dump()
                 return self._ok(payload, 201)
+            if method == "PUT" and path == "/settings/webhook":
+                body = SettingsWebhookUpdate(**(json or {}))
+                payload = SettingsService().set_webhook(body).model_dump()
+                return self._ok(payload, 200)
+            if method == "GET" and path == "/settings/webhook":
+                payload = SettingsService().get_webhook().model_dump()
+                return self._ok(payload, 200)
             if method == "GET" and path == "/rss-feeds":
                 q = query.get("q")
                 page = int(query.get("page", "1"))
@@ -149,6 +158,10 @@ class CompatTestClient:
                 return self._ok(payload, 200)
             if method == "GET" and path.startswith("/rss-feeds/"):
                 payload = RSSFeedService().get(int(path.rsplit("/", 1)[1])).model_dump()
+                return self._ok(payload, 200)
+            if method == "POST" and path.startswith("/rss-feeds/") and path.endswith("/execute"):
+                feed_id = int(path.split("/")[2])
+                payload = RSSFeedService().execute(feed_id).model_dump()
                 return self._ok(payload, 200)
             if method == "PATCH" and path.startswith("/rss-feeds/"):
                 body = RSSFeedUpdate(**(json or {}))
@@ -210,6 +223,9 @@ class CompatTestClient:
 
     def patch(self, url: str, **kwargs):
         return self.request("PATCH", url, **kwargs)
+
+    def put(self, url: str, **kwargs):
+        return self.request("PUT", url, **kwargs)
 
     def delete(self, url: str, **kwargs):
         return self.request("DELETE", url, **kwargs)

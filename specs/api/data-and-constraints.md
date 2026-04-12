@@ -31,6 +31,12 @@ CREATE TABLE IF NOT EXISTS rss_feeds (
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS app_settings (
+    key        TEXT PRIMARY KEY,
+    value      TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS tags (
     id   INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
@@ -50,6 +56,9 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `BookmarkUpdate`
 - `RSSFeedCreate`
 - `RSSFeedUpdate`
+- `RSSFeedExecuteResponse`
+- `SettingsWebhookUpdate`
+- `SettingsWebhookResponse`
 - `FolderCreate`
 - `FolderUpdate`
 - `TagCreate`
@@ -70,6 +79,8 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 | `BookmarkListResponse` | `items`, `total`, `page`, `per_page`, `total_pages`                                  |
 | `RSSFeedResponse`      | `id`, `url`, `title`, `description`, `created_at`, `updated_at`                      |
 | `RSSFeedListResponse`  | `items`, `total`, `page`, `per_page`, `total_pages`                                  |
+| `RSSFeedExecuteResponse` | `feed_id`, `title`, `webhook_url`, `delivered`                                     |
+| `SettingsWebhookResponse` | `webhook_url`                                                                      |
 | `FolderResponse`       | `id`, `name`, `created_at`                                                           |
 | `TagResponse`          | `id`, `name`                                                                         |
 | `ErrorResponse`        | `detail`                                                                             |
@@ -80,6 +91,8 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `rss_feeds.url` は HTTP/HTTPS URL のみ受け付ける
 - `bookmarks.title` は必須
 - `rss_feeds.title` は必須
+- 全体設定の `webhook_url` は 1 つだけ保持する
+- `webhook_url` は Discord webhook URL のみ受け付ける
 - `folders.name` と `tags.name` は重複を許可しない
 - `bookmarks.url` は正規化後に一意扱いする
 - `rss_feeds.url` は正規化後に一意扱いする
@@ -94,5 +107,9 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `/bookmarks/{id}` は詳細取得と更新対象を兼ねる
 - `/bookmarks/{id}/tags` はタグ付与、`DELETE /bookmarks/{id}/tags/{tag_id}` は解除を担当する
 - `/rss-feeds` は RSS リンクの CRUD を担当する
+- `PUT /settings/webhook` はアプリ全体で使う Discord webhook URL を設定する
+- `GET /settings/webhook` は現在の Discord webhook URL を返す
+- `POST /rss-feeds/{id}/execute` は RSS を実行し、登録済み Discord webhook に通知する
+- `POST /rss-feeds/{id}/execute` はグローバル `webhook_url` 未設定時に 400 を返す
 - フォルダとタグは最大件数制限を持ち、上限超過時は 400 を返す
 - `BookmarkListResponse.total_pages` はクライアントのページング UI が使えるように返す

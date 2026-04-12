@@ -199,6 +199,21 @@ class RSSFeedListResponse(BaseModel):
     total_pages: int
 
 
+class RSSFeedExecuteResponse(BaseModel):
+    feed_id: int
+    title: str
+    webhook_url: str
+    delivered: bool
+
+
+class SettingsWebhookUpdate(BaseModel):
+    webhook_url: AnyHttpUrl
+
+
+class SettingsWebhookResponse(BaseModel):
+    webhook_url: str
+
+
 class DashboardMetricsResponse(BaseModel):
     bookmarks_total: int
     folders_total: int

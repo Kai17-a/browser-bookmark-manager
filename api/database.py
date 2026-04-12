@@ -37,6 +37,12 @@ def init_db(database_url: str = DATABASE_URL) -> None:
                 updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
             );
 
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key         TEXT    PRIMARY KEY,
+                value       TEXT    NOT NULL,
+                updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+            );
+
             CREATE TABLE IF NOT EXISTS tags (
                 id   INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,

@@ -1,7 +1,14 @@
 from fastapi import APIRouter, Depends, Query
 
 from api.dependencies import get_rss_feed_service
-from api.model.models import ErrorResponse, RSSFeedCreate, RSSFeedListResponse, RSSFeedResponse, RSSFeedUpdate
+from api.model.models import (
+    ErrorResponse,
+    RSSFeedCreate,
+    RSSFeedExecuteResponse,
+    RSSFeedListResponse,
+    RSSFeedResponse,
+    RSSFeedUpdate,
+)
 from api.services.rss_feed_service import RSSFeedService
 
 router = APIRouter(prefix="/rss-feeds", tags=["rss-feeds"])
@@ -44,3 +51,8 @@ def update_rss_feed(
 @router.delete("/{feed_id}", status_code=204)
 def delete_rss_feed(feed_id: int, service: RSSFeedService = Depends(get_rss_feed_service)):
     service.delete(feed_id)
+
+
+@router.post("/{feed_id}/execute", status_code=200, response_model=RSSFeedExecuteResponse)
+def execute_rss_feed(feed_id: int, service: RSSFeedService = Depends(get_rss_feed_service)):
+    return service.execute(feed_id)

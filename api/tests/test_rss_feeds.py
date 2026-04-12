@@ -16,11 +16,18 @@ def client(tmp_path, monkeypatch):
 
     import api.database as db_module
     import api.services.rss_feed_service as rss_module
+    import api.services.settings_service as settings_module
 
     def fake_get(url, timeout=5.0, follow_redirects=True):
         class Response:
             status_code = 200
             text = "<?xml version='1.0'?><rss><channel><title>Example</title></channel></rss>"
+
+        return Response()
+
+    def fake_post(url, json, timeout=5.0):
+        class Response:
+            status_code = 204
 
         return Response()
 
@@ -40,7 +47,9 @@ def client(tmp_path, monkeypatch):
 
     monkeypatch.setattr(db_module, "get_db", patched_get_db)
     monkeypatch.setattr(rss_module, "get_db", patched_get_db)
+    monkeypatch.setattr(settings_module, "get_db", patched_get_db)
     monkeypatch.setattr(rss_module.httpx, "get", fake_get)
+    monkeypatch.setattr(rss_module.httpx, "post", fake_post)
 
     with TestClient(app) as c:
         yield c
@@ -57,6 +66,15 @@ def test_create_rss_feed_returns_201(client):
     assert body["url"] == "https://example.com/feed.xml"
     assert body["title"] == "Example"
     assert "id" in body
+
+
+def test_set_rss_webhook_accepts_discord_webhook_url(client):
+    resp = client.put(
+        "/settings/webhook",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["webhook_url"] == "https://discord.com/api/webhooks/1/token"
 
 
 def test_list_rss_feeds_returns_200(client):
@@ -83,6 +101,27 @@ def test_update_rss_feed_returns_200(client):
     assert resp.json()["title"] == "New"
 
 
+def test_execute_rss_feed_returns_200(client):
+    client.put(
+        "/settings/webhook",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    feed_id = client.post(
+        "/rss-feeds",
+        json={"url": "https://example.com/feed.xml", "title": "Example"},
+    ).json()["id"]
+    resp = client.post(f"/rss-feeds/{feed_id}/execute")
+    assert resp.status_code == 200
+    assert resp.json()["feed_id"] == feed_id
+    assert resp.json()["delivered"] is True
+
+
+def test_execute_rss_feed_without_webhook_returns_400(client):
+    feed_id = create_feed(client).json()["id"]
+    resp = client.post(f"/rss-feeds/{feed_id}/execute")
+    assert resp.status_code == 400
+
+
 def test_delete_rss_feed_returns_204(client):
     feed_id = create_feed(client).json()["id"]
     resp = client.delete(f"/rss-feeds/{feed_id}")
@@ -98,6 +137,16 @@ def test_create_rss_feed_with_duplicate_url_returns_409(client):
 def test_create_rss_feed_with_invalid_url_returns_422(client):
     resp = client.post("/rss-feeds", json={"url": "not-a-url", "title": "Test"})
     assert resp.status_code == 422
+
+
+def test_create_rss_feed_with_non_discord_webhook_returns_422(client):
+    resp = client.put("/settings/webhook", json={"webhook_url": "https://example.com/webhook"})
+    assert resp.status_code == 422
+
+
+def test_get_rss_webhook_returns_404_when_unconfigured(client):
+    resp = client.get("/settings/webhook")
+    assert resp.status_code == 404
 
 
 def test_create_rss_feed_with_empty_title_returns_422(client):

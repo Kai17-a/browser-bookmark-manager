@@ -5,8 +5,16 @@ import httpx
 from fastapi import HTTPException
 
 from api.database import get_db
-from api.model.models import RSSFeedCreate, RSSFeedListResponse, RSSFeedResponse, RSSFeedUpdate
+from api.model.models import (
+    RSSFeedCreate,
+    RSSFeedExecuteResponse,
+    RSSFeedListResponse,
+    RSSFeedResponse,
+    RSSFeedUpdate,
+)
 from api.repositories.rss_feed_repo import RSSFeedRepository
+from api.repositories.settings_repo import SettingsRepository
+from api.services.settings_service import WEBHOOK_SETTING_KEY
 
 
 class RSSFeedService:
@@ -93,3 +101,36 @@ class RSSFeedService:
             repo = RSSFeedRepository(conn)
             if not repo.delete(feed_id):
                 raise HTTPException(status_code=404, detail="RSS feed not found")
+
+    def execute(self, feed_id: int) -> RSSFeedExecuteResponse:
+        with get_db() as conn:
+            repo = RSSFeedRepository(conn)
+            row = repo.find_by_id(feed_id)
+            if row is None:
+                raise HTTPException(status_code=404, detail="RSS feed not found")
+            webhook_url = SettingsRepository(conn).get(WEBHOOK_SETTING_KEY)
+            if not webhook_url:
+                raise HTTPException(status_code=400, detail="Webhook URL is not configured")
+
+            self._validate_rss_feed_url(row["url"])
+
+            try:
+                response = httpx.post(
+                    webhook_url,
+                    json={
+                        "content": f"RSS feed executed: {row['title']}\n{row['url']}",
+                    },
+                    timeout=5.0,
+                )
+            except httpx.HTTPError as exc:
+                raise HTTPException(status_code=502, detail="Failed to notify Discord webhook") from exc
+
+            if response.status_code >= 400:
+                raise HTTPException(status_code=502, detail="Failed to notify Discord webhook")
+
+            return RSSFeedExecuteResponse(
+                feed_id=feed_id,
+                title=row["title"],
+                webhook_url=webhook_url,
+                delivered=True,
+            )
