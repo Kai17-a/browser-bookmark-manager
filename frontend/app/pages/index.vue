@@ -10,7 +10,7 @@
 
     <template #body>
       <div class="space-y-6">
-        <UPageGrid class="grid gap-4 lg:grid-cols-4">
+        <UPageGrid class="grid gap-4 lg:grid-cols-5">
           <CardsStatCard
             v-for="stat in stats"
             :key="stat.title"
