@@ -15,16 +15,16 @@
 
 ## 主要ファイル
 
-- [アプリケーション本体](/home/kaito/workspaces/bookmark-manager/api/main.py)
-- [DB 初期化](/home/kaito/workspaces/bookmark-manager/api/database.py)
-- [ブックマークルータ](/home/kaito/workspaces/bookmark-manager/api/routers/bookmarks.py)
-- [フォルダルータ](/home/kaito/workspaces/bookmark-manager/api/routers/folders.py)
-- [タグルータ](/home/kaito/workspaces/bookmark-manager/api/routers/tags.py)
-- [タグ付与ルータ](/home/kaito/workspaces/bookmark-manager/api/routers/bookmark_tags.py)
-- [ブックマークサービス](/home/kaito/workspaces/bookmark-manager/api/services/bookmark_service.py)
-- [フォルダサービス](/home/kaito/workspaces/bookmark-manager/api/services/folder_service.py)
-- [タグサービス](/home/kaito/workspaces/bookmark-manager/api/services/tag_service.py)
-- [モデル定義](/home/kaito/workspaces/bookmark-manager/api/model/models.py)
+- [アプリケーション本体](../../api/main.py)
+- [DB 初期化](../../api/database.py)
+- [ブックマークルータ](../../api/routers/bookmarks.py)
+- [フォルダルータ](../../api/routers/folders.py)
+- [タグルータ](../../api/routers/tags.py)
+- [タグ付与ルータ](../../api/routers/bookmark_tags.py)
+- [ブックマークサービス](../../api/services/bookmark_service.py)
+- [フォルダサービス](../../api/services/folder_service.py)
+- [タグサービス](../../api/services/tag_service.py)
+- [モデル定義](../../api/model/models.py)
 
 ## 仕様の範囲
 

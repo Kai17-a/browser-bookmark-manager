@@ -12,9 +12,9 @@
 
 ## 主要ファイル
 
-- [レイアウト](/home/kaito/workspaces/bookmark-manager/frontend/app/layouts/default.vue)
-- [ブックマーク一覧](/home/kaito/workspaces/bookmark-manager/frontend/app/pages/bookmarks.vue)
-- [フォルダ一覧](/home/kaito/workspaces/bookmark-manager/frontend/app/pages/folders/index.vue)
-- [タグ一覧](/home/kaito/workspaces/bookmark-manager/frontend/app/pages/tags/index.vue)
-- [API ヘルパー](/home/kaito/workspaces/bookmark-manager/frontend/app/composables/useBookmarkApi.ts)
-- [サイドバーカタログ](/home/kaito/workspaces/bookmark-manager/frontend/app/composables/useSidebarCatalog.ts)
+- [レイアウト](../../frontend/app/layouts/default.vue)
+- [ブックマーク一覧](../../frontend/app/pages/bookmarks.vue)
+- [フォルダ一覧](../../frontend/app/pages/folders/index.vue)
+- [タグ一覧](../../frontend/app/pages/tags/index.vue)
+- [API ヘルパー](../../frontend/app/composables/useBookmarkApi.ts)
+- [サイドバーカタログ](../../frontend/app/composables/useSidebarCatalog.ts)
