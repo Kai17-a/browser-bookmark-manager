@@ -11,6 +11,63 @@
     <template #body>
       <div class="space-y-6">
         <UPageCard
+          title="API Base URL"
+          description="Configured from runtime environment"
+          :ui="{ body: 'space-y-5' }"
+        >
+          <div class="space-y-2">
+            <UFormField label="Current value" description="This is the base URL used by the app">
+              <div class="flex flex-wrap items-center gap-3">
+                <p
+                  class="rounded-xl border border-default bg-elevated px-4 py-3 text-sm text-default"
+                >
+                  {{ form.apiBaseUrl || defaultApiBase }}
+                </p>
+
+                <UButton
+                  icon="i-lucide-heart-pulse"
+                  variant="soft"
+                  :loading="checking"
+                  @click="checkHealth"
+                >
+                  /health
+                </UButton>
+              </div>
+            </UFormField>
+          </div>
+        </UPageCard>
+
+        <UPageCard
+          title="Theme"
+          description="Switch the app appearance between light, dark, and system"
+          :ui="{ body: 'space-y-5' }"
+        >
+          <div class="space-y-3">
+            <div>
+              <p class="text-sm font-medium text-default">Appearance</p>
+              <p class="text-sm text-muted">
+                Changes apply immediately and are saved in your browser.
+              </p>
+            </div>
+
+            <UTabs
+              v-model="selectedTheme"
+              :items="themeOptions"
+              class="w-full max-w-sm"
+              color="primary"
+              variant="soft"
+              orientation="horizontal"
+              :ui="{
+                list: 'bg-default/60 p-1 rounded-full gap-1',
+                trigger:
+                  'rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors data-[state=active]:bg-primary data-[state=active]:text-inverted data-[state=active]:shadow-sm',
+                indicator: 'hidden',
+              }"
+            />
+          </div>
+        </UPageCard>
+
+        <UPageCard
           title="Webhook"
           description="Configure the global Discord webhook used by RSS execution"
           :ui="{ body: 'space-y-5' }"
@@ -49,61 +106,6 @@
               <span v-else>No webhook is configured yet.</span>
             </p>
           </form>
-        </UPageCard>
-
-        <UPageCard
-          title="Theme"
-          description="Switch the app appearance between light, dark, and system"
-          :ui="{ body: 'space-y-5' }"
-        >
-          <div class="space-y-3">
-            <div>
-              <p class="text-sm font-medium text-default">Appearance</p>
-              <p class="text-sm text-muted">Changes apply immediately and are saved in your browser.</p>
-            </div>
-
-            <UTabs
-              v-model="selectedTheme"
-              :items="themeOptions"
-              class="w-full max-w-sm"
-              color="primary"
-              variant="soft"
-              orientation="horizontal"
-              :ui="{
-                list: 'bg-default/60 p-1 rounded-full gap-1',
-                trigger:
-                  'rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors data-[state=active]:bg-primary data-[state=active]:text-inverted data-[state=active]:shadow-sm',
-                indicator: 'hidden',
-              }"
-            />
-          </div>
-        </UPageCard>
-
-        <UPageCard
-          title="API Base URL"
-          description="Configured from runtime environment"
-          :ui="{ body: 'space-y-5' }"
-        >
-          <div class="space-y-2">
-            <UFormField label="Current value" description="This is the base URL used by the app">
-              <div class="flex flex-wrap items-center gap-3">
-                <p
-                  class="rounded-xl border border-default bg-elevated px-4 py-3 text-sm text-default"
-                >
-                  {{ form.apiBaseUrl || defaultApiBase }}
-                </p>
-
-                <UButton
-                  icon="i-lucide-heart-pulse"
-                  variant="soft"
-                  :loading="checking"
-                  @click="checkHealth"
-                >
-                  /health
-                </UButton>
-              </div>
-            </UFormField>
-          </div>
         </UPageCard>
       </div>
     </template>
