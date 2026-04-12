@@ -22,6 +22,7 @@ def client(tmp_path, monkeypatch):
         class Response:
             status_code = 200
             text = "<?xml version='1.0'?><rss><channel><title>Example</title></channel></rss>"
+            content = b"<?xml version='1.0'?><rss><channel><title>Example</title></channel></rss>"
 
         return Response()
 
@@ -31,7 +32,7 @@ def client(tmp_path, monkeypatch):
 
         return Response()
 
-    def fake_parse(url):
+    def fake_parse(content):
         class ParsedEntry:
             def get(self, key, default=None):
                 data = {
@@ -175,8 +176,16 @@ def test_execute_rss_feed_uses_feedparser_content(client, monkeypatch):
         feed = {"title": "Parsed Example"}
         entries = [ParsedEntry()]
 
+    def fake_get(url, timeout=5.0, follow_redirects=True):
+        class Response:
+            status_code = 200
+            content = b"<?xml version='1.0'?><rss><channel><title>Parsed Example</title><item><title>Item 1</title><link>https://example.com/item-1</link></item></channel></rss>"
+
+        return Response()
+
+    monkeypatch.setattr(rss_module.httpx, "get", fake_get)
     monkeypatch.setattr(rss_module.httpx, "post", fake_post)
-    monkeypatch.setattr(rss_module.feedparser, "parse", lambda url: ParsedFeed())
+    monkeypatch.setattr(rss_module.feedparser, "parse", lambda content: ParsedFeed())
 
     resp = client.post(f"/rss-feeds/{feed_id}/execute")
     assert resp.status_code == 200

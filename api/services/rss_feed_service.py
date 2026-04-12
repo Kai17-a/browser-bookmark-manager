@@ -19,8 +19,8 @@ from api.services.settings_service import WEBHOOK_SETTING_KEY
 
 
 class RSSFeedService:
-    def _parse_rss_feed(self, url: str) -> feedparser.FeedParserDict:
-        parsed = feedparser.parse(url)
+    def _parse_rss_feed(self, content: bytes) -> feedparser.FeedParserDict:
+        parsed = feedparser.parse(content)
         if parsed.bozo:
             raise HTTPException(
                 status_code=422, detail="RSS feed URL is not a valid RSS feed"
@@ -149,7 +149,19 @@ class RSSFeedService:
                     status_code=400, detail="Webhook URL is not configured"
                 )
 
-            parsed_feed = self._parse_rss_feed(row["url"])
+            try:
+                response = httpx.get(row["url"], timeout=5.0, follow_redirects=True)
+            except httpx.HTTPError as exc:
+                raise HTTPException(
+                    status_code=422, detail="RSS feed URL is not reachable"
+                ) from exc
+
+            if response.status_code >= 400:
+                raise HTTPException(
+                    status_code=422, detail="RSS feed URL is not reachable"
+                )
+
+            parsed_feed = self._parse_rss_feed(response.content)
             feed_title = parsed_feed.feed.get("title") or row["title"]
             latest_entry = parsed_feed.entries[0] if parsed_feed.entries else None
             latest_entry_title = None
