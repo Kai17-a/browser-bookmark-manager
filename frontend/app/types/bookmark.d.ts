@@ -43,3 +43,10 @@ export interface BookmarkListResponse {
     per_page: number;
     total_pages: number;
 }
+
+export interface DashboardMetricsResponse {
+    bookmarks_total: number;
+    folders_total: number;
+    tags_total: number;
+    favorites_total: number;
+}

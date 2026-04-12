@@ -10,7 +10,7 @@
 
         <template #body>
             <div class="space-y-6">
-                <UPageGrid class="grid gap-4 lg:grid-cols-3">
+                <UPageGrid class="grid gap-4 lg:grid-cols-4">
                     <CardsStatCard
                         v-for="stat in stats"
                         :key="stat.title"
@@ -110,8 +110,7 @@
 <script setup lang="ts">
 import type {
     BookmarkListResponse,
-    FolderResponse,
-    TagResponse,
+    DashboardMetricsResponse,
 } from "~/types";
 
 const { request } = useBookmarkApi();
@@ -123,40 +122,48 @@ const bookmarks = ref<BookmarkListResponse>({
     per_page: 20,
     total_pages: 0,
 });
-const folders = ref<FolderResponse[]>([]);
-const tags = ref<TagResponse[]>([]);
 
-const stats = ref([
+const metrics = ref<DashboardMetricsResponse>({
+    bookmarks_total: 0,
+    folders_total: 0,
+    tags_total: 0,
+    favorites_total: 0,
+});
+
+const stats = computed(() => [
     {
         title: "Total bookmarks",
         to: "/bookmarks",
-        value: 0,
+        value: metrics.value.bookmarks_total,
     },
     {
         title: "Folders",
         to: "/folders",
-        value: 0,
+        value: metrics.value.folders_total,
     },
     {
         title: "Tags",
         to: "/tags",
-        value: 0,
+        value: metrics.value.tags_total,
+    },
+    {
+        title: "Favorites",
+        to: "/favorites",
+        value: metrics.value.favorites_total,
     },
 ]);
 
 onMounted(async () => {
     try {
-        const [healthRes, bookmarksRes, tagsRes, foldersRes] =
+        const [healthRes, bookmarksRes, metricsRes] =
             await Promise.all([
                 request("/health"),
                 request("/bookmarks"),
-                request("/tags"),
-                request("/folders"),
+                request<DashboardMetricsResponse>("/metrics/dashboard"),
         ]);
 
         bookmarks.value = bookmarksRes;
-        tags.value = tagsRes;
-        folders.value = foldersRes;
+        metrics.value = metricsRes;
         toast.show({
             title:
                 healthRes?.status === "ok"
@@ -168,10 +175,6 @@ onMounted(async () => {
                     ? "i-lucide-check"
                     : "i-lucide-circle-alert",
         });
-
-        stats.value[0].value = bookmarks.value.total;
-        stats.value[1].value = folders.value.length;
-        stats.value[2].value = tags.value.length;
     } catch (error) {
         toast.show({
             title: "Failed to load dashboard.",
