@@ -19,9 +19,7 @@
           icon="i-lucide-play"
           :loading="running"
           @click.stop="$emit('execute', feed)"
-        >
-          Run
-        </UButton>
+        />
         <UButton
           type="button"
           size="xs"
