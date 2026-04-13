@@ -1,11 +1,26 @@
 import sqlite3
 from contextlib import contextmanager
 
+from sqlmodel import SQLModel, create_engine
+
+from api.model.models import (  # noqa: F401 - imported to register SQLModel tables
+    AppSetting,
+    Bookmark,
+    BookmarkTag,
+    Folder,
+    RSSFeed,
+    RSSFeedArticle,
+    Tag,
+)
+
 DATABASE_URL = "bookmarks.db"
 
 
 def init_db(database_url: str = DATABASE_URL) -> None:
     """Create all tables if they don't exist."""
+    engine = create_engine(f"sqlite:///{database_url}")
+    SQLModel.metadata.create_all(engine)
+
     conn = sqlite3.connect(database_url)
     conn.execute("PRAGMA foreign_keys = ON")
     try:
@@ -81,30 +96,6 @@ def init_db(database_url: str = DATABASE_URL) -> None:
                 FROM folders
                 GROUP BY name
             )
-            """
-        )
-        conn.execute(
-            """
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_bookmarks_url_unique
-            ON bookmarks(url)
-            """
-        )
-        conn.execute(
-            """
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_rss_feeds_url_unique
-            ON rss_feeds(url)
-            """
-        )
-        conn.execute(
-            """
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_rss_feed_articles_feed_url_unique
-            ON rss_feed_articles(feed_id, url)
-            """
-        )
-        conn.execute(
-            """
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_folders_name_unique
-            ON folders(name)
             """
         )
         folder_columns = {

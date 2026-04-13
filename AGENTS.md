@@ -13,6 +13,8 @@ This repository uses the following reading order for agentic work:
 
 Follow those sources before making changes to Nuxt, Python, Nuxt UI, or TypeScript code in this repository.
 
+If you change Python code, run `ruff` and `pyright` for the affected package or project before finishing.
+
 If you add shared frontend API plumbing such as a common fetcher or request base layer, add the corresponding unit test or e2e test in the same change set.
 
 If you change code, tests, or repository behavior, finish the task by creating the corresponding commit unless the user explicitly says not to.
