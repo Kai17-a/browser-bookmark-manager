@@ -17,7 +17,7 @@
                 <p
                   class="rounded-xl border border-default bg-elevated px-4 py-3 text-sm text-default"
                 >
-                  {{ form.apiBaseUrl || defaultApiBase }}
+                  {{ apiBaseUrl }}
                 </p>
 
                 <UButton
@@ -86,11 +86,11 @@
                 type="button"
                 color="neutral"
                 variant="ghost"
-                icon="i-lucide-refresh-cw"
-                :loading="webhookLoading"
-                @click="loadWebhook"
+                icon="i-lucide-bell-ring"
+                :loading="webhookChecking"
+                @click="pingWebhook()"
               >
-                Refresh
+                Test
               </UButton>
               <UButton type="submit" icon="i-lucide-save" :loading="webhookSaving">
                 Save webhook
@@ -116,14 +116,13 @@ const toast = useSingleToast();
 const colorMode = useColorMode();
 const checking = ref(false);
 const webhookLoading = ref(false);
+const webhookChecking = ref(false);
 const webhookSaving = ref(false);
 const webhookConfigured = ref(false);
-const form = reactive({
-  apiBaseUrl: "",
-});
 const webhookForm = reactive({
   webhookUrl: "",
 });
+const apiBaseUrl = computed(() => apiBase.value || defaultApiBase);
 
 const themeOptions = [
   { label: "System", value: "system", icon: "i-lucide-monitor" },
@@ -138,12 +137,12 @@ const selectedTheme = computed({
   },
 });
 
-const syncSettings = () => {
-  form.apiBaseUrl = apiBase.value || defaultApiBase;
-};
+const normalizeBaseUrl = (value: string) => value.replace(/\/$/, "");
+
+const getHealthUrl = () => `${normalizeBaseUrl(apiBaseUrl.value)}/health`;
 
 const checkHealth = async () => {
-  if (!form.apiBaseUrl) {
+  if (!apiBaseUrl.value) {
     toast.show({
       title: "API base URL is not configured.",
       color: "error",
@@ -154,7 +153,7 @@ const checkHealth = async () => {
 
   checking.value = true;
   try {
-    const res = await fetch(`${form.apiBaseUrl.replace(/\/$/, "")}/health`);
+    const res = await fetch(getHealthUrl());
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);
     }
@@ -180,6 +179,30 @@ const checkHealth = async () => {
     });
   } finally {
     checking.value = false;
+  }
+};
+
+const pingWebhook = async (webhookUrl = webhookForm.webhookUrl.trim()) => {
+  webhookChecking.value = true;
+  try {
+    await request<SettingsWebhookPingResponse>("/settings/webhook/ping", {
+      method: "POST",
+      body: JSON.stringify({ webhook_url: webhookUrl }),
+    });
+    toast.show({
+      title: "Webhook endpoint is reachable.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  } catch (err) {
+    toast.show({
+      title: "Failed to ping webhook setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    webhookChecking.value = false;
   }
 };
 
@@ -219,10 +242,6 @@ const saveWebhook = async () => {
 
   webhookSaving.value = true;
   try {
-    await request<SettingsWebhookPingResponse>("/settings/webhook/ping", {
-      method: "POST",
-      body: JSON.stringify({ webhook_url: webhookUrl }),
-    });
     const response = await request<SettingsWebhookResponse>("/settings/webhook", {
       method: "PUT",
       body: JSON.stringify({ webhook_url: webhookUrl }),
@@ -247,6 +266,6 @@ const saveWebhook = async () => {
 };
 
 onMounted(async () => {
-  syncSettings();
+  await loadWebhook();
 });
 </script>
