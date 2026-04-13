@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from api.database import init_db
 from api.routers.bookmarks import router as bookmarks_router
 from api.routers.folders import router as folders_router
 from api.routers.metrics import router as metrics_router
@@ -24,7 +23,6 @@ logging.basicConfig(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
     yield
 
 

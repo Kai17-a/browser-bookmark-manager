@@ -9,8 +9,9 @@ from fastapi.testclient import TestClient
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from api.database import get_db, init_db
+from api.database import get_db
 from api.main import app
+from api.tests.test_support import build_test_db
 
 
 TEST_DB_PATH: str | None = None
@@ -22,7 +23,7 @@ def client(tmp_path, monkeypatch):
     global TEST_DB_PATH
     db_path = str(tmp_path / "test.db")
     TEST_DB_PATH = db_path
-    init_db(database_url=db_path)
+    build_test_db(db_path)
 
     import api.database as db_module
     import api.services.bookmark_service as bs_module

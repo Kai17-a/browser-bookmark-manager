@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from fastapi import HTTPException
@@ -28,6 +29,33 @@ from api.services.folder_service import FolderService
 from api.services.rss_feed_service import RSSFeedService
 from api.services.settings_service import SettingsService
 from api.services.tag_service import TagService
+
+
+def build_test_db(db_path: str) -> None:
+    database_path = Path(db_path)
+    database_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(database_path)
+    conn.execute("PRAGMA foreign_keys = ON")
+    try:
+        schema = Path(__file__).resolve().parents[1] / "db" / "migrations" / "20260414000000_initial_schema.sql"
+        up_sql = []
+        current_up = False
+        for raw_line in schema.read_text().splitlines():
+            line = raw_line.strip()
+            if line.startswith("-- migrate:up"):
+                current_up = True
+                continue
+            if line.startswith("-- migrate:down"):
+                break
+            if current_up:
+                up_sql.append(raw_line)
+        for statement in "\n".join(up_sql).split(";"):
+            statement = statement.strip()
+            if statement:
+                conn.execute(statement)
+        conn.commit()
+    finally:
+        conn.close()
 
 
 @dataclass

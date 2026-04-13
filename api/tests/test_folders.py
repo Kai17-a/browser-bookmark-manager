@@ -3,14 +3,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api.main import app
-from api.database import init_db
+from api.tests.test_support import build_test_db
 
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     """TestClient with an isolated in-memory DB for each test."""
     db_path = str(tmp_path / "test.db")
-    init_db(database_url=db_path)
+    build_test_db(db_path)
 
     # Patch get_db to use the temp DB
     import api.database as db_module

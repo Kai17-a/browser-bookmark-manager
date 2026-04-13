@@ -1,18 +1,15 @@
-"""Unit tests for database initialisation (Requirements 8.2)."""
-
-import os
 import sqlite3
 import tempfile
 
-from api.database import init_db
+from api.tests.test_support import build_test_db
 
 
-def test_init_db_creates_all_tables():
-    """After calling init_db() on a fresh DB file, all 6 tables must exist."""
+def test_build_test_db_creates_all_tables():
+    """The test DB bootstrap must create all required tables."""
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = f.name
     try:
-        init_db(database_url=db_path)
+        build_test_db(db_path)
 
         conn = sqlite3.connect(db_path)
         cursor = conn.execute(
@@ -28,17 +25,8 @@ def test_init_db_creates_all_tables():
         assert "rss_feeds" in tables
         assert "app_settings" in tables
     finally:
-        os.unlink(db_path)
+        import os
 
-
-def test_init_db_is_idempotent():
-    """Calling init_db() twice on the same DB must not raise an error."""
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
-        db_path = f.name
-    try:
-        init_db(database_url=db_path)
-        init_db(database_url=db_path)  # second call should be safe
-    finally:
         os.unlink(db_path)
 
 
