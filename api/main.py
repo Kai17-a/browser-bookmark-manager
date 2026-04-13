@@ -74,10 +74,13 @@ app.include_router(tags_router)
 def dev() -> None:
     import subprocess
 
-    subprocess.run(["fastapi", "dev", "api/main.py"], check=True)
+    subprocess.run(["fastapi", "dev", "main.py"], check=True)
 
 
 def serve() -> None:
     import subprocess
 
-    subprocess.run(["fastapi", "run", "api/main.py", "--host", "0.0.0.0", "--port", "8000"], check=True)
+    subprocess.run(
+        ["fastapi", "run", "main.py", "--host", "0.0.0.0", "--port", "8000"],
+        check=True,
+    )
