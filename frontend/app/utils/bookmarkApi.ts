@@ -1,13 +1,11 @@
-export const DEFAULT_API_PORT = "8000";
-
 export type ApiErrorBody = {
   detail?: string | string[];
 };
 
 export const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
-export const getDefaultApiBase = (apiPort = DEFAULT_API_PORT) => {
-  return `http://localhost:${apiPort}`;
+export const getDefaultApiBase = () => {
+  return `http://localhost:8000`;
 };
 
 export const buildRequestHeaders = (options: RequestInit = {}) => {

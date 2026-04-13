@@ -45,7 +45,6 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiPort: env.API_PORT || "8000",
       apiBaseUrl:
         env.API_BASE_URL || env.NUXT_PUBLIC_API_BASE_URL || env.NUXT_PUBLIC_API_BASE || "",
     },
