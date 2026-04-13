@@ -24,8 +24,11 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends nginx \
+  && apt-get install -y --no-install-recommends nginx curl \
   && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL -o ./dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
+RUN chmod +x dbmate
 
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
@@ -34,6 +37,7 @@ COPY api/requirements.txt /app/api/requirements.txt
 RUN pip install --no-cache-dir -r /app/api/requirements.txt
 
 COPY api /app/api
+COPY db /app/db
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
 COPY start.sh /app/start.sh

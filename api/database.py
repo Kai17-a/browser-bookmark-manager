@@ -9,7 +9,7 @@ def _resolve_sqlite_path(database_url: str) -> Path:
     path = Path(database_url)
     if path.is_absolute():
         return path
-    return Path("data") / path
+    return Path("/data") / path
 
 
 @contextmanager

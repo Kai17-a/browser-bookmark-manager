@@ -2,7 +2,10 @@
 set -e
 
 export API_PORT="${API_PORT:-8000}"
-export DATABASE_URL="${DATABASE_URL:-/data/bookmark.db}"
+export DATABASE_URL="${DATABASE_URL:-/data/bookmarks.db}"
+
+mkdir -p "$(dirname "$DATABASE_URL")"
+./dbmate -u "sqlite:$DATABASE_URL" up
 
 fastapi run api/main.py --port "$API_PORT" &
 API_PID=$!

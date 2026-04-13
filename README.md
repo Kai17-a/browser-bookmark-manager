@@ -10,7 +10,7 @@
 ```bash
 docker pull ghcr.io/kai17-a/bookmark-manager:latest
 docker run --rm -p 3000:3000 -p 8000:8000 \
-  -e DATABASE_URL=/data/bookmark.db \
+  -e DATABASE_URL=/data/bookmarks.db \
   -v "$(pwd)/data:/data" \
   ghcr.io/kai17-a/bookmark-manager:latest
 ```
@@ -25,10 +25,10 @@ services:
     container_name: bookmark-manager
     image: ghcr.io/kai17-a/bookmark-manager:latest
     environment:
-      DATABASE_URL: /data/bookmark.db
+      DATABASE_URL: /data/bookmarks.db
     ports:
-      - "3001:3000"
-      - "8005:8000"
+      - "3000:3000"
+      - "8000:8000"
     volumes:
       - ./data:/data
 ```
