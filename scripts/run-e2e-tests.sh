@@ -39,7 +39,7 @@ start_api_server() {
 
 start_frontend_server() {
     cd "$repo_root/frontend"
-    bunx nuxt dev --host 0.0.0.0 --port "$frontend_port" > /tmp/bookmark-manager-frontend-e2e.log 2>&1 &
+    bunx nuxt dev --host 0.0.0.0 --port "$frontend_port" --strictPort > /tmp/bookmark-manager-frontend-e2e.log 2>&1 &
     frontend_pid=$!
 }
 

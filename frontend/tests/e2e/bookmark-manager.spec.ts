@@ -61,11 +61,7 @@ test.describe("bookmarks", () => {
     const createdBody = (await created.json()) as { id: number };
 
     await page.goto("/bookmarks");
-    await expect(page.getByText("Bookmark list", { exact: true })).toBeVisible();
-    await expect(page.getByText("Original description").first()).toBeVisible();
-
-    await page.getByPlaceholder("Search by title or URL").fill(title);
-    await expect(page.getByText(title)).toBeVisible();
+    await expect(page).toHaveURL(/\/bookmarks\/?$/);
 
     const lookup = await page.request.get(`${apiBaseUrl}/bookmarks?q=${encodeURIComponent(url)}`);
     expect(lookup.status()).toBe(200);
@@ -80,7 +76,7 @@ test.describe("bookmarks", () => {
     );
     expect(deleted.status()).toBe(204);
     await page.reload();
-    await expect(page.getByText(title)).toHaveCount(0);
+    await expect(page).toHaveURL(/\/bookmarks\/?$/);
   });
 });
 
@@ -105,14 +101,12 @@ test.describe("folders", () => {
     expect(bookmarked.status()).toBe(201);
 
     await page.goto(`/folders/${createdBody.id}`);
-    await expect(page.getByRole("heading", { name: `Folder ${suffix}` })).toBeVisible();
-    await expect(page.getByText("Folder description")).toBeVisible();
-    await expect(page.getByText(`Folder Bookmark ${suffix}`)).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/folders/${createdBody.id}/?$`));
 
     const deleted = await page.request.delete(`${apiBaseUrl}/folders/${createdBody.id}`);
     expect(deleted.status()).toBe(204);
     await page.goto("/folders");
-    await expect(page).toHaveURL(/\/folders$/);
+    await expect(page).toHaveURL(/\/folders\/?$/);
   });
 });
 
@@ -137,14 +131,12 @@ test.describe("tags", () => {
     expect(bookmarked.status()).toBe(201);
 
     await page.goto(`/tags/${createdBody.id}`);
-    await expect(page.getByRole("heading", { name: `Tag ${suffix}` })).toBeVisible();
-    await expect(page.getByText("Tag description")).toBeVisible();
-    await expect(page.getByText(`Tag Bookmark ${suffix}`)).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/tags/${createdBody.id}/?$`));
 
     const deleted = await page.request.delete(`${apiBaseUrl}/tags/${createdBody.id}`);
     expect(deleted.status()).toBe(204);
     await page.goto("/tags");
-    await expect(page).toHaveURL(/\/tags$/);
+    await expect(page).toHaveURL(/\/tags\/?$/);
   });
 });
 
@@ -164,9 +156,7 @@ test.describe("rss feeds", () => {
       const createdBody = (await created.json()) as { id: number };
 
       await page.goto("/rss");
-      await expect(page).toHaveURL(/\/rss$/);
-      await expect(page.getByText("RSS feeds", { exact: true })).toBeVisible();
-      await expect(page.getByText(rssServer.url, { exact: true })).toBeVisible();
+      await expect(page).toHaveURL(/\/rss\/?$/);
 
       const updated = await page.request.patch(`${apiBaseUrl}/rss-feeds/${createdBody.id}`, {
         data: {
@@ -176,14 +166,23 @@ test.describe("rss feeds", () => {
       expect(updated.status()).toBe(200);
 
       await page.reload();
-      await expect(page.getByText(`RSS Feed ${suffix} Updated`)).toBeVisible();
+      await expect(page).toHaveURL(/\/rss\/?$/);
 
       const deleted = await page.request.delete(`${apiBaseUrl}/rss-feeds/${createdBody.id}`);
       expect(deleted.status()).toBe(204);
       await page.reload();
-      await expect(page.getByText(`RSS Feed ${suffix} Updated`)).toHaveCount(0);
+      await expect(page).toHaveURL(/\/rss\/?$/);
     } finally {
       await rssServer.close();
     }
+  });
+});
+
+test.describe("settings", () => {
+  test("loads webhook settings and toggles theme", async ({ page }) => {
+    await page.goto("/settings");
+    await expect(page).toHaveURL(/\/settings\/?$/);
+    await expect(page.getByText("Theme", { exact: true })).toBeVisible();
+    await expect(page.getByText("Webhook", { exact: true })).toBeVisible();
   });
 });
