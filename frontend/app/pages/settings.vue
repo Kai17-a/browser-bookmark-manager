@@ -7,33 +7,6 @@
     <template #body>
       <div class="space-y-6">
         <UPageCard
-          title="API Base URL"
-          description="Requests are routed through the local reverse proxy"
-          :ui="{ body: 'space-y-5' }"
-        >
-          <div class="space-y-2">
-            <UFormField label="Current value" description="This is the base URL used by the app">
-              <div class="flex flex-wrap items-center gap-3">
-                <p
-                  class="rounded-xl border border-default bg-elevated px-4 py-3 text-sm text-default"
-                >
-                  {{ apiBaseUrl }}
-                </p>
-
-                <UButton
-                  icon="i-lucide-heart-pulse"
-                  variant="soft"
-                  :loading="checking"
-                  @click="checkHealth"
-                >
-                  /api/health
-                </UButton>
-              </div>
-            </UFormField>
-          </div>
-        </UPageCard>
-
-        <UPageCard
           title="Theme"
           description="Switch the app appearance between light, dark, and system"
           :ui="{ body: 'space-y-5' }"
