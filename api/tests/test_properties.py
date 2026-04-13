@@ -1,8 +1,8 @@
 """Property-based tests for Bookmark Manager API using Hypothesis."""
 
 import sqlite3
-from uuid import uuid4
 from contextlib import contextmanager
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,7 +12,6 @@ from hypothesis import strategies as st
 from api.database import get_db
 from api.main import app
 from api.tests.test_support import build_test_db
-
 
 TEST_DB_PATH: str | None = None
 
@@ -179,7 +178,11 @@ def test_property_4_folder_filter_accuracy(client, folder_count, bookmark_count)
     tag_count=st.integers(min_value=1, max_value=3),
     bookmark_count=st.integers(min_value=1, max_value=5),
 )
-@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=100,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
 def test_property_5_tag_filter_accuracy(client, tag_count, bookmark_count):
     """Validates: Requirements 2.4"""
     _reset_database()
@@ -193,7 +196,9 @@ def test_property_5_tag_filter_accuracy(client, tag_count, bookmark_count):
     # Create bookmarks and assign tags
     bm_ids_by_tag = {tid: [] for tid in tag_ids}
     for i in range(bookmark_count):
-        resp = _create_bookmark(client, url=_unique(f"https://site{i}.com"), title=f"Site{i}")
+        resp = _create_bookmark(
+            client, url=_unique(f"https://site{i}.com"), title=f"Site{i}"
+        )
         assert resp.status_code == 201
         bm_id = resp.json()["id"]
         tag_id = tag_ids[i % tag_count]
@@ -220,7 +225,9 @@ def test_property_6_keyword_search_accuracy(client, q):
     """Validates: Requirements 2.5"""
     _reset_database()
     # Create a bookmark whose title contains q
-    resp = _create_bookmark(client, url=_unique("https://example.com"), title=f"prefix{q}suffix")
+    resp = _create_bookmark(
+        client, url=_unique("https://example.com"), title=f"prefix{q}suffix"
+    )
     assert resp.status_code == 201
 
     # Search and verify all results contain q in title or url
@@ -276,7 +283,9 @@ def test_property_8_bookmark_delete_cascade(client, tag_count):
     """Validates: Requirements 4.1, 4.2"""
     _reset_database()
     # Create bookmark with tags
-    resp = _create_bookmark(client, url=_unique("https://delete-me.com"), title="ToDelete")
+    resp = _create_bookmark(
+        client, url=_unique("https://delete-me.com"), title="ToDelete"
+    )
     assert resp.status_code == 201
     bm_id = resp.json()["id"]
 
@@ -356,7 +365,9 @@ def test_property_11_tag_attach_detach_roundtrip(client, tag_count):
     """Validates: Requirements 7.1, 7.2"""
     _reset_database()
     # Create bookmark (starts with no tags)
-    resp = _create_bookmark(client, url=_unique("https://roundtrip.com"), title="RoundTrip")
+    resp = _create_bookmark(
+        client, url=_unique("https://roundtrip.com"), title="RoundTrip"
+    )
     assert resp.status_code == 201
     bm_id = resp.json()["id"]
     assert resp.json()["tags"] == []

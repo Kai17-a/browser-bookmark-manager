@@ -2,7 +2,9 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-DATABASE_URL = "bookmarks.db"
+import os
+
+DATABASE_URL = os.getenv("DATABASE_URL", "/data/bookmarks.db")
 
 
 def _resolve_sqlite_path(database_url: str) -> Path:

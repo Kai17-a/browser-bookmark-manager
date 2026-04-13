@@ -37,7 +37,8 @@ def build_test_db(db_path: str) -> None:
     conn = sqlite3.connect(database_path)
     conn.execute("PRAGMA foreign_keys = ON")
     try:
-        schema = Path(__file__).resolve().parents[1] / "db" / "migrations" / "20260414000000_initial_schema.sql"
+        migrations_dir = Path(__file__).resolve().parents[2] / "db" / "migrations"
+        schema = sorted(migrations_dir.glob("*_initial_schema.sql"))[0]
         up_sql = []
         current_up = False
         for raw_line in schema.read_text().splitlines():
@@ -123,7 +124,9 @@ class CompatTestClient:
             return self._ok(self._serialize(FolderService().list()), 200)
         if method == "PATCH" and path.startswith("/folders/"):
             body = FolderUpdate(**(json or {}))
-            payload = FolderService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+            payload = (
+                FolderService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+            )
             return self._ok(payload, 200)
         if method == "DELETE" and path.startswith("/folders/"):
             FolderService().delete(int(path.rsplit("/", 1)[1]))
@@ -139,7 +142,9 @@ class CompatTestClient:
             return self._ok(self._serialize(TagService().list()), 200)
         if method == "PATCH" and path.startswith("/tags/"):
             body = TagUpdate(**(json or {}))
-            payload = TagService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+            payload = (
+                TagService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+            )
             return self._ok(payload, 200)
         if method == "DELETE" and path.startswith("/tags/"):
             TagService().delete(int(path.rsplit("/", 1)[1]))
@@ -155,18 +160,26 @@ class CompatTestClient:
             q = query.get("q")
             page = int(query.get("page", "1"))
             per_page = int(query.get("per_page", "20"))
-            payload = RSSFeedService().list(q=q, page=page, per_page=per_page).model_dump()
+            payload = (
+                RSSFeedService().list(q=q, page=page, per_page=per_page).model_dump()
+            )
             return self._ok(payload, 200)
         if method == "GET" and path.startswith("/rss-feeds/"):
             payload = RSSFeedService().get(int(path.rsplit("/", 1)[1])).model_dump()
             return self._ok(payload, 200)
-        if method == "POST" and path.startswith("/rss-feeds/") and path.endswith("/execute"):
+        if (
+            method == "POST"
+            and path.startswith("/rss-feeds/")
+            and path.endswith("/execute")
+        ):
             feed_id = int(path.split("/")[2])
             payload = RSSFeedService().execute(feed_id).model_dump()
             return self._ok(payload, 200)
         if method == "PATCH" and path.startswith("/rss-feeds/"):
             body = RSSFeedUpdate(**(json or {}))
-            payload = RSSFeedService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+            payload = (
+                RSSFeedService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+            )
             return self._ok(payload, 200)
         if method == "DELETE" and path.startswith("/rss-feeds/"):
             RSSFeedService().delete(int(path.rsplit("/", 1)[1]))
@@ -184,7 +197,11 @@ class CompatTestClient:
             q = query.get("q")
             page = int(query.get("page", "1"))
             per_page = int(query.get("per_page", "20"))
-            payload = BookmarkService().list(folder_id, tag_id, q, page=page, per_page=per_page).model_dump()
+            payload = (
+                BookmarkService()
+                .list(folder_id, tag_id, q, page=page, per_page=per_page)
+                .model_dump()
+            )
             return self._ok(BookmarkListPayload(payload), 200)
         if method == "GET" and path.startswith("/bookmarks/") and "/tags" not in path:
             payload = BookmarkService().get(int(path.rsplit("/", 1)[1])).model_dump()
@@ -195,12 +212,22 @@ class CompatTestClient:
             return self._ok(payload, 200)
         if method == "PATCH" and path.startswith("/bookmarks/") and "/tags" not in path:
             body = BookmarkUpdate(**(json or {}))
-            payload = BookmarkService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+            payload = (
+                BookmarkService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+            )
             return self._ok(payload, 200)
-        if method == "DELETE" and path.startswith("/bookmarks/") and "/tags" not in path:
+        if (
+            method == "DELETE"
+            and path.startswith("/bookmarks/")
+            and "/tags" not in path
+        ):
             BookmarkService().delete(int(path.rsplit("/", 1)[1]))
             return self._ok(status_code=204)
-        if method == "POST" and path.endswith("/tags") and path.startswith("/bookmarks/"):
+        if (
+            method == "POST"
+            and path.endswith("/tags")
+            and path.startswith("/bookmarks/")
+        ):
             bookmark_id = int(path.split("/")[2])
             body = TagAttach(**(json or {}))
             payload = BookmarkService().add_tag(bookmark_id, body.tag_id).model_dump()

@@ -1,5 +1,6 @@
 import sqlite3
 import tempfile
+from contextlib import contextmanager
 
 from api.tests.test_support import build_test_db
 
@@ -36,12 +37,33 @@ def test_db_error_returns_500(tmp_path, monkeypatch):
 
     # Mock a DB operation that raises sqlite3.Error
     import api.repositories.bookmark_repo as br_module
+    import api.database as db_module
+    import api.services.bookmark_service as bs_module
     from api.main import app
+
+    db_path = str(tmp_path / "test.db")
+    build_test_db(db_path)
+
+    @contextmanager
+    def patched_get_db(database_url=db_path):
+        conn = sqlite3.connect(db_path)
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.row_factory = sqlite3.Row
+        try:
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
 
     def mock_insert(*args, **kwargs):
         raise sqlite3.Error("Simulated DB error")
 
     monkeypatch.setattr(br_module.BookmarkRepository, "insert", mock_insert)
+    monkeypatch.setattr(db_module, "get_db", patched_get_db)
+    monkeypatch.setattr(bs_module, "get_db", patched_get_db)
 
     client = TestClient(app)
     response = client.post(
