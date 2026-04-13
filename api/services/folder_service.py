@@ -49,9 +49,19 @@ class FolderService(NamedResourceService):
     def update(self, folder_id: int, data: FolderUpdate) -> FolderResponse:
         with get_db() as conn:
             repo = FolderRepository(conn)
-            self._ensure_name_available(repo, data.name, folder_id=folder_id)
+            current = repo.find_by_id(folder_id)
+            if current is None:
+                raise HTTPException(status_code=404, detail="Folder not found")
+
+            payload = data.model_dump(exclude_unset=True)
+            name = payload.get("name", current["name"])
+            if name is None:
+                raise HTTPException(status_code=422, detail="Folder name cannot be null")
+            description = payload.get("description", current["description"])
+
+            self._ensure_name_available(repo, str(name), folder_id=folder_id)
             try:
-                row = repo.update(folder_id, data.name, data.description)
+                row = repo.update(folder_id, str(name), description)
             except sqlite3.IntegrityError:
                 raise HTTPException(status_code=409, detail="Folder name already exists")
             if not row:

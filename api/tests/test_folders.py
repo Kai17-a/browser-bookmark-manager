@@ -107,10 +107,22 @@ def test_update_folder_can_change_description(client):
     folder_id = client.post("/folders", json={"name": "A", "description": "Old"}).json()["id"]
     response = client.patch(
         f"/folders/{folder_id}",
-        json={"name": "A", "description": "New"},
+        json={"description": "New"},
     )
     assert response.status_code == 200
     assert response.json()["description"] == "New"
+
+
+def test_update_folder_can_change_name_without_description(client):
+    folder_id = client.post("/folders", json={"name": "A", "description": "Old"}).json()["id"]
+    response = client.patch(
+        f"/folders/{folder_id}",
+        json={"name": "Renamed"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "Renamed"
+    assert data["description"] == "Old"
 
 
 def test_delete_nonexistent_folder_returns_404(client):

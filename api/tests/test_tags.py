@@ -99,10 +99,22 @@ def test_update_tag_can_change_description(client):
     tag_id = client.post("/tags", json={"name": "alpha", "description": "Old"}).json()["id"]
     response = client.patch(
         f"/tags/{tag_id}",
-        json={"name": "alpha", "description": "New"},
+        json={"description": "New"},
     )
     assert response.status_code == 200
     assert response.json()["description"] == "New"
+
+
+def test_update_tag_can_change_name_without_description(client):
+    tag_id = client.post("/tags", json={"name": "alpha", "description": "Old"}).json()["id"]
+    response = client.patch(
+        f"/tags/{tag_id}",
+        json={"name": "beta"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "beta"
+    assert data["description"] == "Old"
 
 
 def test_delete_nonexistent_tag_returns_404(client):

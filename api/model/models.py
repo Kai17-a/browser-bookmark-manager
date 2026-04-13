@@ -219,7 +219,7 @@ class FolderCreate(BaseModel):
 
 
 class FolderUpdate(BaseModel):
-    name: str = PydField(min_length=1)
+    name: str | None = PydField(default=None, min_length=1)
     description: str | None = None
 
     @field_validator("name")
@@ -245,7 +245,7 @@ class TagCreate(BaseModel):
 
 
 class TagUpdate(BaseModel):
-    name: str = PydField(min_length=1)
+    name: str | None = PydField(default=None, min_length=1)
     description: str | None = None
 
     @field_validator("name")

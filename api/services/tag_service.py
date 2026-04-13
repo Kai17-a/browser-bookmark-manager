@@ -44,8 +44,18 @@ class TagService(NamedResourceService):
     def update(self, tag_id: int, data: TagUpdate) -> TagResponse:
         with get_db() as conn:
             repo = TagRepository(conn)
-            self._ensure_name_available(repo, data.name, tag_id=tag_id)
-            row = repo.update(tag_id, data.name, data.description)
+            current = repo.find_by_id(tag_id)
+            if current is None:
+                raise HTTPException(status_code=404, detail="Tag not found")
+
+            payload = data.model_dump(exclude_unset=True)
+            name = payload.get("name", current["name"])
+            if name is None:
+                raise HTTPException(status_code=422, detail="Tag name cannot be null")
+            description = payload.get("description", current["description"])
+
+            self._ensure_name_available(repo, str(name), tag_id=tag_id)
+            row = repo.update(tag_id, str(name), description)
             if not row:
                 raise HTTPException(status_code=404, detail="Tag not found")
             return TagResponse(**row)

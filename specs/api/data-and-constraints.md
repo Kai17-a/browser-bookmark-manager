@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 
 - `/bookmarks` の一覧は `folder_id`、`tag_id`、`q`、`page`、`per_page` を受け付ける
 - `/bookmarks/{id}` は詳細取得と更新対象を兼ねる
+- `PATCH /folders/{id}` と `PATCH /tags/{id}` は partial update として `name` の省略を許可する
 - `/bookmarks/{id}/tags` はタグ付与、`DELETE /bookmarks/{id}/tags/{tag_id}` は解除を担当する
 - `/rss-feeds` は RSS リンクの CRUD を担当する
 - `POST /settings/webhook/ping` は登録前の Discord webhook 疎通確認を担当する
