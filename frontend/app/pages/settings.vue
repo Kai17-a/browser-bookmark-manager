@@ -8,7 +8,7 @@
       <div class="space-y-6">
         <UPageCard
           title="API Base URL"
-          description="Configured from runtime environment"
+          description="Requests are routed through the local reverse proxy"
           :ui="{ body: 'space-y-5' }"
         >
           <div class="space-y-2">
@@ -26,7 +26,7 @@
                   :loading="checking"
                   @click="checkHealth"
                 >
-                  /health
+                  /api/health
                 </UButton>
               </div>
             </UFormField>
@@ -137,27 +137,10 @@ const selectedTheme = computed({
   },
 });
 
-const normalizeBaseUrl = (value: string) => value.replace(/\/$/, "");
-
-const getHealthUrl = () => `${normalizeBaseUrl(apiBaseUrl.value)}/health`;
-
 const checkHealth = async () => {
-  if (!apiBaseUrl.value) {
-    toast.show({
-      title: "API base URL is not configured.",
-      color: "error",
-      icon: "i-lucide-circle-alert",
-    });
-    return;
-  }
-
   checking.value = true;
   try {
-    const res = await fetch(getHealthUrl());
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    const body = await res.json();
+    const body = await request<{ status?: string }>("/health");
     if (body?.status === "ok") {
       toast.show({
         title: "API server is reachable.",

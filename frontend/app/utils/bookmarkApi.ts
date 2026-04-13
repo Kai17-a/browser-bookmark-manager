@@ -5,7 +5,7 @@ export type ApiErrorBody = {
 export const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
 export const getDefaultApiBase = () => {
-  return `http://localhost:8000`;
+  return "/api";
 };
 
 export const buildRequestHeaders = (options: RequestInit = {}) => {

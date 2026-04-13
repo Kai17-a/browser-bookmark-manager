@@ -28,7 +28,6 @@ services:
       dockerfile: Dockerfile
     environment:
       DATABASE_URL: /data/bookmark.db
-      API_BASE_URL: http://127.0.0.1:8005
     ports:
       - "3001:3000"
       - "8005:8000"
@@ -36,11 +35,9 @@ services:
       - ./data:/data
 ```
 
-`API_BASE_URL` は、API を別ホストや別ポートに公開するときだけ上書きする。
-コンテナ起動時に `index.html` へ実行時設定を注入するため、`docker run -e` や `docker compose` の `environment` で変更した値がフロントエンドにも反映される。
-フロントエンド内部ではこの値を `NUXT_PUBLIC_API_BASE_URL` として扱う。
-`API_PORT` を変えると、コンテナ内で起動する API の待受ポートもフロントエンドの接続先も同じ値に揃う。
-`docker compose` でホスト側の公開ポートを変えても、コンテナ内のフロントと API は `3000` と `API_PORT` で参照し合う。
+フロントエンドは `/api` を起点に呼び出し、nginx がそれをコンテナ内の FastAPI (`127.0.0.1:8000`) に転送する。
+そのため、`docker compose` でホスト側の公開ポートを `3001:3000` と `8005:8000` に変えても、ブラウザからの API 呼び出しは `http://localhost:3001/api/...` のまま動作する。
+API 直アクセスは `http://localhost:8005/...` で行える。
 
 GitHub Packages の Docker image 公開機能を使う場合は、別途ワークフローを用意してください。
 `GITHUB_TOKEN` に `packages: write` 権限が付くように設定してください。

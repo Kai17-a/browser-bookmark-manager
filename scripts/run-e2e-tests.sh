@@ -33,20 +33,13 @@ wait_for_url() {
 }
 
 start_api_server() {
-    export API_BASE_URL="http://127.0.0.1:$api_port"
     uv run --directory "$repo_root/api" uvicorn api.main:app --app-dir "$repo_root" --host 127.0.0.1 --port "$api_port" > /tmp/bookmark-manager-api-e2e.log 2>&1 &
     api_pid=$!
 }
 
 start_frontend_server() {
     cd "$repo_root/frontend"
-    export API_BASE_URL="http://127.0.0.1:$api_port"
-    export NUXT_PUBLIC_API_BASE_URL="$API_BASE_URL"
-    bun run build
-
-    export HOST=0.0.0.0
-    export PORT="$frontend_port"
-    bun .output/server/index.mjs > /tmp/bookmark-manager-frontend-e2e.log 2>&1 &
+    bunx nuxt dev --host 0.0.0.0 --port "$frontend_port" > /tmp/bookmark-manager-frontend-e2e.log 2>&1 &
     frontend_pid=$!
 }
 

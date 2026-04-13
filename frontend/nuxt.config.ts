@@ -1,12 +1,5 @@
 import tailwindcss from "@tailwindcss/vite";
 
-const env =
-  (
-    globalThis as {
-      process?: { env?: Record<string, string | undefined> };
-    }
-  ).process?.env ?? {};
-
 export default defineNuxtConfig({
   modules: ["@nuxt/ui"],
 
@@ -19,6 +12,15 @@ export default defineNuxtConfig({
   },
   vite: {
     logLevel: "error",
+    server: {
+      proxy: {
+        "/api": {
+          target: "http://127.0.0.1:8000",
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ""),
+        },
+      },
+    },
     build: {
       sourcemap: true,
       modulePreload: {
@@ -40,13 +42,5 @@ export default defineNuxtConfig({
       ],
     },
   },
-
   compatibilityDate: "2025-04-07",
-
-  runtimeConfig: {
-    public: {
-      apiBaseUrl:
-        env.API_BASE_URL || env.NUXT_PUBLIC_API_BASE_URL || env.NUXT_PUBLIC_API_BASE || "",
-    },
-  },
 });

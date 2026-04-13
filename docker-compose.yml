@@ -6,9 +6,8 @@ services:
       dockerfile: Dockerfile
     environment:
       DATABASE_URL: /data/bookmark.db
-      API_BASE_URL: http://127.0.0.1:8005
     ports:
-      - "3001:3000"
-      - "8005:8000"
+      - "3033:3000"
+      - "8044:8000"
     volumes:
       - ./data:/data

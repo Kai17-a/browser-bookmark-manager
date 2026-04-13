@@ -64,7 +64,6 @@ services:
       dockerfile: Dockerfile
     environment:
       DATABASE_URL: /data/bookmark.db
-      API_BASE_URL: http://127.0.0.1:8005
     ports:
       - "3001:3000"
       - "8005:8000"
@@ -72,9 +71,10 @@ services:
       - ./data:/data
 ```
 
-Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコンテナでフロントエンドと API を利用できる。`API_PORT` を変えない限り、コンテナ内ではフロントが `http://127.0.0.1:8000` の API を使う。
-`API_PORT` を変更した場合は、コンテナ内の API 待受ポートとフロントエンドの既定接続先もその値に追従する。
-`docker run -e` や `docker compose` の `environment` で `API_BASE_URL` を変えると、起動時に frontend の静的ファイルへ実行時設定が注入される。
+Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコンテナでフロントエンドと API を利用できる。
+フロントエンドは `/api` を使い、nginx がそれをコンテナ内の FastAPI (`127.0.0.1:8000`) に転送する。
+そのため、ホスト側の公開ポートを変えても、ブラウザからは `http://localhost:3001/api/...` のようにアクセスできる。
+`API_PORT` はコンテナ内の FastAPI 待受ポートを変える場合だけ使う。
 
 ## Push 前チェック
 
@@ -122,7 +122,7 @@ bun run e2e:headed
 
 `e2e:run` は結果ログを `.artifacts/playwright-e2e.log` に保存する。
 `e2e:headed` はブラウザを開いて実行する。
-`e2e:run` は `API_BASE_URL=http://127.0.0.1:8001` で API と frontend を起動し、内部的に同じ値を `NUXT_PUBLIC_API_BASE_URL` として扱う。`http://127.0.0.1:8001` と `http://127.0.0.1:3001` を使って E2E を実行する。
+`e2e:run` は API と frontend を個別に起動し、`http://127.0.0.1:8001` と `http://127.0.0.1:3001` を使って E2E を実行する。
 
 ## ローカル URL
 

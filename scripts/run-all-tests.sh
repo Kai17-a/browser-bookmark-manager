@@ -15,20 +15,13 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 start_api_server() {
-    export API_BASE_URL=http://127.0.0.1:8000
     uv run --directory "$repo_root/api" uvicorn api.main:app --app-dir "$repo_root" --host 127.0.0.1 --port 8000 > /tmp/bookmark-manager-api.log 2>&1 &
     api_pid=$!
 }
 
 start_frontend_server() {
     cd "$repo_root/frontend"
-    export API_BASE_URL=http://127.0.0.1:8000
-    export NUXT_PUBLIC_API_BASE_URL="$API_BASE_URL"
-    bun run build
-
-    export HOST=0.0.0.0
-    export PORT=3000
-    bun .output/server/index.mjs > /tmp/bookmark-manager-frontend.log 2>&1 &
+    bunx nuxt dev --host 0.0.0.0 --port 3000 > /tmp/bookmark-manager-frontend.log 2>&1 &
     frontend_pid=$!
 }
 

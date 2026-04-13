@@ -11,13 +11,12 @@ import {
 
 describe("bookmarkApi helpers", () => {
   it("trims trailing slashes from an API base", () => {
-    expect(trimTrailingSlash("http://localhost:8000///")).toBe("http://localhost:8000");
-    expect(trimTrailingSlash("http://localhost:8000")).toBe("http://localhost:8000");
+    expect(trimTrailingSlash("/api///")).toBe("/api");
+    expect(trimTrailingSlash("/api")).toBe("/api");
   });
 
-  it("builds the default api base from the configured port", () => {
-    expect(getDefaultApiBase()).toBe("http://localhost:8000");
-    expect(getDefaultApiBase("9000")).toBe("http://localhost:9000");
+  it("uses the reverse proxy api base by default", () => {
+    expect(getDefaultApiBase()).toBe("/api");
   });
 
   it("adds JSON content type only when a request body is present", () => {
@@ -62,11 +61,11 @@ describe("bookmarkApi helpers", () => {
       value: fetchMock,
     });
 
-    const baseUrl = ref("http://localhost:8000/");
+    const baseUrl = ref("/api/");
     const { request } = createHttpFetcher(() => baseUrl.value);
 
     await expect(request<{ ok: boolean }>("/health")).resolves.toEqual({ ok: true });
-    expect(fetchMock).toHaveBeenCalledWith("http://localhost:8000/health", expect.any(Object));
+    expect(fetchMock).toHaveBeenCalledWith("/api/health", expect.any(Object));
 
     Object.defineProperty(globalThis, "fetch", {
       configurable: true,
@@ -98,7 +97,7 @@ describe("bookmarkApi helpers", () => {
       value: fetchMock,
     });
 
-    const baseUrl = ref("http://localhost:8000/");
+    const baseUrl = ref("/api/");
     const { request } = createHttpFetcher(() => baseUrl.value);
 
     await expect(request("/health")).resolves.toEqual({ status: "ok" });
