@@ -74,7 +74,14 @@ services:
 Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコンテナでフロントエンドと API を利用できる。
 フロントエンドは `/api` を使い、nginx がそれをコンテナ内の FastAPI (`127.0.0.1:8000`) に転送する。
 そのため、ホスト側の公開ポートを変えても、ブラウザからは `http://localhost:3001/api/...` のようにアクセスできる。
+`docker compose` で `3001:3000` と `8005:8000` に変えた場合も、ブラウザからの API 呼び出しは `http://localhost:3001/api/...` のまま動作する。
+API 直アクセスは `http://localhost:8005/...` で行える。
 `API_PORT` はコンテナ内の FastAPI 待受ポートを変える場合だけ使う。
+
+### GitHub Packages を使う場合
+
+GitHub Packages の Docker image 公開機能を使う場合は、別途ワークフローを用意する。
+`GITHUB_TOKEN` に `packages: write` 権限が付くように設定する。
 
 ## Push 前チェック
 
