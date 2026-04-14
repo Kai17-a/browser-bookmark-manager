@@ -1,8 +1,7 @@
+import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
-
-import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "/data/bookmarks.db")
 
@@ -11,7 +10,7 @@ def _resolve_sqlite_path(database_url: str) -> Path:
     path = Path(database_url)
     if path.is_absolute():
         return path
-    return Path("/data") / path
+    return Path(".") / path
 
 
 @contextmanager
