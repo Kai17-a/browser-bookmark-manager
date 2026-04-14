@@ -81,7 +81,7 @@
               variant="ghost"
               size="sm"
               :loading="refreshing"
-              @click="loadFolder"
+              @click="loadFolder(true)"
             >
               Refresh
             </UButton>
@@ -235,7 +235,7 @@ const editForm = reactive({ name: "", description: "" });
 const bookmarkForm = reactive<BookmarkFormState>(createBookmarkFormState());
 const pendingBookmark = ref<BookmarkResponse | null>(null);
 
-const loadFolder = async () => {
+const loadFolder = async (showToast = false) => {
   refreshing.value = true;
   state.value = "loading";
   errorMessage.value = "";
@@ -254,6 +254,13 @@ const loadFolder = async () => {
     tags.value = tagsRes;
     bookmarks.value = bookmarksRes.items || [];
     state.value = folder.value ? "ready" : "not-found";
+    if (showToast) {
+      toast.show({
+        title: "Folder refreshed.",
+        color: "success",
+        icon: "i-lucide-check",
+      });
+    }
   } catch (err) {
     folder.value = null;
     bookmarks.value = [];

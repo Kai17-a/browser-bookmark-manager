@@ -80,7 +80,7 @@
               variant="ghost"
               size="sm"
               :loading="refreshing"
-              @click="loadTag"
+              @click="loadTag(true)"
             >
               Refresh
             </UButton>
@@ -234,7 +234,7 @@ const editForm = reactive({ name: "", description: "" });
 const bookmarkForm = reactive<BookmarkFormState>(createBookmarkFormState());
 const pendingBookmark = ref<BookmarkResponse | null>(null);
 
-const loadTag = async () => {
+const loadTag = async (showToast = false) => {
   refreshing.value = true;
   state.value = "loading";
   errorMessage.value = "";
@@ -252,6 +252,13 @@ const loadTag = async () => {
     folders.value = foldersRes;
     bookmarks.value = bookmarksRes.items || [];
     state.value = tag.value ? "ready" : "not-found";
+    if (showToast) {
+      toast.show({
+        title: "Tag refreshed.",
+        color: "success",
+        icon: "i-lucide-check",
+      });
+    }
   } catch (err) {
     tag.value = null;
     bookmarks.value = [];
