@@ -258,6 +258,7 @@ const loadTag = async () => {
 
     tag.value =
       tagsRes.find((item: TagResponse) => String(item.id) === String(route.params.id)) || null;
+    allTags.value = tagsRes;
     folders.value = foldersRes;
     bookmarks.value = bookmarksRes.items || [];
     state.value = tag.value ? "ready" : "not-found";
