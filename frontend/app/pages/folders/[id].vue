@@ -11,14 +11,8 @@
           description="Inspect and manage a single folder"
           :ui="{ body: 'space-y-4' }"
         >
-          <div v-if="state === 'loading'" class="space-y-3">
-            <USkeleton class="h-6 w-32" />
-            <USkeleton class="h-8 w-64" />
-            <USkeleton class="h-4 w-full max-w-md" />
-          </div>
-
           <UAlert
-            v-else-if="state === 'error'"
+            v-if="state === 'error'"
             title="Failed to load folder"
             :description="errorMessage"
             color="error"
@@ -93,11 +87,7 @@
             </UButton>
           </div>
 
-          <div v-if="state === 'loading'" class="space-y-3">
-            <USkeleton v-for="n in 3" :key="n" class="h-20 w-full" />
-          </div>
-
-          <div v-else-if="bookmarks.length" class="grid gap-3">
+          <div v-if="bookmarks.length" class="grid gap-3">
             <BookmarkCard
               v-for="bookmark in bookmarks"
               :key="bookmark.id"
