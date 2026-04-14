@@ -1,20 +1,32 @@
 <template>
   <UDashboardPanel id="rss">
     <template #header>
-      <PageHeaderActions title="RSS" :loading="loading" @refresh="refreshFeeds">
-        <template #actions>
-          <UButton label="Register" icon="i-lucide-plus" size="sm" @click="openCreateModal" />
-        </template>
-      </PageHeaderActions>
+      <PageHeaderActions title="RSS" />
     </template>
 
     <template #body>
       <div class="space-y-6">
-        <UPageCard
-          title="RSS feeds"
-          description="Manage external feed links separately from bookmarks"
-          :ui="{ body: 'space-y-4' }"
-        >
+        <UPageCard :ui="{ body: 'space-y-4' }">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold text-default">RSS feeds</h2>
+              <p class="text-sm text-muted">Manage external feed links separately from bookmarks</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <UButton
+                icon="i-lucide-refresh-cw"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                :loading="loading"
+                @click="refreshFeeds"
+              >
+                Refresh
+              </UButton>
+              <UButton label="Register" icon="i-lucide-plus" size="sm" @click="openCreateModal" />
+            </div>
+          </div>
+
           <div
             class="flex flex-col gap-3 border-b border-default pb-4 md:flex-row md:items-center md:justify-between"
           >
@@ -86,9 +98,7 @@
         <UModal
           v-model:open="modalOpen"
           :title="feedForm.id ? 'Edit RSS feed' : 'Register RSS feed'"
-          :description="
-            feedForm.id ? 'Update the selected feed.' : 'Create a new feed link.'
-          "
+          :description="feedForm.id ? 'Update the selected feed.' : 'Create a new feed link.'"
           :ui="{
             content:
               'w-[calc(100vw-2rem)] max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-4rem)]',

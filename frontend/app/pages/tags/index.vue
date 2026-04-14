@@ -1,7 +1,7 @@
 <template>
   <UDashboardPanel id="tags">
     <template #header>
-      <PageHeaderActions title="Tags" :loading="false" @refresh="refresh" />
+      <PageHeaderActions title="Tags" />
     </template>
 
     <template #body>
@@ -25,7 +25,23 @@
           </form>
         </UPageCard>
 
-        <UPageCard title="Tag list" :ui="{ body: 'space-y-3' }">
+        <UPageCard :ui="{ body: 'space-y-3' }">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold text-default">Tag list</h2>
+            </div>
+            <UButton
+              icon="i-lucide-refresh-cw"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :loading="refreshing"
+              @click="refresh"
+            >
+              Refresh
+            </UButton>
+          </div>
+
           <div v-if="tags.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <CardsEntityCard
               v-for="tag in tags"
@@ -98,12 +114,14 @@ const toast = useSingleToast();
 const tags = ref<TagResponse[]>([]);
 const tagName = ref("");
 const tagDescription = ref("");
+const refreshing = ref(false);
 const editOpen = ref(false);
 const confirmOpen = ref(false);
 const pendingTag = ref<TagResponse | null>(null);
 const editForm = reactive({ id: "", name: "", description: "" });
 
 const refresh = async () => {
+  refreshing.value = true;
   try {
     tags.value = await request("/tags");
     await refreshSidebarCatalog();
@@ -119,6 +137,8 @@ const refresh = async () => {
       color: "error",
       icon: "i-lucide-circle-alert",
     });
+  } finally {
+    refreshing.value = false;
   }
 };
 

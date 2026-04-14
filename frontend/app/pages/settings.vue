@@ -1,7 +1,7 @@
 <template>
   <UDashboardPanel id="settings">
     <template #header>
-      <PageHeaderActions title="Settings" :show-refresh="false" />
+      <PageHeaderActions title="Settings" />
     </template>
 
     <template #body>

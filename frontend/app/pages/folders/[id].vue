@@ -1,7 +1,7 @@
 <template>
   <UDashboardPanel id="folder-detail">
     <template #header>
-      <PageHeaderActions title="Folder" :loading="state === 'loading'" @refresh="loadFolder" />
+      <PageHeaderActions title="Folder" />
     </template>
 
     <template #body>
@@ -75,11 +75,24 @@
           </div>
         </UPageCard>
 
-        <UPageCard
-          title="Bookmarks in this folder"
-          description="Bookmarks associated with the selected folder"
-          :ui="{ body: 'space-y-3' }"
-        >
+        <UPageCard :ui="{ body: 'space-y-3' }">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold text-default">Bookmarks in this folder</h2>
+              <p class="text-sm text-muted">Bookmarks associated with the selected folder</p>
+            </div>
+            <UButton
+              icon="i-lucide-refresh-cw"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :loading="refreshing"
+              @click="loadFolder"
+            >
+              Refresh
+            </UButton>
+          </div>
+
           <div v-if="state === 'loading'" class="space-y-3">
             <USkeleton v-for="n in 3" :key="n" class="h-20 w-full" />
           </div>
@@ -227,11 +240,13 @@ const confirmOpen = ref(false);
 const saving = ref(false);
 const deleting = ref(false);
 const deletingBookmark = ref(false);
+const refreshing = ref(false);
 const editForm = reactive({ name: "", description: "" });
 const bookmarkForm = reactive<BookmarkFormState>(createBookmarkFormState());
 const pendingBookmark = ref<BookmarkResponse | null>(null);
 
 const loadFolder = async () => {
+  refreshing.value = true;
   state.value = "loading";
   errorMessage.value = "";
 
@@ -254,6 +269,8 @@ const loadFolder = async () => {
     bookmarks.value = [];
     errorMessage.value = err instanceof Error ? err.message : "Failed to load folder.";
     state.value = "error";
+  } finally {
+    refreshing.value = false;
   }
 };
 

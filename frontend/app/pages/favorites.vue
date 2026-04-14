@@ -1,16 +1,31 @@
 <template>
   <UDashboardPanel id="favorites">
     <template #header>
-      <PageHeaderActions title="Favorites" :loading="loading" @refresh="refreshFavorites" />
+      <PageHeaderActions title="Favorites" />
     </template>
 
     <template #body>
       <div class="space-y-6">
-        <UPageCard
-          title="Favorite bookmarks"
-          description="Bookmarks marked with a star through the dedicated favorite API"
-          :ui="{ body: 'space-y-4' }"
-        >
+        <UPageCard :ui="{ body: 'space-y-4' }">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold text-default">Favorite bookmarks</h2>
+              <p class="text-sm text-muted">
+                Bookmarks marked with a star through the dedicated favorite API
+              </p>
+            </div>
+            <UButton
+              icon="i-lucide-refresh-cw"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :loading="loading"
+              @click="refreshFavorites"
+            >
+              Refresh
+            </UButton>
+          </div>
+
           <div
             class="flex flex-col gap-3 border-b border-default pb-4 md:flex-row md:items-center md:justify-between"
           >

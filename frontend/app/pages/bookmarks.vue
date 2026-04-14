@@ -1,11 +1,7 @@
 <template>
   <UDashboardPanel id="bookmarks">
     <template #header>
-      <PageHeaderActions title="Bookmarks" :loading="loading" @refresh="refreshBookmarks">
-        <template #actions>
-          <UButton label="Register" icon="i-lucide-plus" size="sm" @click="openCreateModal" />
-        </template>
-      </PageHeaderActions>
+      <PageHeaderActions title="Bookmarks" />
     </template>
 
     <template #body>
@@ -34,11 +30,27 @@
           </form>
         </UPageCard>
 
-        <UPageCard
-          title="Bookmark list"
-          description="Latest bookmarks matching the current filters"
-          :ui="{ body: 'space-y-4' }"
-        >
+        <UPageCard :ui="{ body: 'space-y-4' }">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0">
+              <h2 class="text-lg font-semibold text-default">Bookmark list</h2>
+              <p class="text-sm text-muted">Latest bookmarks matching the current filters</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <UButton
+                icon="i-lucide-refresh-cw"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                :loading="loading"
+                @click="refreshBookmarks"
+              >
+                Refresh
+              </UButton>
+              <UButton label="Register" icon="i-lucide-plus" size="sm" @click="openCreateModal" />
+            </div>
+          </div>
+
           <div
             class="flex flex-col gap-3 border-b border-default pb-4 md:flex-row md:items-center md:justify-between"
           >

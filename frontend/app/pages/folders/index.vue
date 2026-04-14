@@ -1,7 +1,7 @@
 <template>
   <UDashboardPanel id="folders">
     <template #header>
-      <PageHeaderActions title="Folders" show-refresh :loading="false" @refresh="refresh" />
+      <PageHeaderActions title="Folders" />
     </template>
 
     <template #body>
@@ -25,7 +25,24 @@
           </form>
         </UPageCard>
 
-        <UPageCard title="Folder list" :ui="{ body: 'space-y-3' }">
+        <UPageCard :ui="{ body: 'space-y-3' }">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold text-default">Folder list</h2>
+              <p class="text-sm text-muted">Browse and manage every folder in one place</p>
+            </div>
+            <UButton
+              icon="i-lucide-refresh-cw"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :loading="refreshing"
+              @click="refresh"
+            >
+              Refresh
+            </UButton>
+          </div>
+
           <div v-if="folders.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <CardsEntityCard
               v-for="folder in folders"
@@ -98,12 +115,14 @@ const toast = useSingleToast();
 const folders = ref<FolderResponse[]>([]);
 const folderName = ref("");
 const folderDescription = ref("");
+const refreshing = ref(false);
 const editOpen = ref(false);
 const confirmOpen = ref(false);
 const pendingFolder = ref<FolderResponse | null>(null);
 const editForm = reactive({ id: "", name: "", description: "" });
 
 const refresh = async () => {
+  refreshing.value = true;
   try {
     folders.value = await request("/folders");
     await refreshSidebarCatalog();
@@ -119,6 +138,8 @@ const refresh = async () => {
       color: "error",
       icon: "i-lucide-circle-alert",
     });
+  } finally {
+    refreshing.value = false;
   }
 };
 
