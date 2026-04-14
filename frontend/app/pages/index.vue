@@ -141,8 +141,7 @@ const stats = computed(() => [
 
 onMounted(async () => {
   try {
-    const [healthRes, bookmarksRes, metricsRes] = await Promise.all([
-      request("/health"),
+    const [bookmarksRes, metricsRes] = await Promise.all([
       request("/bookmarks"),
       request<DashboardMetricsResponse>("/metrics/dashboard"),
     ]);
@@ -150,14 +149,6 @@ onMounted(async () => {
     bookmarks.value = bookmarksRes;
     metrics.value = metricsRes;
     await refreshSidebarCatalog();
-    toast.show({
-      title:
-        healthRes?.status === "ok"
-          ? "API server is reachable."
-          : "API server responded unexpectedly.",
-      color: healthRes?.status === "ok" ? "success" : "warning",
-      icon: healthRes?.status === "ok" ? "i-lucide-check" : "i-lucide-circle-alert",
-    });
   } catch (error) {
     toast.show({
       title: "Failed to load dashboard.",

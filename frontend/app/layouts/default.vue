@@ -24,6 +24,8 @@
 import type { NavigationMenuItem } from "@nuxt/ui";
 
 const { folders, tags, refresh } = useSidebarCatalog();
+const { checked: healthChecked, ok: healthOk, check: checkApiHealth } = useApiHealth();
+const toast = useSingleToast();
 
 const open = ref(true);
 
@@ -93,5 +95,14 @@ const secondaryLinks = computed<NavigationMenuItem[]>(() => [
 
 onMounted(async () => {
   await refresh();
+
+  if (!healthChecked.value) {
+    await checkApiHealth();
+    toast.show({
+      title: healthOk.value ? "API server is reachable." : "API server responded unexpectedly.",
+      color: healthOk.value ? "success" : "warning",
+      icon: healthOk.value ? "i-lucide-check" : "i-lucide-circle-alert",
+    });
+  }
 });
 </script>
