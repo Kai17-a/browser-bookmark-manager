@@ -1,5 +1,5 @@
 export type ApiErrorBody = {
-  detail?: string | string[];
+  detail?: string | string[] | Record<string, unknown>[];
 };
 
 export const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
@@ -22,10 +22,34 @@ export const buildRequestHeaders = (options: RequestInit = {}) => {
 
 export const extractErrorMessage = (status: number, body: ApiErrorBody | null) => {
   if (Array.isArray(body?.detail)) {
-    return body.detail.join(", ");
+    return body.detail
+      .map((item) => {
+        if (typeof item === "string") {
+          return item;
+        }
+
+        if (item && typeof item === "object") {
+          const message = "msg" in item ? item.msg : undefined;
+          if (typeof message === "string" && message.trim()) {
+            return message;
+          }
+
+          const detail = "detail" in item ? item.detail : undefined;
+          if (typeof detail === "string" && detail.trim()) {
+            return detail;
+          }
+        }
+
+        return "Validation error";
+      })
+      .join(", ");
   }
 
-  return body?.detail || `HTTP ${status}`;
+  if (typeof body?.detail === "string") {
+    return body.detail;
+  }
+
+  return `HTTP ${status}`;
 };
 
 export const parseJsonBody = async <T>(response: Response) => {

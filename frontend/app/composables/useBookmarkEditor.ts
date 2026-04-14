@@ -1,5 +1,7 @@
 import { createBookmarkFormState, type BookmarkFormState } from "~/utils/bookmarkList";
 import type { BookmarkResponse } from "~/types";
+import { useBookmarkApi } from "~/composables/useBookmarkApi";
+import { useSingleToast } from "~/composables/useSingleToast";
 
 type UseBookmarkEditorOptions = {
   request: ReturnType<typeof useBookmarkApi>["request"];
@@ -39,7 +41,6 @@ export const useBookmarkEditor = (options: UseBookmarkEditorOptions) => {
   const saveBookmark = async () => {
     const url = bookmarkForm.url.trim();
     const title = bookmarkForm.title.trim();
-    if (!url || !title) return;
 
     saving.value = true;
     try {

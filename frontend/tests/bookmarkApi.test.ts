@@ -44,6 +44,14 @@ describe("bookmarkApi helpers", () => {
   it("normalizes error payloads into readable messages", () => {
     expect(extractErrorMessage(400, { detail: "Bad request" })).toBe("Bad request");
     expect(extractErrorMessage(400, { detail: ["name is required"] })).toBe("name is required");
+    expect(
+      extractErrorMessage(422, {
+        detail: [
+          { msg: "url is not a valid URL" },
+          { msg: "title is required" },
+        ] as never,
+      }),
+    ).toBe("url is not a valid URL, title is required");
     expect(extractErrorMessage(500, null)).toBe("HTTP 500");
   });
 

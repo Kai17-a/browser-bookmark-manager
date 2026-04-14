@@ -13,6 +13,12 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     exclude: ["tests/e2e/**"],
     pool: "threads",
+    poolOptions: {
+      threads: {
+        singleThread: true,
+        isolate: false,
+      },
+    },
     fileParallelism: false,
   },
 });
