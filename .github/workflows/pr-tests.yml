@@ -143,8 +143,10 @@ jobs:
         working-directory: frontend
         run: bunx playwright install --with-deps chromium
 
-      - name: Run E2E tests
+      - name: Set up mise
         uses: jdx/mise-action@v4
+
+      - name: Run E2E tests
         run: ./scripts/run-e2e-tests.sh
 
       - name: Upload logs on failure
