@@ -8,11 +8,11 @@
 公開イメージを使う場合は、GitHub Container Registry から pull して実行します。
 
 ```bash
-docker pull ghcr.io/kai17-a/bookmark-manager:latest
+docker pull ghcr.io/kai17-a/browser-bookmark-manager:latest
 docker run --rm -p 3000:3000 -p 8000:8000 \
   -e DATABASE_URL=/data/bookmarks.db \
   -v "$(pwd)/data:/data" \
-  ghcr.io/kai17-a/bookmark-manager:latest
+  ghcr.io/kai17-a/browser-bookmark-manager:latest
 ```
 
 起動後はフロントエンドを `http://127.0.0.1:3000`、API を `http://127.0.0.1:8000` で利用できます。
@@ -23,7 +23,7 @@ docker run --rm -p 3000:3000 -p 8000:8000 \
 services:
   bookmark-manager:
     container_name: bookmark-manager
-    image: ghcr.io/kai17-a/bookmark-manager:latest
+    image: ghcr.io/kai17-a/browser-bookmark-manager:latest
     environment:
       DATABASE_URL: /data/bookmarks.db
     ports:
