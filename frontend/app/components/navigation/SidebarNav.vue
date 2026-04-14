@@ -3,6 +3,7 @@
     <UNavigationMenu
       :collapsed="collapsed"
       :items="primaryLinks"
+      :model-value="primaryModelValue"
       orientation="vertical"
       tooltip
       popover
@@ -24,5 +25,6 @@ defineProps<{
   collapsed: boolean;
   primaryLinks: NavigationMenuItem[];
   secondaryLinks: NavigationMenuItem[];
+  primaryModelValue: string[];
 }>();
 </script>

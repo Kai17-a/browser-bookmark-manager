@@ -12,6 +12,7 @@
           :collapsed="collapsed"
           :primary-links="primaryLinks"
           :secondary-links="secondaryLinks"
+          :primary-model-value="sidebarOpenItems"
           @navigate="closeSidebar"
         />
       </template>
@@ -36,6 +37,10 @@ const closeSidebar = () => {
 
 const isActive = (path: string) => route.path === path;
 const isActivePrefix = (path: string) => route.path === path || route.path.startsWith(`${path}/`);
+const sidebarOpenItems = computed(() => [
+  ...(isActivePrefix("/folders") ? ["folders"] : []),
+  ...(isActivePrefix("/tags") ? ["tags"] : []),
+]);
 
 const primaryLinks = computed<NavigationMenuItem[]>(() => [
   {
@@ -70,6 +75,7 @@ const primaryLinks = computed<NavigationMenuItem[]>(() => [
     label: "Folders",
     icon: "i-lucide-folder",
     to: "/folders",
+    value: "folders",
     active: isActivePrefix("/folders"),
     defaultOpen: false,
     children: folders.value.map((folder) => ({
@@ -84,6 +90,7 @@ const primaryLinks = computed<NavigationMenuItem[]>(() => [
     label: "Tags",
     icon: "i-lucide-tag",
     to: "/tags",
+    value: "tags",
     active: isActivePrefix("/tags"),
     defaultOpen: false,
     children: tags.value.map((tag) => ({
