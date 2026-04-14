@@ -23,6 +23,7 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
 
+const route = useRoute();
 const { folders, tags, refresh } = useSidebarCatalog();
 const { checked: healthChecked, ok: healthOk, check: checkApiHealth } = useApiHealth();
 const toast = useSingleToast();
@@ -33,40 +34,49 @@ const closeSidebar = () => {
   open.value = false;
 };
 
+const isActive = (path: string) => route.path === path;
+const isActivePrefix = (path: string) => route.path === path || route.path.startsWith(`${path}/`);
+
 const primaryLinks = computed<NavigationMenuItem[]>(() => [
   {
     label: "Dashboard",
     icon: "i-lucide-house",
     to: "/",
+    active: isActive("/"),
     onSelect: closeSidebar,
   },
   {
     label: "Bookmarks",
     icon: "i-lucide-bookmark",
     to: "/bookmarks",
+    active: isActivePrefix("/bookmarks"),
     onSelect: closeSidebar,
   },
   {
     label: "Favorites",
     icon: "i-lucide-star",
     to: "/favorites",
+    active: isActive("/favorites"),
     onSelect: closeSidebar,
   },
   {
     label: "RSS",
     icon: "i-lucide-rss",
     to: "/rss",
+    active: isActive("/rss"),
     onSelect: closeSidebar,
   },
   {
     label: "Folders",
     icon: "i-lucide-folder",
     to: "/folders",
+    active: isActivePrefix("/folders"),
     defaultOpen: false,
     children: folders.value.map((folder) => ({
       label: folder.name,
       to: `/folders/${folder.id}`,
       exact: true,
+      active: isActive(`/folders/${folder.id}`),
       onSelect: closeSidebar,
     })),
   },
@@ -74,11 +84,13 @@ const primaryLinks = computed<NavigationMenuItem[]>(() => [
     label: "Tags",
     icon: "i-lucide-tag",
     to: "/tags",
+    active: isActivePrefix("/tags"),
     defaultOpen: false,
     children: tags.value.map((tag) => ({
       label: tag.name,
       to: `/tags/${tag.id}`,
       exact: true,
+      active: isActive(`/tags/${tag.id}`),
       onSelect: closeSidebar,
     })),
   },
@@ -89,6 +101,7 @@ const secondaryLinks = computed<NavigationMenuItem[]>(() => [
     label: "Settings",
     icon: "i-lucide-settings",
     to: "/settings",
+    active: isActive("/settings"),
     onSelect: closeSidebar,
   },
 ]);
