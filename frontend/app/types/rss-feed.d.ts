@@ -19,6 +19,23 @@ export interface RSSFeedResponse {
   updated_at: string;
 }
 
+export interface RSSFeedArticleResponse {
+  id: number;
+  feed_id: number;
+  url: string;
+  title: string | null;
+  published: string | null;
+  created_at: string;
+}
+
+export interface RSSFeedArticleListResponse {
+  items: RSSFeedArticleResponse[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
 export interface RSSFeedListResponse {
   items: RSSFeedResponse[];
   total: number;

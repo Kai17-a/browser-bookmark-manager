@@ -1,6 +1,9 @@
 import logging
 import sqlite3
+from datetime import datetime
 import xml.etree.ElementTree as ET
+from typing import cast
+from time import mktime
 
 import feedparser  # type: ignore
 import httpx
@@ -9,6 +12,8 @@ from fastapi import HTTPException
 from api.database import get_db
 from api.model.models import (
     RSSFeedCreate,
+    RSSFeedArticleListResponse,
+    RSSFeedArticleResponse,
     RSSFeedExecuteResponse,
     RSSFeedListResponse,
     RSSFeedResponse,
@@ -129,13 +134,28 @@ class RSSFeedService:
     def _record_sent_articles(
         self, conn, feed_id: int, articles: list[dict[str, object]]
     ) -> None:
-        for article in articles:
-            conn.execute(
+        has_published = RSSFeedRepository(conn)._has_column("rss_feed_articles", "published")
+        insert_query = (
+            """
+                INSERT OR IGNORE INTO rss_feed_articles (feed_id, url, title, published)
+                VALUES (?, ?, ?, ?)
                 """
+            if has_published
+            else """
                 INSERT OR IGNORE INTO rss_feed_articles (feed_id, url, title)
                 VALUES (?, ?, ?)
-                """,
-                (feed_id, article["url"], article.get("title")),
+                """
+        )
+        for article in articles:
+            params = (
+                feed_id,
+                article["url"],
+                article.get("title"),
+                article.get("published"),
+            )
+            conn.execute(
+                insert_query,
+                params if has_published else params[:3],
             )
 
     def create(self, data: RSSFeedCreate) -> RSSFeedResponse:
@@ -182,6 +202,29 @@ class RSSFeedService:
             if row is None:
                 raise HTTPException(status_code=404, detail="RSS feed not found")
             return RSSFeedResponse(**row)
+
+    def list_articles(
+        self, feed_id: int, page: int = 1, per_page: int = 20
+    ) -> RSSFeedArticleListResponse:
+        with get_db() as conn:
+            repo = RSSFeedRepository(conn)
+            if repo.find_by_id(feed_id) is None:
+                raise HTTPException(status_code=404, detail="RSS feed not found")
+            total = repo.count_articles_by_feed_id(feed_id)
+            total_pages = max((total + per_page - 1) // per_page, 1) if total else 0
+            page = max(page, 1)
+            if total_pages and page > total_pages:
+                page = total_pages
+            offset = (page - 1) * per_page
+            rows = repo.find_articles_by_feed_id_paginated(feed_id, per_page, offset)
+            items = [RSSFeedArticleResponse(**row) for row in rows]
+            return RSSFeedArticleListResponse(
+                items=items,
+                total=total,
+                page=page,
+                per_page=per_page,
+                total_pages=total_pages,
+            )
 
     def update(self, feed_id: int, data: RSSFeedUpdate) -> RSSFeedResponse:
         with get_db() as conn:
@@ -251,11 +294,18 @@ class RSSFeedService:
                 summary = entry.get("summary") or entry.get("description")
                 if summary:
                     embed["description"] = summary
+                published = entry.get("published_parsed")
+                published_dt = (
+                    datetime.fromtimestamp(mktime(cast(tuple, published)))
+                    if published is not None
+                    else None
+                )
                 embeds.append(embed)
                 articles.append(
                     {
                         "url": entry_link,
                         "title": entry.get("title") or "(no title)",
+                        "published": published_dt,
                     }
                 )
 

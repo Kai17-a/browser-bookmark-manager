@@ -2,9 +2,12 @@
   <article class="rounded-2xl border border-default bg-elevated/40 p-4 space-y-4">
     <div class="flex items-start justify-between gap-4">
       <div class="min-w-0">
-        <p class="block truncate text-base font-semibold text-default">
+        <NuxtLink
+          :to="to"
+          class="block truncate text-base font-semibold text-default hover:underline"
+        >
           {{ feed.title }}
-        </p>
+        </NuxtLink>
         <p class="mt-1 break-all text-sm text-muted">
           {{ feed.url }}
         </p>
@@ -85,6 +88,7 @@ import type { RSSFeedResponse } from "~/types";
 
 defineProps<{
   feed: RSSFeedResponse;
+  to: string;
   running?: boolean;
 }>();
 

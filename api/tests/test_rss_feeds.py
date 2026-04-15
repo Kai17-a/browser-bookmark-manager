@@ -170,6 +170,22 @@ def test_execute_rss_feed_returns_200(client):
     assert resp.json()["delivered"] is True
 
 
+def test_list_rss_feed_articles_returns_200(client):
+    client.put(
+        "/settings/webhook",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    feed_id = create_feed(client).json()["id"]
+    client.post(f"/rss-feeds/{feed_id}/execute")
+
+    resp = client.get(f"/rss-feeds/{feed_id}/articles")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body["items"]) == 2
+    assert body["items"][0]["feed_id"] == feed_id
+    assert body["items"][0]["url"].startswith("https://example.com/item-")
+
+
 def test_execute_rss_feed_uses_feedparser_content(client, monkeypatch):
     import api.services.rss_feed_service as rss_module
 

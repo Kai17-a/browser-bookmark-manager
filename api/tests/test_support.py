@@ -164,6 +164,17 @@ class CompatTestClient:
                 RSSFeedService().list(q=q, page=page, per_page=per_page).model_dump()
             )
             return self._ok(payload, 200)
+        if method == "GET" and path.startswith("/rss-feeds/") and path.endswith("/articles"):
+            parts = path.strip("/").split("/")
+            feed_id = int(parts[1])
+            page = int(query.get("page", "1"))
+            per_page = int(query.get("per_page", "20"))
+            payload = (
+                RSSFeedService()
+                .list_articles(feed_id, page=page, per_page=per_page)
+                .model_dump()
+            )
+            return self._ok(payload, 200)
         if method == "GET" and path.startswith("/rss-feeds/"):
             payload = RSSFeedService().get(int(path.rsplit("/", 1)[1])).model_dump()
             return self._ok(payload, 200)

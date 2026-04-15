@@ -110,6 +110,7 @@ class RSSFeedArticle(SQLModel, table=True):
     )
     url: str = Field(sa_column=Column(String, nullable=False))
     title: str | None = Field(default=None, sa_column=Column(String))
+    published: datetime | None = Field(default=None, sa_column=Column(DateTime))
     created_at: datetime = Field(
         sa_column=Column(
             DateTime,
@@ -349,6 +350,23 @@ class RSSFeedResponse(BaseModel):
     description: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class RSSFeedArticleResponse(BaseModel):
+    id: int
+    feed_id: int
+    url: str
+    title: str | None = None
+    published: datetime | None = None
+    created_at: datetime
+
+
+class RSSFeedArticleListResponse(BaseModel):
+    items: list[RSSFeedArticleResponse]
+    total: int
+    page: int
+    per_page: int
+    total_pages: int
 
 
 class RSSFeedListResponse(BaseModel):

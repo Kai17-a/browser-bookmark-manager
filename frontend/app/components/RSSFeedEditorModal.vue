@@ -2,19 +2,19 @@
   <UModal v-model:open="openModel" :title="title" :description="description">
     <template #content="{ close }">
       <form class="space-y-4 p-6" @submit.prevent="emit('save')">
-        <UFormField v-if="titleLabel" :label="titleLabel" required class="w-full">
+        <UFormField label="Title" required class="w-full">
           <UInput v-model="form.title" :placeholder="titlePlaceholder" class="w-full" />
         </UFormField>
 
-        <UFormField :label="nameLabel" required class="w-full">
-          <UInput v-model="form.name" :placeholder="namePlaceholder" class="w-full" />
+        <UFormField label="URL" required class="w-full">
+          <UInput v-model="form.url" :placeholder="urlPlaceholder" class="w-full" />
         </UFormField>
 
-        <UFormField :label="descriptionLabel" class="w-full">
+        <UFormField label="Description" class="w-full">
           <UTextarea
             v-model="form.description"
             :placeholder="descriptionPlaceholder"
-            :rows="3"
+            :rows="4"
             class="w-full"
           />
         </UFormField>
@@ -35,17 +35,14 @@ const openModel = defineModel<boolean>("open", { required: true });
 
 defineProps<{
   form: {
-    title?: string;
-    name: string;
+    title: string;
+    url: string;
     description: string;
   };
   title: string;
   description: string;
-  titleLabel?: string;
-  titlePlaceholder?: string;
-  nameLabel: string;
-  namePlaceholder: string;
-  descriptionLabel?: string;
+  titlePlaceholder: string;
+  urlPlaceholder: string;
   descriptionPlaceholder: string;
   submitLabel: string;
   saving?: boolean;

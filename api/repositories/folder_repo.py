@@ -16,7 +16,7 @@ class FolderRepository:
         return dict(row)
 
     def find_all(self) -> list[dict]:
-        rows = self.conn.execute("SELECT * FROM folders").fetchall()
+        rows = self.conn.execute("SELECT * FROM folders ORDER BY name ASC, id ASC").fetchall()
         return [dict(row) for row in rows]
 
     def find_by_name(self, name: str) -> dict | None:

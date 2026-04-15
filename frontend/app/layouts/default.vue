@@ -52,7 +52,7 @@
 import type { NavigationMenuItem } from "@nuxt/ui";
 
 const route = useRoute();
-const { folders, tags, refresh } = useSidebarCatalog();
+const { folders, tags, rssFeeds, refresh } = useSidebarCatalog();
 const { checked: healthChecked, ok: healthOk, check: checkApiHealth } = useApiHealth();
 const toast = useSingleToast();
 
@@ -67,6 +67,7 @@ const isActivePrefix = (path: string) => route.path === path || route.path.start
 const sidebarOpenItems = computed(() => [
   ...(isActivePrefix("/folders") ? ["folders"] : []),
   ...(isActivePrefix("/tags") ? ["tags"] : []),
+  ...(isActivePrefix("/rss") ? ["rss"] : []),
 ]);
 
 const primaryLinks = computed<NavigationMenuItem[]>(() => [
@@ -95,8 +96,16 @@ const primaryLinks = computed<NavigationMenuItem[]>(() => [
     label: "RSS",
     icon: "i-lucide-rss",
     to: "/rss",
-    active: isActive("/rss"),
-    onSelect: closeSidebar,
+    value: "rss",
+    active: isActivePrefix("/rss"),
+    defaultOpen: false,
+    children: rssFeeds.value.map((feed) => ({
+      label: feed.title,
+      to: `/rss/${feed.id}`,
+      exact: true,
+      active: isActive(`/rss/${feed.id}`),
+      onSelect: closeSidebar,
+    })),
   },
   {
     label: "Folders",

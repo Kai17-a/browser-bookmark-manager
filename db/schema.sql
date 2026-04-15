@@ -31,7 +31,7 @@ CREATE TABLE rss_feed_articles (
   url TEXT NOT NULL,
   title TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
+, published DATETIME);
 CREATE UNIQUE INDEX idx_rss_feed_articles_feed_url_unique
   ON rss_feed_articles(feed_id, url);
 CREATE TABLE app_settings (
@@ -51,4 +51,5 @@ CREATE TABLE bookmark_tags (
 );
 -- Dbmate schema migrations
 INSERT INTO "schema_migrations" (version) VALUES
-  ('010');
+  ('010'),
+  ('011');

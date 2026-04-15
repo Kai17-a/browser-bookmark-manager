@@ -5,6 +5,10 @@ class RSSFeedRepository:
     def __init__(self, conn: sqlite3.Connection) -> None:
         self.conn = conn
 
+    def _has_column(self, table: str, column: str) -> bool:
+        rows = self.conn.execute(f"PRAGMA table_info({table})").fetchall()
+        return any(row["name"] == column for row in rows)
+
     def insert(self, url: str, title: str, description: str | None) -> dict:
         cursor = self.conn.execute(
             "INSERT INTO rss_feeds (url, title, description) VALUES (?, ?, ?)",
@@ -32,7 +36,7 @@ class RSSFeedRepository:
             query += " WHERE (title LIKE ? OR url LIKE ?)"
             like = f"%{q}%"
             params.extend([like, like])
-        query += " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?"
+        query += " ORDER BY title ASC, id ASC LIMIT ? OFFSET ?"
         params.extend([limit, offset])
         rows = self.conn.execute(query, params).fetchall()
         return [dict(row) for row in rows]
@@ -65,3 +69,37 @@ class RSSFeedRepository:
     def delete(self, feed_id: int) -> bool:
         cursor = self.conn.execute("DELETE FROM rss_feeds WHERE id = ?", (feed_id,))
         return cursor.rowcount > 0
+
+    def find_articles_by_feed_id(self, feed_id: int) -> list[dict]:
+        has_published = self._has_column("rss_feed_articles", "published")
+        published_select = ", published" if has_published else ", NULL AS published"
+        query = f"""
+            SELECT id, feed_id, url, title{published_select}, created_at
+            FROM rss_feed_articles
+            WHERE feed_id = ?
+            ORDER BY created_at DESC, id DESC
+            """
+        rows = self.conn.execute(query, (feed_id,)).fetchall()
+        return [dict(row) for row in rows]
+
+    def count_articles_by_feed_id(self, feed_id: int) -> int:
+        row = self.conn.execute(
+            "SELECT COUNT(*) AS total FROM rss_feed_articles WHERE feed_id = ?",
+            (feed_id,),
+        ).fetchone()
+        return int(row["total"]) if row else 0
+
+    def find_articles_by_feed_id_paginated(
+        self, feed_id: int, limit: int, offset: int
+    ) -> list[dict]:
+        has_published = self._has_column("rss_feed_articles", "published")
+        published_select = ", published" if has_published else ", NULL AS published"
+        query = f"""
+            SELECT id, feed_id, url, title{published_select}, created_at
+            FROM rss_feed_articles
+            WHERE feed_id = ?
+            ORDER BY created_at DESC, id DESC
+            LIMIT ? OFFSET ?
+            """
+        rows = self.conn.execute(query, (feed_id, limit, offset)).fetchall()
+        return [dict(row) for row in rows]

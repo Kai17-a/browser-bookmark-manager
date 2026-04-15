@@ -3,7 +3,7 @@ import {
   createSidebarCatalogState,
   type SidebarCatalogState,
 } from "~/utils/sidebarCatalog";
-import type { FolderResponse, TagResponse } from "~/types";
+import type { FolderResponse, RSSFeedListResponse, TagResponse } from "~/types";
 
 export const useSidebarCatalog = () => {
   const state = useState<SidebarCatalogState>("sidebar-catalog", createSidebarCatalogState);
@@ -20,12 +20,13 @@ export const useSidebarCatalog = () => {
     loadPromise = (async () => {
       loading.value = true;
       try {
-        const [foldersRes, tagsRes] = await Promise.all([
+        const [foldersRes, tagsRes, rssFeedsRes] = await Promise.all([
           request<FolderResponse[]>("/folders"),
           request<TagResponse[]>("/tags"),
+          request<RSSFeedListResponse>("/rss-feeds?per_page=100"),
         ]);
 
-        applySidebarCatalogResults(state.value, foldersRes, tagsRes);
+        applySidebarCatalogResults(state.value, foldersRes, tagsRes, rssFeedsRes.items || []);
       } finally {
         loading.value = false;
         loadPromise = null;
@@ -38,6 +39,7 @@ export const useSidebarCatalog = () => {
   return {
     folders: computed(() => state.value.folders),
     tags: computed(() => state.value.tags),
+    rssFeeds: computed(() => state.value.rssFeeds),
     loaded: computed(() => state.value.loaded),
     loading: computed(() => loading.value),
     refresh,

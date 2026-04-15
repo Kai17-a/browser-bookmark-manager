@@ -4,6 +4,7 @@ from api.dependencies import get_rss_feed_service
 from api.model.models import (
     ErrorResponse,
     RSSFeedCreate,
+    RSSFeedArticleListResponse,
     RSSFeedExecuteResponse,
     RSSFeedListResponse,
     RSSFeedResponse,
@@ -34,6 +35,16 @@ def list_rss_feeds(
 @router.get("/{feed_id}", status_code=200, response_model=RSSFeedResponse)
 def get_rss_feed(feed_id: int, service: RSSFeedService = Depends(get_rss_feed_service)):
     return service.get(feed_id)
+
+
+@router.get("/{feed_id}/articles", status_code=200, response_model=RSSFeedArticleListResponse)
+def list_rss_feed_articles(
+    feed_id: int,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    service: RSSFeedService = Depends(get_rss_feed_service),
+):
+    return service.list_articles(feed_id, page=page, per_page=per_page)
 
 
 @router.patch(

@@ -30,7 +30,9 @@
           <div v-else-if="folder" class="space-y-3">
             <div class="flex flex-wrap items-center gap-2">
               <UBadge color="primary" variant="soft"> Folder #{{ folder.id }} </UBadge>
-              <span class="text-sm text-muted"> Created {{ folder.created_at }} </span>
+              <span class="text-sm text-muted">
+                Created {{ formatDateTime(folder.created_at) }}
+              </span>
             </div>
             <h1 class="text-2xl font-semibold text-default">
               {{ folder.name }}
@@ -207,6 +209,7 @@ import {
   type BookmarkFormState,
   type SelectOption,
 } from "~/utils/bookmarkList";
+import { formatDateTime } from "~/utils/dateTime";
 
 const route = useRoute();
 const router = useRouter();
@@ -412,7 +415,7 @@ const toggleFavorite = async (bookmark: BookmarkResponse) => {
 
 const saveFolder = async () => {
   if (!folder.value) return;
-  const name = editForm.name.trim();
+  const name = (editForm.title || editForm.name).trim();
   if (!name) {
     toast.show({
       title: "Folder name is required.",
