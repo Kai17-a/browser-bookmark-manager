@@ -1,11 +1,13 @@
 # Shiori Keeper
 
-ブラウザのブックマークを一覧・整理するためのアプリケーションです。
-この `README.md` はインストール方法だけをまとめ、開発手順や設計資料は [DEVELOPMENT.md](DEVELOPMENT.md) と `specs/` に分離しています。
+## Overview
 
-## インストール
+Shiori Keeper is a web app for listing, finding, and organizing bookmarks collected in your browser.  
+It is designed to make it easier to revisit links later.
 
-公開イメージを使う場合は、GitHub Container Registry から pull して実行します。
+## How to Install
+
+If you use the published image, pull it from GitHub Container Registry and run it locally:
 
 ```bash
 docker pull ghcr.io/kai17-a/browser-bookmark-manager:latest
@@ -15,9 +17,9 @@ docker run --rm -p 3000:3000 -p 8000:8000 \
   ghcr.io/kai17-a/browser-bookmark-manager:latest
 ```
 
-起動後はフロントエンドを `http://127.0.0.1:3000`、API を `http://127.0.0.1:8000` で利用できます。
+After startup, open the frontend at `http://127.0.0.1:3000` and the API at `http://127.0.0.1:8000`.
 
-`docker compose` を使う場合は、次のような構成を使います。
+If you prefer `docker compose`, use a setup like this:
 
 ```yaml
 services:
@@ -32,3 +34,81 @@ services:
     volumes:
       - ./data:/data
 ```
+
+## What You Can Do
+
+### Manage bookmarks in one place
+
+- Register bookmarks with a URL, title, and description
+- Edit or delete bookmarks later
+- Mark important bookmarks as favorites so they are easier to find
+
+### Organize with folders
+
+- Group bookmarks into folders
+- Create, rename, and delete folders
+- When a folder is deleted, the bookmarks inside remain and are simply unassigned from that folder
+
+### Classify with tags
+
+- Attach multiple tags to a single bookmark
+- Create, rename, and delete tags
+- When a tag is deleted, its bookmark links are removed automatically
+
+### Find things quickly
+
+- Search bookmarks by keyword
+- Filter by folder or tag
+- Browse results with pagination
+
+### Keep RSS feeds separately
+
+- Register RSS or Atom feed URLs
+- List, edit, and delete RSS feeds
+- Run a feed manually and connect the result to external notifications
+
+### Configure notifications
+
+- Set a global Discord webhook used across the app
+- Test whether the webhook endpoint is reachable
+- Use the webhook as the notification target for RSS execution
+
+### See the overall status at a glance
+
+- View counts for bookmarks, folders, tags, favorites, and RSS feeds on the dashboard
+- See recent bookmarks and saved folders or tags
+
+### Switch the appearance
+
+- Choose between system, light, and dark themes
+
+## Main Screens
+
+- `Dashboard`: View overall counts and recent bookmarks
+- `Bookmarks`: List, search, add, edit, and delete bookmarks
+- `Favorites`: View only bookmarked items marked as favorites
+- `Folders`: Create, edit, and delete folders
+- `Tags`: Create, edit, and delete tags
+- `RSS`: Register, edit, delete, and execute RSS feeds
+- `Settings`: Configure the theme and webhook
+
+## Where Data Is Stored
+
+- Data is stored in a SQLite database
+- Your saved information remains even after you close the browser
+
+## Intended Use
+
+- A bookmark organizer for individuals or small teams
+- Helps turn an ever-growing list of saved links into something easier to browse with folders and tags
+- Also keeps RSS feeds in the same app
+
+## Browser Extension
+
+- The browser extension is currently being prepared for submission
+
+## Notes
+
+- Invalid URL formats cannot be registered
+- Duplicate bookmark URLs, tag names, and RSS feed URLs are not allowed
+- The webhook is designed around Discord webhooks
