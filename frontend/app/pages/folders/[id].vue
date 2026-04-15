@@ -107,22 +107,19 @@
           </div>
         </UPageCard>
 
-        <UModal v-model:open="editOpen" title="Edit folder" description="Rename this folder.">
-          <template #content="{ close }">
-            <form class="space-y-4 p-6" @submit.prevent="saveFolder">
-              <UFormField label="Folder name">
-                <UInput v-model="editForm.name" />
-              </UFormField>
-              <UFormField label="Description">
-                <UTextarea v-model="editForm.description" :rows="3" />
-              </UFormField>
-              <div class="flex justify-end gap-3">
-                <UButton color="neutral" variant="ghost" @click="close"> Cancel </UButton>
-                <UButton type="submit" :loading="saving"> Save changes </UButton>
-              </div>
-            </form>
-          </template>
-        </UModal>
+        <EntityEditorModal
+          v-model:open="editOpen"
+          :form="editForm"
+          title="Edit folder"
+          description="Rename this folder."
+          name-label="Folder name"
+          name-placeholder="Folder name"
+          description-label="Description"
+          description-placeholder="Optional folder description"
+          submit-label="Save changes"
+          :saving="saving"
+          @save="saveFolder"
+        />
 
         <UModal
           v-model:open="editBookmarkOpen"

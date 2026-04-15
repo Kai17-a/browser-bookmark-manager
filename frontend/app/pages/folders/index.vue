@@ -62,35 +62,19 @@
           </div>
         </UPageCard>
 
-        <UModal
+        <EntityEditorModal
           v-model:open="editOpen"
+          :form="editForm"
           title="Edit folder"
           description="Rename the selected folder."
-          :ui="{
-            content:
-              'w-[calc(100vw-2rem)] max-w-md max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-4rem)]',
-          }"
-        >
-          <template #content="{ close }">
-            <div class="space-y-4 p-6">
-              <UFormField label="Folder name" class="w-full">
-                <UInput v-model="editForm.name" placeholder="Folder name" class="w-full" />
-              </UFormField>
-              <UFormField label="Description" class="w-full">
-                <UTextarea
-                  v-model="editForm.description"
-                  placeholder="Optional folder description"
-                  :rows="3"
-                  class="w-full"
-                />
-              </UFormField>
-              <div class="flex justify-end gap-3">
-                <UButton color="neutral" variant="ghost" @click="close"> Cancel </UButton>
-                <UButton @click="saveEdit"> Save changes </UButton>
-              </div>
-            </div>
-          </template>
-        </UModal>
+          name-label="Folder name"
+          name-placeholder="Folder name"
+          description-label="Description"
+          description-placeholder="Optional folder description"
+          submit-label="Save changes"
+          :saving="saving"
+          @save="saveEdit"
+        />
 
         <DeleteConfirmModal
           v-model:open="confirmOpen"
@@ -117,6 +101,7 @@ const folderName = ref("");
 const folderDescription = ref("");
 const refreshing = ref(false);
 const editOpen = ref(false);
+const saving = ref(false);
 const confirmOpen = ref(false);
 const pendingFolder = ref<FolderResponse | null>(null);
 const editForm = reactive({ id: "", name: "", description: "" });
@@ -191,6 +176,7 @@ const closeEdit = () => {
 const saveEdit = async () => {
   const name = editForm.name.trim();
   if (!name) return;
+  saving.value = true;
   try {
     await request(`/folders/${editForm.id}`, {
       method: "PATCH",
@@ -208,6 +194,8 @@ const saveEdit = async () => {
       color: "error",
       icon: "i-lucide-circle-alert",
     });
+  } finally {
+    saving.value = false;
   }
 };
 
