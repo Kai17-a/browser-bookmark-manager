@@ -7,6 +7,11 @@ It is designed to make it easier to revisit links later.
 
 *Shiori(栞)*　means “bookmark” in Japanese.
 
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+> This project is still in alpha, so destructive changes to the database may happen.
+> If anything goes wrong, please report it with the `bug` label on the issue tracker.
+
 ## How to Install
 
 If you use the published image, pull it from GitHub Container Registry and run it locally:
