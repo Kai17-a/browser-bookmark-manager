@@ -2,7 +2,7 @@
 set -e
 
 export API_PORT="${API_PORT:-8000}"
-export DATABASE_URL="${DATABASE_URL:-/data/bookmarks.db}"
+export DATABASE_URL="${DATABASE_URL:-/data/data.db}"
 
 mkdir -p "$(dirname "$DATABASE_URL")"
 ./dbmate -u "sqlite:$DATABASE_URL" up

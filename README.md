@@ -10,7 +10,7 @@
 ```bash
 docker pull ghcr.io/kai17-a/browser-bookmark-manager:latest
 docker run --rm -p 3000:3000 -p 8000:8000 \
-  -e DATABASE_URL=/data/bookmarks.db \
+  -e DATABASE_URL=/data/data.db \
   -v "$(pwd)/data:/data" \
   ghcr.io/kai17-a/browser-bookmark-manager:latest
 ```
@@ -25,7 +25,7 @@ services:
     container_name: shiori-keeper
     image: ghcr.io/kai17-a/browser-bookmark-manager:latest
     environment:
-      DATABASE_URL: /data/bookmarks.db
+      DATABASE_URL: /data/data.db
     ports:
       - "3000:3000"
       - "8000:8000"

@@ -5,7 +5,7 @@ repo_root=$(cd "$(dirname "$0")/.." && pwd)
 
 frontend_port=${FRONTEND_PORT:-3001}
 api_port=${API_PORT:-8001}
-database_path=${DATABASE_URL:-/tmp/bookmark-manager-e2e/bookmarks.db}
+database_path=${DATABASE_URL:-/tmp/bookmark-manager-e2e/data.db}
 
 cleanup() {
     if [ -n "${api_pid:-}" ]; then
