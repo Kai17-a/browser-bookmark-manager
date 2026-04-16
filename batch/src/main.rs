@@ -102,7 +102,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
 
         if embeds.is_empty() {
-            println!("No new articles found.");
             continue;
         }
 

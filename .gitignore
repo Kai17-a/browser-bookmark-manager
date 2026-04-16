@@ -22,3 +22,5 @@ local-data/*
 data.db
 api/*.egg-info
 *.egg-info/
+batch/target/
+batch/data/
