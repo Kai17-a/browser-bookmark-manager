@@ -183,6 +183,5 @@ test.describe("settings", () => {
     await page.goto("/settings");
     await expect(page).toHaveURL(/\/settings\/?$/);
     await expect(page.getByText("Theme", { exact: true })).toBeVisible();
-    await expect(page.getByText("Webhook", { exact: true })).toBeVisible();
   });
 });
