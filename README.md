@@ -72,6 +72,7 @@ services:
 - Register RSS or Atom feed URLs
 - List, edit, and delete RSS feeds
 - Run a feed manually and connect the result to external notifications
+- Run RSS feeds periodically with the batch process and send new articles to the Discord webhook
 
 ### Configure notifications
 
@@ -95,7 +96,7 @@ services:
 - `Favorites`: View only bookmarked items marked as favorites
 - `Folders`: Create, edit, and delete folders
 - `Tags`: Create, edit, and delete tags
-- `RSS`: Register, edit, delete, and execute RSS feeds
+- `RSS`: Register, edit, delete, and execute RSS feeds, including periodic batch runs
 - `Settings`: Configure the theme and webhook
 
 ## Where Data Is Stored
