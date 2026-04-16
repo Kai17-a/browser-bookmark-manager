@@ -2,12 +2,12 @@
   <UModal v-model:open="openModel" :title="title" :description="description">
     <template #content="{ close }">
       <form class="space-y-4 p-6" @submit.prevent="emit('save')">
-        <UFormField label="URL" required class="w-full">
-          <UInput v-model="form.url" placeholder="https://example.com" class="w-full" />
-        </UFormField>
-
         <UFormField label="Title" required class="w-full">
           <UInput v-model="form.title" placeholder="Bookmark title" class="w-full" />
+        </UFormField>
+
+        <UFormField label="URL" required class="w-full">
+          <UInput v-model="form.url" placeholder="https://example.com" class="w-full" />
         </UFormField>
 
         <UFormField label="Description" class="w-full">
