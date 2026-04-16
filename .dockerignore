@@ -21,5 +21,8 @@ api/.hypothesis
 api/.ruff_cache
 api/__pycache__
 
+batch/target
+batch/tests
+
 local-data
 data

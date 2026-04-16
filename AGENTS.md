@@ -15,6 +15,12 @@ Follow those sources before making changes to Nuxt, Python, Nuxt UI, or TypeScri
 
 If you change Python code, run `ruff` and `pyright` for the affected package or project before finishing.
 
+If you change Rust code, run the following commands before finishing:
+
+- `cargo check`
+- `cargo fmt`
+- `cargo test`
+
 If you add shared frontend API plumbing such as a common fetcher or request base layer, add the corresponding unit test or e2e test in the same change set.
 
 When adding or changing DB columns, follow this process:
