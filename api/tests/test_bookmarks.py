@@ -134,6 +134,17 @@ def test_update_bookmark_returns_200(client):
     assert resp.json()["title"] == "New"
 
 
+def test_update_bookmark_by_url_returns_200(client):
+    url = create_bookmark(client, title="Old").json()["url"]
+    resp = client.patch(
+        "/bookmarks/by-url",
+        params={"url": url},
+        json={"title": "New"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["title"] == "New"
+
+
 def test_update_bookmark_can_replace_tags(client):
     tag_a = create_tag(client, name="a").json()["id"]
     tag_b = create_tag(client, name="b").json()["id"]
@@ -187,6 +198,12 @@ def test_delete_bookmark_returns_204(client):
     assert resp.status_code == 204
 
 
+def test_delete_bookmark_by_url_returns_204(client):
+    url = create_bookmark(client).json()["url"]
+    resp = client.delete("/bookmarks", params={"url": url})
+    assert resp.status_code == 204
+
+
 def test_deleted_bookmark_returns_404(client):
     bm_id = create_bookmark(client).json()["id"]
     client.delete(f"/bookmarks/{bm_id}")
@@ -231,6 +248,11 @@ def test_update_nonexistent_bookmark_returns_404(client):
 
 def test_delete_nonexistent_bookmark_returns_404(client):
     resp = client.delete("/bookmarks/99999")
+    assert resp.status_code == 404
+
+
+def test_delete_nonexistent_bookmark_by_url_returns_404(client):
+    resp = client.delete("/bookmarks", params={"url": "https://example.com/missing"})
     assert resp.status_code == 404
 
 

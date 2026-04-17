@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlencode
 from urllib.parse import parse_qs, urlparse
 
 from fastapi import HTTPException
@@ -228,12 +229,19 @@ class CompatTestClient:
                 BookmarkService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
             )
             return self._ok(payload, 200)
+        if method == "PATCH" and path == "/bookmarks/by-url" and "url" in query:
+            body = BookmarkUpdate(**(json or {}))
+            payload = BookmarkService().update_by_url(query["url"], body).model_dump()
+            return self._ok(payload, 200)
         if (
             method == "DELETE"
             and path.startswith("/bookmarks/")
             and "/tags" not in path
         ):
             BookmarkService().delete(int(path.rsplit("/", 1)[1]))
+            return self._ok(status_code=204)
+        if method == "DELETE" and path == "/bookmarks" and "url" in query:
+            BookmarkService().delete_by_url(query["url"])
             return self._ok(status_code=204)
         if (
             method == "POST"
@@ -267,6 +275,10 @@ class CompatTestClient:
         return Request(scope)
 
     def request(self, method: str, url: str, json=None, **kwargs):
+        params = kwargs.get("params")
+        if params:
+            query_string = urlencode(params, doseq=True)
+            url = f"{url}?{query_string}"
         path, query = self._parse(url)
 
         try:

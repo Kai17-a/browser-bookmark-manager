@@ -6,7 +6,8 @@ const apiStatusDot = document.getElementById("api-status-dot");
 const apiHealthcheckButton = document.getElementById("api-healthcheck-button");
 const saveStatusMessage = document.getElementById("save-status-message");
 const saveButton = document.getElementById("save-button");
-const cancelButton = document.getElementById("cancel-button");
+const closeButton = document.getElementById("close-button");
+const removeButton = document.getElementById("remove-button");
 const folderSelect = document.getElementById("folder-select");
 const tagSelect = document.getElementById("tag-select");
 
@@ -199,23 +200,76 @@ async function patchBookmark(baseUrl, bookmarkId) {
   setSaveStatus("success", "Saved");
 }
 
+async function patchBookmarkByUrl(baseUrl, url) {
+  const payload = buildBookmarkPayload();
+
+  if (!payload.url || !payload.title) {
+    setSaveStatus("error", "Missing title or URL");
+    return;
+  }
+
+  const response = await fetch(new URL(`/bookmarks/by-url?url=${encodeURIComponent(url)}`, baseUrl), {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorMessage = await readErrorMessage(response);
+    throw new Error(errorMessage || `Patch bookmark failed with status ${response.status}`);
+  }
+
+  setSaveStatus("success", "Saved");
+}
+
+async function deleteBookmark(baseUrl, url) {
+  if (!url) {
+    setSaveStatus("error", "Nothing to delete");
+    return false;
+  }
+
+  const deleteUrl = new URL("/bookmarks", baseUrl);
+  deleteUrl.searchParams.set("url", url);
+
+  const response = await fetch(deleteUrl, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const errorMessage = await readErrorMessage(response);
+    throw new Error(errorMessage || `Delete bookmark failed with status ${response.status}`);
+  }
+
+  setSaveStatus("success", "Deleted");
+  return true;
+}
+
 async function handleSaveClick() {
   setSaveStatus("", "");
 
   try {
     const baseUrl = apiServerUrlInput.value.trim();
+    const url = pageUrlInput.value.trim();
 
-    if (apiHealthyOnLoad && savedBookmarkId) {
+    if (savedBookmarkId) {
       await patchBookmark(baseUrl, savedBookmarkId);
       savedBookmarkId = null;
+      window.close();
+    } else if (url) {
+      await patchBookmarkByUrl(baseUrl, url);
+      savedBookmarkId = null;
+      window.close();
     } else {
       const created = await createBookmark(baseUrl);
       if (created?.ok && created?.data?.id != null) {
-        savedBookmarkId = null;
+        savedBookmarkId = created.data.id;
+        window.close();
+      } else if (!created?.ok) {
+        setSaveStatus("error", created?.errorMessage || "Save failed");
       }
     }
-
-    window.close();
   } catch (error) {
     setSaveStatus("error", error instanceof Error && error.message ? error.message : "Save failed");
   }
@@ -227,9 +281,27 @@ function saveApiServerUrl() {
   });
 }
 
+function closePopup() {
+  window.close();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  cancelButton.addEventListener("click", () => {
-    window.close();
+  closeButton.addEventListener("click", closePopup);
+  removeButton.addEventListener("click", async () => {
+    setSaveStatus("", "");
+
+    try {
+      const baseUrl = apiServerUrlInput.value.trim();
+      const deleted = await deleteBookmark(baseUrl, pageUrlInput.value.trim());
+      if (deleted) {
+        closePopup();
+      }
+    } catch (error) {
+      setSaveStatus(
+        "error",
+        error instanceof Error && error.message ? error.message : "Delete failed",
+      );
+    }
   });
 
   apiHealthcheckButton.addEventListener("click", () => {

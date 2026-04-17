@@ -98,36 +98,48 @@ class BookmarkService(BookmarkServiceBase):
             assert row is not None
             return self._build_bookmark_response(repo, repo.normalize_row(row))
 
+    def _update_with_repo(
+        self, conn, repo: BookmarkRepository, bookmark_id: int, data: BookmarkUpdate
+    ) -> BookmarkResponse:
+        if repo.find_by_id(bookmark_id) is None:
+            self._raise_not_found("Bookmark")
+
+        fields: dict[str, object] = {}
+        if data.url is not None:
+            fields["url"] = str(data.url)
+        if data.title is not None:
+            fields["title"] = data.title
+        if data.description is not None:
+            fields["description"] = data.description
+        if data.folder_id is not None:
+            self._verify_folder(conn, data.folder_id)
+            fields["folder_id"] = data.folder_id
+        if data.url is not None:
+            existing = repo.find_by_url(str(data.url))
+            if existing is not None and existing["id"] != bookmark_id:
+                raise HTTPException(
+                    status_code=409, detail="Bookmark URL already exists"
+                )
+
+        repo.update(bookmark_id, fields)
+        self._sync_tags(repo, bookmark_id, data.tag_ids)
+        row = repo.find_by_id(bookmark_id)
+        assert row is not None
+        return self._build_bookmark_response(repo, repo.normalize_row(row))
+
     def update(self, bookmark_id: int, data: BookmarkUpdate) -> BookmarkResponse:
         with get_db() as conn:
-            # Verify bookmark exists first
             repo = BookmarkRepository(conn)
-            if repo.find_by_id(bookmark_id) is None:
+            return self._update_with_repo(conn, repo, bookmark_id, data)
+
+    def update_by_url(self, url: str, data: BookmarkUpdate) -> BookmarkResponse:
+        with get_db() as conn:
+            repo = BookmarkRepository(conn)
+            row = repo.find_by_url(url)
+            if row is None:
                 self._raise_not_found("Bookmark")
-
-            # Build fields dict with only non-None values
-            fields: dict[str, object] = {}
-            if data.url is not None:
-                fields["url"] = str(data.url)
-            if data.title is not None:
-                fields["title"] = data.title
-            if data.description is not None:
-                fields["description"] = data.description
-            if data.folder_id is not None:
-                self._verify_folder(conn, data.folder_id)
-                fields["folder_id"] = data.folder_id
-            if data.url is not None:
-                existing = repo.find_by_url(str(data.url))
-                if existing is not None and existing["id"] != bookmark_id:
-                    raise HTTPException(
-                        status_code=409, detail="Bookmark URL already exists"
-                    )
-
-            row = repo.update(bookmark_id, fields)
-            self._sync_tags(repo, bookmark_id, data.tag_ids)
-            row = repo.find_by_id(bookmark_id)
             assert row is not None
-            return self._build_bookmark_response(repo, repo.normalize_row(row))
+            return self._update_with_repo(conn, repo, int(row["id"]), data)
 
     def set_favorite(self, data: BookmarkFavoriteUpdate) -> BookmarkResponse:
         with get_db() as conn:
@@ -144,6 +156,16 @@ class BookmarkService(BookmarkServiceBase):
         with get_db() as conn:
             repo = BookmarkRepository(conn)
             found = repo.delete(bookmark_id)
+            if not found:
+                raise HTTPException(status_code=404, detail="Bookmark not found")
+
+    def delete_by_url(self, url: str) -> None:
+        with get_db() as conn:
+            repo = BookmarkRepository(conn)
+            row = repo.find_by_url(url)
+            if row is None:
+                raise HTTPException(status_code=404, detail="Bookmark not found")
+            found = repo.delete(int(row["id"]))
             if not found:
                 raise HTTPException(status_code=404, detail="Bookmark not found")
 
