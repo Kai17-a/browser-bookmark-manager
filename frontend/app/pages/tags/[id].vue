@@ -6,11 +6,7 @@
 
     <template #body>
       <div class="space-y-6">
-        <UPageCard
-          title="Tag details"
-          description="Inspect and manage a single tag"
-          :ui="{ body: 'space-y-4' }"
-        >
+        <UPageCard :ui="{ body: 'space-y-4' }">
           <UAlert
             v-if="state === 'error'"
             title="Failed to load tag"
@@ -28,15 +24,15 @@
           />
 
           <div v-else-if="tag" class="space-y-3">
+            <h1 class="text-2xl font-semibold text-default">
+              {{ tag.name }}
+            </h1>
             <div class="flex flex-wrap items-center gap-2">
               <UBadge color="primary" variant="soft"> Tag #{{ tag.id }} </UBadge>
               <span class="text-sm text-muted">
                 {{ bookmarks.length }} bookmark{{ bookmarks.length === 1 ? "" : "s" }}
               </span>
             </div>
-            <h1 class="text-2xl font-semibold text-default">
-              {{ tag.name }}
-            </h1>
             <div class="space-y-1">
               <p class="text-xs font-medium uppercase tracking-wide text-muted">Description</p>
               <p v-if="tag.description" class="text-sm leading-6 text-default/90">

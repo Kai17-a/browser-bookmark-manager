@@ -6,11 +6,7 @@
 
     <template #body>
       <div class="space-y-6">
-        <UPageCard
-          title="Folder details"
-          description="Inspect and manage a single folder"
-          :ui="{ body: 'space-y-4' }"
-        >
+        <UPageCard :ui="{ body: 'space-y-4' }">
           <UAlert
             v-if="state === 'error'"
             title="Failed to load folder"
@@ -28,15 +24,15 @@
           />
 
           <div v-else-if="folder" class="space-y-3">
-            <div class="flex flex-wrap items-center gap-2">
-              <UBadge color="primary" variant="soft"> Folder #{{ folder.id }} </UBadge>
-              <span class="text-sm text-muted">
-                Created {{ formatDateTime(folder.created_at) }}
-              </span>
-            </div>
             <h1 class="text-2xl font-semibold text-default">
               {{ folder.name }}
             </h1>
+            <div class="flex flex-wrap items-center gap-2">
+              <UBadge color="primary" variant="soft"> Folder #{{ folder.id }} </UBadge>
+              <span class="text-sm text-muted">
+                {{ bookmarks.length }} bookmark{{ bookmarks.length === 1 ? "" : "s" }}
+              </span>
+            </div>
             <div class="space-y-1">
               <p class="text-xs font-medium uppercase tracking-wide text-muted">Description</p>
               <p v-if="folder.description" class="text-sm leading-6 text-default/90">
@@ -44,9 +40,6 @@
               </p>
               <p v-else class="text-sm text-muted">No description provided.</p>
             </div>
-            <p class="text-sm text-muted">
-              {{ bookmarks.length }} bookmark{{ bookmarks.length === 1 ? "" : "s" }} in this folder.
-            </p>
             <div class="flex flex-wrap gap-3">
               <UButton to="/folders" variant="ghost" size="sm"> Back to folders </UButton>
               <UButton
