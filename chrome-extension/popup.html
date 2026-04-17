@@ -4,18 +4,33 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Shiori Keeper</title>
-    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
     <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="popup-form.css" />
   </head>
   <body>
     <main class="popup">
       <section class="frame">
         <header class="topbar">
           <div class="brand">
-            <!--<div class="brand-mark">B</div>-->
-            <div>
-              <h1>Shiori Keeper</h1>
-            </div>
+            <h1>Shiori Keeper</h1>
+            <button id="close-button" class="icon-button" type="button" aria-label="Close popup">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-x-icon lucide-x"
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
           </div>
         </header>
 
@@ -54,22 +69,68 @@
 
             <label class="field">
               <span>Description</span>
-              <textarea rows="3" placeholder="Short note"></textarea>
+              <textarea id="page-description" rows="3" placeholder="Short note"></textarea>
             </label>
 
             <div class="split">
               <label class="field">
                 <span>Folder</span>
-                <select id="folder-select">
-                  <option value="">-- Select Folder --</option>
-                </select>
+                <div class="tag-picker">
+                  <button
+                    id="folder-select-button"
+                    class="select-button"
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                  >
+                    <span id="folder-select-label">-- Select Folder --</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+                  <div id="folder-select-panel" class="tag-panel" role="listbox" hidden></div>
+                </div>
               </label>
 
               <label class="field">
                 <span>Tag</span>
-                <select id="tag-select">
-                  <option value="">-- Select Tag --</option>
-                </select>
+                <div class="tag-picker">
+                  <button
+                    id="tag-select-button"
+                    class="select-button"
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                  >
+                    <span id="tag-select-label">-- Select Tag --</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+                  <div id="tag-select-panel" class="tag-panel" role="listbox" hidden></div>
+                </div>
               </label>
             </div>
           </div>
@@ -77,7 +138,26 @@
 
         <footer class="actions">
           <span id="save-status-message" class="save-status"></span>
-          <button id="cancel-button" class="button button--ghost" type="button">Cancel</button>
+          <button id="remove-button" class="button button--error" type="button" aria-label="Delete bookmark">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="lucide lucide-trash2-icon lucide-trash-2"
+            >
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+              <path d="M3 6h18" />
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+          </button>
           <button id="save-button" class="button button--primary" type="button">Save</button>
         </footer>
       </section>
