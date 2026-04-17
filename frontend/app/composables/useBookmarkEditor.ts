@@ -76,8 +76,9 @@ export const useBookmarkEditor = (options: UseBookmarkEditorOptions) => {
     }
   };
 
-  const removeBookmark = (id: number) => {
-    pendingDeleteBookmark.value = options.findBookmarkById(id);
+  const removeBookmark = (bookmark: BookmarkResponse | number) => {
+    const id = typeof bookmark === "number" ? bookmark : bookmark.id;
+    pendingDeleteBookmark.value = options.findBookmarkById(id) || null;
     deleteOpen.value = true;
   };
 

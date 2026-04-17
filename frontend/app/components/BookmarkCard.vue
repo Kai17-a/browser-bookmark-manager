@@ -112,7 +112,7 @@ defineProps<{
 
 defineEmits<{
   edit: [bookmark: BookmarkResponse & { folder_name?: string | null }];
-  remove: [id: number];
+  remove: [bookmark: BookmarkResponse & { folder_name?: string | null }];
   favorite: [bookmark: BookmarkResponse & { folder_name?: string | null }];
 }>();
 </script>
