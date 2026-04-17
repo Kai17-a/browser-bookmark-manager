@@ -86,7 +86,7 @@
             </UButton>
           </div>
 
-          <div v-if="bookmarks.length" class="grid gap-3">
+          <div v-if="bookmarks.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <BookmarkCard
               v-for="bookmark in bookmarksWithFolderNames"
               :key="bookmark.id"
