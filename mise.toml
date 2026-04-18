@@ -1,6 +1,6 @@
 [tools]
 act = "latest"
-bun = "1.1.38"
+bun = "latest"
 dbmate = "latest"
 git-cliff = "2.12.0"
 "github:aptible/supercronic" = "latest"
