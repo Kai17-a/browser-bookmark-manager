@@ -103,14 +103,14 @@ const apiUrl = ref("http://localhost:8000");
 // api
 const pending = ref(false);
 // const isRemoving = ref(false);
-const responseMessage = ref("apiresponse");
+const responseMessage = ref("");
 const responseMessageColor = ref("text-warning");
 
 // form value
 const state = reactive({
-  title: "example",
-  url: "https://example.com",
-  description: "description",
+  title: document.title,
+  url: location.href,
+  description: "",
   folder: null,
   tag: [],
 });
@@ -126,7 +126,6 @@ const connectApiServer = async () => {
 
   try {
     const response = await fetch(new URL("/health", apiUrl.value));
-    console.log(response);
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     } else {
@@ -193,11 +192,68 @@ const remove = async () => {
   }
 };
 
+const isGetFolderPending = ref(false);
+const getFolders = async () => {
+  if (pending.value && isGetFolderPending.value) return;
+
+  isGetFolderPending.value = true;
+
+  try {
+    const response = await fetch(new URL("/folders", apiUrl.value));
+
+    if (!response.ok) {
+      throw new Error(await response.json());
+    }
+    const tags = await response.json();
+
+    tags.forEach((e) => {
+      folderItems.value.push({
+        label: e.name,
+        value: e.id,
+      });
+    });
+  } catch (error) {
+    responseMessageColor.value = "text-error";
+    responseMessage.value = error.message;
+  } finally {
+    isGetFolderPending.value = false;
+  }
+};
+
+const isGetTags = ref(false);
+const getTags = async () => {
+  if (pending.value && isGetTags.value) return;
+
+  isGetTags.value = true;
+
+  try {
+    const response = await fetch(new URL("/tags", apiUrl.value));
+
+    if (!response.ok) {
+      throw new Error(await response.json());
+    }
+    const tags = await response.json();
+
+    tags.forEach((e) => {
+      tagItems.value.push({
+        label: e.name,
+        value: e.id,
+      });
+    });
+  } catch (error) {
+    responseMessageColor.value = "text-error";
+    responseMessage.value = error.message;
+  } finally {
+    isGetTags.value = false;
+  }
+};
+
 onMounted(async () => {
   await connectApiServer();
 
   if (isApiServerConnect.value) {
     await save();
+    await Promise.all([getFolders(), getTags()]);
   }
 });
 </script>
