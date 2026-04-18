@@ -4,6 +4,7 @@ This repository uses the following reading order for agentic work:
 
 1. `README.md`
 1. `specs/llm-reading-guide.md`
+1. If the task touches `api/` or `batch/`, use the `.agents/skills/learning/` skill first and read the relevant learning notes there
 1. Official LLM reference sources for Nuxt, Nuxt UI, and Vue:
    - https://nuxt.com/modules/llms
    - https://nuxt.com/llms-full.txt
@@ -12,6 +13,10 @@ This repository uses the following reading order for agentic work:
    - https://vuejs.org/llms-full.txt
 
 Follow those sources before making changes to Nuxt, Python, Nuxt UI, or TypeScript code in this repository.
+
+If you work in `api/`, read the `learning` skill notes relevant to SQLModel and dbmate before changing code or migrations.
+
+If you work in `batch/`, read the `learning` skill note for `rusqlite` before changing Rust SQLite access.
 
 If you change Python code, run `ruff` and `pyright` for the affected package or project before finishing.
 
