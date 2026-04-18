@@ -1,0 +1,8 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+body {
+  margin: 0;
+  width: 360px;
+  min-height: 0;
+}
