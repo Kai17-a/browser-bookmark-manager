@@ -11,6 +11,7 @@
   - 作成、一覧、詳細、更新、削除
   - 検索、絞り込み、ページング
   - フォルダ関連付け
+  - URL 指定更新とお気に入り切り替え
   - タグ付与・解除
   - バリデーションと重複エラー
   - タグ集合の置き換え
@@ -24,6 +25,16 @@
   - 作成、一覧、更新、削除
   - 重複エラーと 404 応答
   - タグ上限
+
+- `api/tests/test_rss_feeds.py`
+  - 作成、一覧、詳細、更新、削除
+  - 記事一覧、実行、webhook 設定
+  - RSS/Atom 以外の URL 拒否
+  - webhook 疎通確認
+  - RSS 定期実行設定
+
+- `api/tests/test_metrics.py`
+  - ダッシュボード集計
 
 ## ルート単位の確認観点
 
@@ -40,6 +51,8 @@
 
 - `PATCH /bookmarks/{id}`
   - 部分更新
+  - URL 指定更新
+  - お気に入り切り替え
   - タグ集合の置き換え
   - 404 と 409
 
@@ -62,6 +75,21 @@
   - 紐付け解除
   - 存在しない bookmark/tag の 404
 
+- `GET /settings/webhook` / `PUT /settings/webhook`
+  - 取得と更新
+  - Discord webhook URL の形式検証
+
+- `POST /settings/webhook/ping`
+  - 疎通確認
+  - 422 と 502
+
+- `GET /settings/rss-execution` / `PUT /settings/rss-execution`
+  - 現在値取得
+  - 有効/無効更新
+
+- `GET /metrics/dashboard`
+  - 総数取得
+
 ## プロパティテスト
 
 - `api/tests/test_properties.py`
@@ -73,6 +101,7 @@
   - 部分更新の不変性
   - 削除とカスケード
   - タグ付与・解除のラウンドトリップ
+  - URL 指定更新とお気に入り切り替え
 
 ## 未カバー範囲
 

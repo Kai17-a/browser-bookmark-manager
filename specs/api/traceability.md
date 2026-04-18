@@ -10,8 +10,9 @@
 | 要件2: フォルダ管理                   | `routes-and-flows.md` のフォルダ節、`data-and-constraints.md` の制約     |
 | 要件3: タグ管理                       | `routes-and-flows.md` のタグ節、`data-and-constraints.md` の制約         |
 | 要件4: ブックマークへのタグ付与・解除 | `routes-and-flows.md` のタグ付与節                                       |
-| 要件5: 設定取得                       | `routes-and-flows.md` の設定節                                           |
-| 要件6: 永続化とエラー処理             | `data-and-constraints.md` のデータモデル・制約                           |
+| 要件5: 永続化とエラー処理             | `data-and-constraints.md` のデータモデル・制約                           |
+| 要件6: RSS フィード管理               | `routes-and-flows.md` の RSS 節、`data-and-constraints.md` の制約       |
+| 要件7: Webhook 設定、RSS 定期実行、集計 | `routes-and-flows.md` の設定・ダッシュボード節、`data-and-constraints.md` の制約 |
 
 ## 補足
 

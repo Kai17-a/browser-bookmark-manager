@@ -8,7 +8,9 @@
 | GET    | `/bookmarks`                    | ブックマーク一覧取得             |
 | GET    | `/bookmarks/{id}`               | ブックマーク詳細取得             |
 | PATCH  | `/bookmarks/{id}`               | ブックマーク部分更新             |
+| PATCH  | `/bookmarks/by-url`             | URL 指定ブックマーク部分更新     |
 | DELETE | `/bookmarks/{id}`               | ブックマーク削除                 |
+| DELETE | `/bookmarks?url=...`            | URL 指定ブックマーク削除         |
 | PATCH  | `/bookmarks/favorite`           | ブックマークのお気に入り状態更新 |
 | POST   | `/bookmarks/{id}/tags`          | ブックマークへタグ付与           |
 | DELETE | `/bookmarks/{id}/tags/{tag_id}` | ブックマークからタグ解除         |
@@ -21,6 +23,18 @@
 | GET    | `/tags`                         | タグ一覧取得                     |
 | PATCH  | `/tags/{id}`                    | タグ更新                         |
 | DELETE | `/tags/{id}`                    | タグ削除                         |
+| PUT    | `/settings/webhook`             | Discord webhook 設定             |
+| GET    | `/settings/webhook`             | Discord webhook 取得             |
+| POST   | `/settings/webhook/ping`        | Discord webhook 疎通確認         |
+| GET    | `/settings/rss-execution`       | RSS 定期実行設定取得             |
+| PUT    | `/settings/rss-execution`       | RSS 定期実行設定更新             |
+| POST   | `/rss-feeds`                    | RSS フィード作成                 |
+| GET    | `/rss-feeds`                    | RSS フィード一覧取得             |
+| GET    | `/rss-feeds/{id}`               | RSS フィード詳細取得             |
+| GET    | `/rss-feeds/{id}/articles`      | RSS フィード記事一覧取得         |
+| PATCH  | `/rss-feeds/{id}`               | RSS フィード部分更新             |
+| DELETE | `/rss-feeds/{id}`               | RSS フィード削除                 |
+| POST   | `/rss-feeds/{id}/execute`       | RSS 実行と webhook 通知          |
 | GET    | `/health`                       | ヘルスチェック                   |
 
 ## ユーザーフロー
@@ -30,31 +44,45 @@
 - URL とタイトルを入力して作成する
 - 一覧で検索・ページング・絞り込みを行う
 - 詳細を確認して編集または削除する
+- URL 指定で詳細なしに部分更新する
 - 必要に応じてタグを追加・削除する
 - 必要に応じてお気に入り状態を切り替える
 
 ### ダッシュボード
 
-- ブックマーク、フォルダ、タグ、お気に入りの総数を確認する
+- ブックマーク、フォルダ、タグ、お気に入り、RSS フィードの総数を確認する
 
 ### フォルダ
 
 - フォルダを作成する
 - 一覧から対象フォルダへ移動する
-- 詳細で配下ブックマークを確認する
-- フォルダ名を更新し、不要なら削除する
+- フォルダ名と説明を更新し、不要なら削除する
 
 ### タグ
 
 - タグを作成する
 - 一覧から対象タグへ移動する
-- 詳細で関連ブックマークを確認する
-- タグ名を更新し、不要なら削除する
+- タグ名と説明を更新し、不要なら削除する
+
+### 設定
+
+- Discord webhook URL を保存する
+- webhook の疎通確認を行う
+- 未設定時の webhook 取得は 404 を返す
+- RSS 定期実行の有効/無効を切り替える
+
+### RSS
+
+- RSS フィードを登録する
+- 一覧で検索・ページングを行う
+- 詳細を確認して編集または削除する
+- 保存済みの記事一覧を確認する
+- 手動実行して webhook 通知を送る
 
 ## 共通レスポンス
 
 - 正常系はリソースモデルを返す
-- 一覧はページングレスポンスを返す
+- 一覧はページングレスポンス、または小さなマスタ一覧では配列を返す
 - エラーは `{"detail": ...}` 形式で返す
 - バリデーションエラーは FastAPI の標準形式を返す
 
@@ -70,30 +98,58 @@
 6. `GET /bookmarks` は、`folder_id`、`tag_id`、`q`、`page`、`per_page` を受け付ける。
 7. `GET /bookmarks/{id}` は、対象ブックマークを返す。
 8. `PATCH /bookmarks/{id}` は、部分更新を行い更新後リソースを返す。
-9. `DELETE /bookmarks/{id}` は、204 を返す。
+9. `PATCH /bookmarks/by-url` は、URL で対象ブックマークを特定して部分更新を行う。
+10. `DELETE /bookmarks/{id}` は、204 を返す。
+11. `DELETE /bookmarks?url=...` は、指定 URL のブックマークを削除し、204 を返す。
+12. `PATCH /bookmarks/favorite` は、お気に入り状態を更新し更新後リソースを返す。
 
 ### フォルダ
 
-10. `POST /folders` は、201 と作成済みフォルダを返す。
-11. `GET /folders` は、フォルダ一覧を返す。
-12. `PATCH /folders/{id}` は、更新後フォルダを返す。
-13. `DELETE /folders/{id}` は、204 を返す。
-14. フォルダ削除時は、関連ブックマークの `folder_id` を `NULL` にする。
+13. `POST /folders` は、201 と作成済みフォルダを返す。
+14. `GET /folders` は、フォルダ一覧を配列で返す。
+15. `PATCH /folders/{id}` は、更新後フォルダを返す。
+16. `DELETE /folders/{id}` は、204 を返す。
+17. フォルダ削除時は、関連ブックマークの `folder_id` を `NULL` にする。
+18. フォルダは `name` に加えて `description` を保持する。
 
 ### タグ
 
-15. `POST /tags` は、201 と作成済みタグを返す。
-16. `GET /tags` は、タグ一覧を返す。
-17. `PATCH /tags/{id}` は、更新後タグを返す。
-18. `DELETE /tags/{id}` は、204 を返す。
-19. タグ削除時は、関連 `bookmark_tags` を削除する。
+19. `POST /tags` は、201 と作成済みタグを返す。
+20. `GET /tags` は、タグ一覧を配列で返す。
+21. `PATCH /tags/{id}` は、更新後タグを返す。
+22. `DELETE /tags/{id}` は、204 を返す。
+23. タグ削除時は、関連 `bookmark_tags` を削除する。
+24. タグは `name` に加えて `description` を保持する。
 
 ### タグ付与
 
-20. `POST /bookmarks/{id}/tags` は、タグ紐付けを追加し更新後ブックマークを返す。
-21. `DELETE /bookmarks/{id}/tags/{tag_id}` は、204 を返す。
-22. `GET /metrics/dashboard` は、ダッシュボードで使う総数を返す。
-23. `GET /health` は、`status: ok` を返す。
+25. `POST /bookmarks/{id}/tags` は、タグ紐付けを追加し更新後ブックマークを返す。
+26. `DELETE /bookmarks/{id}/tags/{tag_id}` は、204 を返す。
+27. 既に紐付け済みのタグを再度付与すると 409 を返す。
+28. 存在しない bookmark/tag のいずれかを指定すると 404 を返す。
+
+### ダッシュボードとヘルス
+
+29. `GET /metrics/dashboard` は、ダッシュボードで使う総数を返す。
+30. `GET /health` は、`status: ok` を返す。
+
+### 設定
+
+31. `GET /settings/webhook` は、現在設定済みの webhook URL を返す。
+32. `PUT /settings/webhook` は、Discord webhook URL を保存する。
+33. `POST /settings/webhook/ping` は、Discord webhook の疎通確認を行い `pong: true` を返す。
+34. `GET /settings/rss-execution` は、RSS 定期実行の有効/無効状態を返す。
+35. `PUT /settings/rss-execution` は、RSS 定期実行の有効/無効状態を更新する。
+
+### RSS
+
+36. `POST /rss-feeds` は、201 と作成済み RSS フィードを返す。
+37. `GET /rss-feeds` は、RSS フィード一覧とページング情報を返す。
+38. `GET /rss-feeds/{id}` は、対象 RSS フィードを返す。
+39. `GET /rss-feeds/{id}/articles` は、保存済み記事一覧とページング情報を返す。
+40. `PATCH /rss-feeds/{id}` は、部分更新を行い更新後 RSS フィードを返す。
+41. `DELETE /rss-feeds/{id}` は、204 を返す。
+42. `POST /rss-feeds/{id}/execute` は、RSS を取得して Discord webhook に通知する。
 
 ### `GET /metrics/dashboard`
 
@@ -104,11 +160,10 @@ Response:
   "bookmarks_total": 12,
   "folders_total": 3,
   "tags_total": 8,
-  "favorites_total": 4
+  "favorites_total": 4,
+  "rss_feeds_total": 2
 }
 ```
-
-## エンドポイント詳細
 
 ### `POST /bookmarks`
 
@@ -135,8 +190,8 @@ Response:
   "folder_id": 1,
   "is_favorite": false,
   "tags": [
-    { "id": 1, "name": "tag-a" },
-    { "id": 2, "name": "tag-b" }
+    { "id": 1, "name": "tag-a", "description": null },
+    { "id": 2, "name": "tag-b", "description": null }
   ],
   "created_at": "2026-04-11T00:00:00",
   "updated_at": "2026-04-11T00:00:00"
@@ -169,6 +224,18 @@ Response:
 
 - `total_pages` は総件数と `per_page` から算出する
 - 該当件数がない場合は `items` を空配列で返す
+
+### `PATCH /bookmarks/by-url`
+
+- `url` クエリパラメータで対象ブックマークを特定する
+- `PATCH /bookmarks/{id}` と同じ更新ルールを使う
+- 存在しない URL は 404 を返す
+
+### `DELETE /bookmarks?url=...`
+
+- `url` クエリパラメータで対象ブックマークを特定する
+- 存在しない URL は 404 を返す
+- 成功時は 204 を返す
 
 ### `PATCH /bookmarks/{id}`
 
@@ -225,9 +292,15 @@ Response:
 {
   "id": 1,
   "name": "Work",
+  "description": "Team notes",
   "created_at": "2026-04-11T00:00:00"
 }
 ```
+
+### `GET /folders`
+
+- レスポンスは配列で返す
+- `name` と `id` の昇順で返す
 
 ### `PATCH /folders/{id}`
 
@@ -247,8 +320,13 @@ Request:
 Response:
 
 ```json
-{ "id": 1, "name": "python" }
+{ "id": 1, "name": "python", "description": "Programming language" }
 ```
+
+### `GET /tags`
+
+- レスポンスは配列で返す
+- `name` と `id` の昇順で返す
 
 ### `PATCH /tags/{id}`
 
@@ -256,6 +334,89 @@ Response:
 - `description` も更新できる
 - 重複名は 409 を返す
 - 存在しない ID は 404 を返す
+
+### `GET /settings/webhook`
+
+```json
+{ "webhook_url": "https://discord.com/api/webhooks/1/token" }
+```
+
+### `PUT /settings/webhook`
+
+Request:
+
+```json
+{ "webhook_url": "https://discord.com/api/webhooks/1/token" }
+```
+
+Response:
+
+```json
+{ "webhook_url": "https://discord.com/api/webhooks/1/token" }
+```
+
+### `POST /settings/webhook/ping`
+
+Request:
+
+```json
+{ "webhook_url": "https://discord.com/api/webhooks/1/token" }
+```
+
+Response:
+
+```json
+{ "pong": true }
+```
+
+### `GET /settings/rss-execution`
+
+```json
+{ "enabled": false }
+```
+
+### `PUT /settings/rss-execution`
+
+Request:
+
+```json
+{ "enabled": true }
+```
+
+Response:
+
+```json
+{ "enabled": true }
+```
+
+### `GET /rss-feeds/{id}`
+
+- 指定 ID の RSS フィードを返す
+
+### `GET /rss-feeds/{id}/articles`
+
+- 保存済み記事の一覧を返す
+- `page` と `per_page` を受け付ける
+
+Response:
+
+```json
+{
+  "items": [],
+  "total": 0,
+  "page": 1,
+  "per_page": 20,
+  "total_pages": 0
+}
+```
+
+### `POST /rss-feeds/{id}/execute`
+
+- フィード URL を取得して RSS として解析する
+- 登録済み webhook URL がない場合は 400 を返す
+- 新規記事のみ webhook に送信する
+- 新規記事がない場合も成功として扱い、メッセージを返す
+- 送信済み記事は `rss_feed_articles` に保存済みとして追記する
 
 ### `GET /health`
 
