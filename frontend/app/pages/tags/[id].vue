@@ -225,24 +225,11 @@ const editForm = reactive({ name: "", description: "" });
 const bookmarkForm = reactive<BookmarkFormState>(createBookmarkFormState());
 const pendingBookmark = ref<BookmarkResponse | null>(null);
 
-const loadTag = async (showToast = false) => {
-  refreshing.value = true;
+const loadTagCore = async (showToast = false) => {
   state.value = "loading";
-  errorMessage.value = "";
-
   try {
-    const [tagsRes, foldersRes, bookmarksRes] = await Promise.all([
-      request("/tags"),
-      request("/folders"),
-      request(`/bookmarks?tag_id=${route.params.id}`),
-    ]);
-
-    tag.value =
-      tagsRes.find((item: TagResponse) => String(item.id) === String(route.params.id)) || null;
-    allTags.value = tagsRes;
-    folders.value = foldersRes;
-    bookmarks.value = bookmarksRes.items || [];
-    state.value = tag.value ? "ready" : "not-found";
+    tag.value = await request<TagResponse>(`/tags/${route.params.id}`);
+    state.value = "ready";
     if (showToast) {
       toast.show({
         title: "Tag refreshed.",
@@ -252,9 +239,34 @@ const loadTag = async (showToast = false) => {
     }
   } catch (err) {
     tag.value = null;
+    const message = err instanceof Error ? err.message : "Failed to load tag.";
+    errorMessage.value = message;
+    state.value = message.includes("404") ? "not-found" : "error";
+  }
+};
+
+const loadTagRelations = async () => {
+  try {
+    const [foldersRes, bookmarksRes] = await Promise.all([
+      request("/folders"),
+      request(`/bookmarks?tag_id=${route.params.id}`),
+    ]);
+
+    folders.value = foldersRes;
+    bookmarks.value = bookmarksRes.items || [];
+  } catch (err) {
     bookmarks.value = [];
-    errorMessage.value = err instanceof Error ? err.message : "Failed to load tag.";
+    errorMessage.value = err instanceof Error ? err.message : "Failed to load tag relations.";
     state.value = "error";
+  }
+};
+
+const loadTag = async (showToast = false) => {
+  refreshing.value = true;
+  errorMessage.value = "";
+  try {
+    await loadTagCore(showToast);
+    await loadTagRelations();
   } finally {
     refreshing.value = false;
   }
@@ -371,7 +383,7 @@ const saveBookmark = async () => {
     });
     editBookmarkOpen.value = false;
     Object.assign(bookmarkForm, createBookmarkFormState());
-    await loadTag();
+    await loadTagRelations();
     toast.show({
       title: "Bookmark updated.",
       color: "success",
@@ -402,7 +414,7 @@ const confirmDeleteBookmark = async () => {
     await request(`/bookmarks/${pendingBookmark.value.id}`, { method: "DELETE" });
     deleteBookmarkOpen.value = false;
     pendingBookmark.value = null;
-    await loadTag();
+    await loadTagRelations();
     toast.show({
       title: "Bookmark deleted.",
       color: "success",
@@ -482,5 +494,7 @@ watch(
   },
 );
 
-onMounted(loadTag);
+onMounted(() => {
+  void loadTag();
+});
 </script>

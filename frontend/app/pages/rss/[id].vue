@@ -297,7 +297,7 @@ const loadFeed = async (showToast = false) => {
   }
 };
 
-const loadArticles = async (showToast = false) => {
+const loadFeedArticles = async (showToast = false) => {
   articlesLoading.value = true;
   try {
     const result = await request<RSSFeedArticleListResponse>(
@@ -321,6 +321,10 @@ const loadArticles = async (showToast = false) => {
   } finally {
     articlesLoading.value = false;
   }
+};
+
+const loadArticles = async (showToast = false) => {
+  await loadFeedArticles(showToast);
 };
 
 const setArticlePage = async (nextPage: number) => {
@@ -362,6 +366,7 @@ const saveFeed = async () => {
     });
     closeModal();
     await loadFeed();
+    await loadFeedArticles();
     toast.show({
       title: "RSS feed updated.",
       color: "success",
@@ -428,14 +433,8 @@ const confirmDelete = async () => {
   }
 };
 
-onMounted(loadFeed);
-watch(
-  feed,
-  (value) => {
-    if (value) {
-      void loadArticles();
-    }
-  },
-  { immediate: true },
-);
+onMounted(() => {
+  void loadFeed();
+  void loadFeedArticles();
+});
 </script>

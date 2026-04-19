@@ -41,6 +41,14 @@ class FolderService(NamedResourceService):
             rows = repo.find_all()
             return [FolderResponse(**row) for row in rows]
 
+    def get(self, folder_id: int) -> FolderResponse:
+        with get_db() as conn:
+            repo = FolderRepository(conn)
+            row = repo.find_by_id(folder_id)
+            if row is None:
+                raise HTTPException(status_code=404, detail="Folder not found")
+            return FolderResponse(**row)
+
     def update(self, folder_id: int, data: FolderUpdate) -> FolderResponse:
         with get_db() as conn:
             repo = FolderRepository(conn)

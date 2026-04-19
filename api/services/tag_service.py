@@ -34,6 +34,14 @@ class TagService(NamedResourceService):
             rows = repo.find_all()
             return [TagResponse(**row) for row in rows]
 
+    def get(self, tag_id: int) -> TagResponse:
+        with get_db() as conn:
+            repo = TagRepository(conn)
+            row = repo.find_by_id(tag_id)
+            if row is None:
+                raise HTTPException(status_code=404, detail="Tag not found")
+            return TagResponse(**row)
+
     def update(self, tag_id: int, data: TagUpdate) -> TagResponse:
         with get_db() as conn:
             repo = TagRepository(conn)

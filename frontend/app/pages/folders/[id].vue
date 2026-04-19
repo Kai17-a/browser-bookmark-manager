@@ -226,25 +226,11 @@ const editForm = reactive({ name: "", description: "" });
 const bookmarkForm = reactive<BookmarkFormState>(createBookmarkFormState());
 const pendingBookmark = ref<BookmarkResponse | null>(null);
 
-const loadFolder = async (showToast = false) => {
-  refreshing.value = true;
+const loadFolderCore = async (showToast = false) => {
   state.value = "loading";
-  errorMessage.value = "";
-
   try {
-    const [foldersRes, tagsRes, bookmarksRes] = await Promise.all([
-      request("/folders"),
-      request("/tags"),
-      request(`/bookmarks?folder_id=${route.params.id}`),
-    ]);
-
-    folder.value =
-      foldersRes.find((item: FolderResponse) => String(item.id) === String(route.params.id)) ||
-      null;
-    folders.value = foldersRes;
-    tags.value = tagsRes;
-    bookmarks.value = bookmarksRes.items || [];
-    state.value = folder.value ? "ready" : "not-found";
+    folder.value = await request<FolderResponse>(`/folders/${route.params.id}`);
+    state.value = "ready";
     if (showToast) {
       toast.show({
         title: "Folder refreshed.",
@@ -254,9 +240,34 @@ const loadFolder = async (showToast = false) => {
     }
   } catch (err) {
     folder.value = null;
+    const message = err instanceof Error ? err.message : "Failed to load folder.";
+    errorMessage.value = message;
+    state.value = message.includes("404") ? "not-found" : "error";
+  }
+};
+
+const loadFolderRelations = async () => {
+  try {
+    const [tagsRes, bookmarksRes] = await Promise.all([
+      request("/tags"),
+      request(`/bookmarks?folder_id=${route.params.id}`),
+    ]);
+
+    tags.value = tagsRes;
+    bookmarks.value = bookmarksRes.items || [];
+  } catch (err) {
     bookmarks.value = [];
-    errorMessage.value = err instanceof Error ? err.message : "Failed to load folder.";
+    errorMessage.value = err instanceof Error ? err.message : "Failed to load folder relations.";
     state.value = "error";
+  }
+};
+
+const loadFolder = async (showToast = false) => {
+  refreshing.value = true;
+  errorMessage.value = "";
+  try {
+    await loadFolderCore(showToast);
+    await loadFolderRelations();
   } finally {
     refreshing.value = false;
   }
@@ -323,7 +334,7 @@ const saveBookmark = async () => {
     });
     editBookmarkOpen.value = false;
     Object.assign(bookmarkForm, createBookmarkFormState());
-    await loadFolder();
+    await loadFolderRelations();
     toast.show({
       title: "Bookmark updated.",
       color: "success",
@@ -356,7 +367,7 @@ const confirmDeleteBookmark = async () => {
     });
     deleteBookmarkOpen.value = false;
     pendingBookmark.value = null;
-    await loadFolder();
+    await loadFolderRelations();
     toast.show({
       title: "Bookmark deleted.",
       color: "success",
@@ -477,5 +488,7 @@ watch(
   },
 );
 
-onMounted(loadFolder);
+onMounted(() => {
+  void loadFolder();
+});
 </script>

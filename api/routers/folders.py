@@ -19,6 +19,15 @@ def list_folders(service: FolderService = Depends(get_folder_service)):
     return service.list()
 
 
+@router.get(
+    "/{folder_id}",
+    status_code=200,
+    response_model=FolderResponse,
+)
+def get_folder(folder_id: int, service: FolderService = Depends(get_folder_service)):
+    return service.get(folder_id)
+
+
 @router.patch("/{folder_id}", response_model=FolderResponse)
 def update_folder(
     folder_id: int,

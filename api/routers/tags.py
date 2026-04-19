@@ -22,6 +22,15 @@ def list_tags(service: TagService = Depends(get_tag_service)):
     return service.list()
 
 
+@router.get(
+    "/{tag_id}",
+    status_code=200,
+    response_model=TagResponse,
+)
+def get_tag(tag_id: int, service: TagService = Depends(get_tag_service)):
+    return service.get(tag_id)
+
+
 @router.patch(
     "/{tag_id}",
     response_model=TagResponse,
