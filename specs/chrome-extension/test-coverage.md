@@ -1,30 +1,29 @@
 # テスト観点
 
-- API URL の保存と復元ができること
+- API URL の初期値が表示され、手動で変更できること
 - 現在タブのタイトルと URL が入力欄に反映されること
 - `/health` の結果に応じて接続状態が更新されること
-- API 接続成功時に初回自動保存を 1 回だけ試みること
+- API 接続成功時に URL から既存ブックマークを取得して初期値へ反映すること
 - フォルダ一覧とタグ一覧が読み込まれること
 - 新規保存、既存ブックマークの更新、URL ベースの削除が実行できること
-- 既存ブックマークが見つかった場合にフォームへ反映されること
-- 重複 URL の場合はエラー終了せず既存ブックマーク読込へフォールバックすること
-- URL 入力変更時に既存ブックマークの再同期が行われること
-- Close ボタンと削除成功時にポップアップが閉じること
+- 既存ブックマークの取得で `GET /bookmarks/by-url?url=...` を使うこと
+- 保存時に `PATCH /bookmarks/by-url` が `404` の場合は `POST /bookmarks` にフォールバックすること
+- Close ボタンでポップアップが閉じること
+- 保存成功時と削除成功時に完了メッセージが表示されること
 
 ## 実装候補
 
 - popup 初期化テスト
-  - `chrome.storage.local.get`
   - `chrome.tabs.query`
-  - `/health` 成功時の自動保存試行
-  - 重複時の `/bookmarks?q=...` fallback
+  - `/health` 成功時の既存ブックマーク取得試行
+  - `/folders` と `/tags` の取得
+  - `/bookmarks/by-url?url=...` の取得と初期値反映
 
 - popup 保存フローテスト
-  - 既存 ID ありで `PATCH /bookmarks/{id}`
-  - 既存 ID なしで `POST /bookmarks`
+  - `PATCH /bookmarks/by-url?url=...`
+  - `PATCH /bookmarks/by-url` が `404` のときは `POST /bookmarks` にフォールバックする
   - folder/tag 選択値が payload に含まれる
 
 - popup 削除/補助操作テスト
   - `DELETE /bookmarks?url=...`
-  - URL change 時の resync
   - Close button による close

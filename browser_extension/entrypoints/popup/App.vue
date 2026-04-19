@@ -74,6 +74,7 @@
                   v-model="state.folder"
                   :options="folderItems"
                   optionLabel="label"
+                  optionValue="value"
                   placeholder="Select a Folder"
                   size="small"
                   class="md:w-56"
@@ -86,6 +87,7 @@
                   v-model="state.tag"
                   :options="tagItems"
                   optionLabel="label"
+                  optionValue="value"
                   placeholder="Select Tags"
                   :maxSelectedLabels="2"
                   size="small"
@@ -194,41 +196,27 @@ const connectApiServer = async () => {
   }
 };
 
-const register = async () => {
-  if (pending.value) {
-    return;
+const loadExistingBookmark = async () => {
+  const url = new URL("/bookmarks/by-url", apiUrl.value);
+  url.searchParams.set("url", state.url);
+
+  const response = await fetch(url);
+  if (response.status === 404) {
+    return false;
+  }
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body, response.status));
   }
 
-  pending.value = true;
-
-  try {
-    const response = await fetch(new URL("/bookmarks", apiUrl.value), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: state.url,
-        title: state.title,
-        description: state.description,
-        folder_id: state.folder ?? null,
-        tag_ids: state.tag ?? [],
-      }),
-    });
-
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      throw new Error(formatApiError(body, response.status));
-    }
-
-    responseMessageColor.value = "success";
-    responseMessage.value = "Registered";
-  } catch (error) {
-    responseMessageColor.value = "error";
-    responseMessage.value = error instanceof Error ? error.message : String(error);
-  } finally {
-    pending.value = false;
-  }
+  const bookmark = await response.json();
+  state.title = bookmark.title ?? state.title;
+  state.description = bookmark.description ?? "";
+  state.folder = bookmark.folder_id ?? null;
+  state.tag = Array.isArray(bookmark.tags)
+    ? bookmark.tags.map((tag: { id: number }) => tag.id)
+    : [];
+  return true;
 };
 
 const save = async () => {
@@ -242,8 +230,8 @@ const save = async () => {
     const requestBody = {
       title: state.title,
       description: state.description,
-      folder_id: state.folder.value ?? null,
-      tag_ids: state.tag.map((e) => e.value),
+      folder_id: state.folder ?? null,
+      tag_ids: state.tag,
     };
     const url = new URL("/bookmarks/by-url", apiUrl.value);
     url.searchParams.set("url", state.url);
@@ -386,8 +374,8 @@ onMounted(async () => {
   await connectApiServer();
 
   if (isApiServerConnect.value) {
-    await register();
     await Promise.all([getFolders(), getTags()]);
+    await loadExistingBookmark();
   }
 });
 </script>

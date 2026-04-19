@@ -70,6 +70,14 @@ def update_bookmark_by_url(
     return service.update_by_url(url, body)
 
 
+@router.get("/by-url", status_code=200, response_model=BookmarkResponse)
+def get_bookmark_by_url(
+    url: str = Query(...),
+    service: BookmarkService = Depends(get_bookmark_service),
+):
+    return service.get_by_url(url)
+
+
 @router.get("/{bookmark_id}", status_code=200, response_model=BookmarkResponse)
 def get_bookmark(
     bookmark_id: int, service: BookmarkService = Depends(get_bookmark_service)

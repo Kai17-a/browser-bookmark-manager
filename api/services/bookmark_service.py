@@ -98,6 +98,15 @@ class BookmarkService(BookmarkServiceBase):
             assert row is not None
             return self._build_bookmark_response(repo, repo.normalize_row(row))
 
+    def get_by_url(self, url: str) -> BookmarkResponse:
+        with get_db() as conn:
+            repo = BookmarkRepository(conn)
+            row = repo.find_by_url(url)
+            if row is None:
+                self._raise_not_found("Bookmark")
+            assert row is not None
+            return self._build_bookmark_response(repo, repo.normalize_row(row))
+
     def _update_with_repo(
         self, conn, repo: BookmarkRepository, bookmark_id: int, data: BookmarkUpdate
     ) -> BookmarkResponse:

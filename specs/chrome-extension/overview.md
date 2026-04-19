@@ -1,20 +1,22 @@
 # 概要
 
-この拡張機能は、現在開いているタブのタイトルと URL を取得し、Shiori Keeper の API サーバーにブックマークを保存する Chrome Manifest V3 拡張である。
+この拡張機能は、現在開いているタブのタイトルと URL を取得し、Shiori Keeper の API サーバーにブックマークを保存する Manifest V3 拡張である。
 
 ## 主な特徴
 
-- ポップアップ UI から現在タブの情報を取得する
-- API サーバー URL を `chrome.storage.local` に保存し、次回起動時に復元する
+- `browser_extension/entrypoints/popup/` のポップアップ UI から現在タブの情報を取得する
+- API サーバー URL を入力欄で変更でき、デフォルトは `http://localhost:8000` である
 - API `/health` を使って接続確認を行う
+- 接続成功時に現在タブの URL で既存ブックマークを取得し、あればフォームに反映する
 - `/folders` と `/tags` を取得して、保存時にフォルダとタグを選択できる
-- API 接続直後に現在タブの内容でブックマーク作成を試み、重複時は既存ブックマークを読み込む
-- 既存ブックマークの読み込み、更新、URL による削除を行える
+- 保存時は `/bookmarks/by-url` で既存ブックマークの更新を試み、`404` の場合のみ `/bookmarks` で新規作成する
+- URL による削除を行える
 
 ## 主要ファイル
 
-- [Manifest](../../chrome-extension/manifest.json)
-- [ポップアップ HTML](../../chrome-extension/popup.html)
-- [ポップアップ実装](../../chrome-extension/popup.js)
-- [ポップアップスタイル](../../chrome-extension/popup.css)
-- [フォームスタイル](../../chrome-extension/popup-form.css)
+- [Manifest 設定](../../browser_extension/wxt.config.ts)
+- [ポップアップ UI](../../browser_extension/entrypoints/popup/App.vue)
+- [ポップアップエントリ](../../browser_extension/entrypoints/popup/main.ts)
+- [ポップアップスタイル](../../browser_extension/entrypoints/popup/style.css)
+- [Background](../../browser_extension/entrypoints/background.ts)
+- [Content Script](../../browser_extension/entrypoints/content.ts)
