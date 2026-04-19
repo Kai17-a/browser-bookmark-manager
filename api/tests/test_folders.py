@@ -140,11 +140,11 @@ def test_delete_nonexistent_folder_returns_404(client):
     assert response.status_code == 404
 
 
-def test_create_folder_returns_400_when_limit_reached(client):
+def test_create_folder_can_exceed_previous_limit(client):
     for i in range(20):
         response = client.post("/folders", json={"name": f"Folder {i}"})
         assert response.status_code == 201
 
     response = client.post("/folders", json={"name": "Folder 20"})
-    assert response.status_code == 400
-    assert response.json()["detail"] == "Folder limit reached: maximum 20 folders"
+    assert response.status_code == 201
+    assert response.json()["name"] == "Folder 20"

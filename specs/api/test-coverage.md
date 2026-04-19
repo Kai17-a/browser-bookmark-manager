@@ -20,12 +20,10 @@
 - `api/tests/test_folders.py`
   - 作成、一覧、更新、削除
   - 参照先更新と 404 応答
-  - フォルダ上限
 
 - `api/tests/test_tags.py`
   - 作成、一覧、更新、削除
   - 重複エラーと 404 応答
-  - タグ上限
 
 - `api/tests/test_rss_feeds.py`
   - 作成、一覧、詳細、更新、削除
@@ -79,7 +77,6 @@
 - `POST /folders` / `POST /tags`
   - 正常作成
   - 空文字拒否
-  - 上限超過
   - `description` の保存
 
 - `PATCH /folders/{id}` / `PATCH /tags/{id}`

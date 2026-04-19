@@ -5,8 +5,6 @@ from api.model.models import TagCreate, TagResponse, TagUpdate
 from api.repositories.tag_repo import TagRepository
 from api.services.base import NamedResourceService
 
-MAX_TAGS = 20
-
 
 class TagService(NamedResourceService):
     def _ensure_name_available(
@@ -27,11 +25,6 @@ class TagService(NamedResourceService):
         with get_db() as conn:
             repo = TagRepository(conn)
             self._ensure_name_available(repo, data.name)
-            if len(repo.find_all()) >= MAX_TAGS:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Tag limit reached: maximum {MAX_TAGS} tags",
-                )
             row = repo.insert(data.name, data.description)
             return TagResponse(**row)
 

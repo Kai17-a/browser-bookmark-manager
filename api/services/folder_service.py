@@ -7,8 +7,6 @@ from api.model.models import FolderCreate, FolderResponse, FolderUpdate
 from api.repositories.folder_repo import FolderRepository
 from api.services.base import NamedResourceService
 
-MAX_FOLDERS = 20
-
 
 class FolderService(NamedResourceService):
     def _ensure_name_available(
@@ -29,11 +27,6 @@ class FolderService(NamedResourceService):
         with get_db() as conn:
             repo = FolderRepository(conn)
             self._ensure_name_available(repo, data.name)
-            if len(repo.find_all()) >= MAX_FOLDERS:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Folder limit reached: maximum {MAX_FOLDERS} folders",
-                )
             try:
                 row = repo.insert(data.name, data.description)
             except sqlite3.IntegrityError:
