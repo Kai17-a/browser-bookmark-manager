@@ -18,8 +18,6 @@ export default defineConfig({
     },
     permissions: ["tabs", "storage", "bookmarks"],
     host_permissions: ["<all_urls>"],
-    content_security_policy: {
-      extension_pages: "script-src 'self'; style-src 'self';",
-    },
+    content_security_policy: {},
   },
 });
