@@ -66,7 +66,7 @@
           </div>
 
           <div class="mt-2">
-            <div class="flex items-center justify px-1 gap-2">
+            <div class="flex items-center justify gap-2">
               <div class="flex flex-col gap-2 w-full">
                 <label for="folder">Folder</label>
                 <Select
@@ -219,12 +219,51 @@ const loadExistingBookmark = async () => {
   return true;
 };
 
+const register = async () => {
+  if (pending.value) {
+    return;
+  }
+
+  pending.value = true;
+
+  try {
+    const response = await fetch(new URL("/bookmarks", apiUrl.value), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: state.url,
+        title: state.title,
+        description: state.description,
+        folder_id: state.folder ?? null,
+        tag_ids: state.tag.map((e) => e.value),
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(formatApiError(body, response.status));
+    }
+
+    responseMessageColor.value = "success";
+    responseMessage.value = "Registered";
+  } catch (error) {
+    responseMessageColor.value = "error";
+    responseMessage.value = error instanceof Error ? error.message : String(error);
+  } finally {
+    pending.value = false;
+  }
+};
+
 const save = async () => {
   if (pending.value) {
     return;
   }
 
   pending.value = true;
+  responseMessageColor.value = "warn";
+  responseMessage.value = "Running...";
 
   try {
     const requestBody = {
@@ -375,6 +414,7 @@ onMounted(async () => {
 
   if (isApiServerConnect.value) {
     await Promise.all([getFolders(), getTags()]);
+    await register();
     await loadExistingBookmark();
   }
 });
