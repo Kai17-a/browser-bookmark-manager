@@ -119,3 +119,25 @@ services:
 - Invalid URL formats cannot be registered
 - Duplicate bookmark URLs, tag names, and RSS feed URLs are not allowed
 - The webhook is designed around Discord webhooks
+
+## Screenshots
+
+### Light
+
+![Dashboard light](docs/app-images/dashboard-light.png)
+![Bookmarks light](docs/app-images/bookmarks-light.png)
+![Favorites light](docs/app-images/favorites-light.png)
+![Folders light](docs/app-images/folders-light.png)
+![Tags light](docs/app-images/tags-light.png)
+![RSS light](docs/app-images/rss-light.png)
+![Settings light](docs/app-images/settings-light.png)
+
+### Dark
+
+![Dashboard dark](docs/app-images/dashboard-dark.png)
+![Bookmarks dark](docs/app-images/bookmarks-dark.png)
+![Favorites dark](docs/app-images/favorites-dark.png)
+![Folders dark](docs/app-images/folders-dark.png)
+![Tags dark](docs/app-images/tags-dark.png)
+![RSS dark](docs/app-images/rss-dark.png)
+![Settings dark](docs/app-images/settings-dark.png)
