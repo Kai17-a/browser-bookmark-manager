@@ -203,6 +203,7 @@ const connectApiServer = async () => {
     }
     isApiServerConnect.value = true;
     register();
+    Promise.all([register(), getFolders(), getTags()]);
   } catch (error) {
     apiStatusMessage.value = "Failed to Connect to API";
     apiStatusMessageColor.value = "error";
